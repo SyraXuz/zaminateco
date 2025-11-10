@@ -1,0 +1,282 @@
+/* Mobile-first responsive design for ZAMINAT.eco */
+
+/* Base mobile styles */
+@media (max-width: 640px) {
+  /* Ensure minimum touch target sizes */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Avatar system mobile optimizations */
+  .avatar-card {
+    min-height: 140px;
+    touch-action: manipulation;
+  }
+  
+  /* Modal optimizations */
+  .modal-mobile {
+    margin: 8px;
+    max-height: 95vh;
+  }
+  
+  /* Grid responsive adjustments */
+  .avatar-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  /* Text scaling for mobile */
+  .mobile-text-scale {
+    font-size: clamp(0.75rem, 2.5vw, 0.875rem);
+  }
+  
+  /* Button optimizations */
+  .mobile-button {
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+  
+  /* Tab navigation mobile */
+  .tab-mobile {
+    min-width: 60px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  /* FIXED: Daily participation streak mobile optimizations */
+  .daily-streak-container {
+    padding: 12px;
+  }
+  
+  .daily-streak-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    max-width: 100%;
+  }
+  
+  .daily-streak-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    max-width: 100%;
+  }
+  
+  .daily-streak-text {
+    font-size: 10px;
+    line-height: 1.2;
+    text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+  }
+  
+  .daily-streak-actions {
+    font-size: 9px;
+    font-weight: 600;
+    color: #ea580c;
+    margin-top: 2px;
+  }
+  
+  .daily-streak-day {
+    font-size: 9px;
+    color: #6b7280;
+    margin-top: 1px;
+  }
+  
+  .daily-streak-bar {
+    width: 20px;
+    height: 48px;
+    margin: 2px 0;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 375px) {
+  .avatar-grid {
+    gap: 8px;
+  }
+  
+  .modal-mobile {
+    margin: 4px;
+  }
+  
+  .mobile-text-scale {
+    font-size: 0.75rem;
+  }
+
+  /* Extra small screen optimizations for streak */
+  .daily-streak-grid {
+    gap: 2px;
+  }
+  
+  .daily-streak-bar {
+    width: 18px;
+    height: 44px;
+  }
+  
+  .daily-streak-text {
+    font-size: 9px;
+  }
+  
+  .daily-streak-actions {
+    font-size: 8px;
+  }
+  
+  .daily-streak-day {
+    font-size: 8px;
+  }
+}
+
+/* Tablet and larger mobile */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .avatar-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 896px) and (orientation: landscape) {
+  .modal-mobile {
+    max-height: 90vh;
+  }
+  
+  .modal-content {
+    max-height: calc(90vh - 120px);
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .avatar-emoji {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .avatar-card {
+    transition: none;
+  }
+  
+  .modal-animation {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Dark mode support for mobile */
+@media (prefers-color-scheme: dark) {
+  .modal-mobile {
+    background-color: #1f2937;
+    color: #f9fafb;
+  }
+  
+  .avatar-card {
+    border-color: #374151;
+    background: linear-gradient(135deg, #374151, #4b5563);
+  }
+}
+
+/* Safe area handling for notched devices */
+@supports (padding: max(0px)) {
+  .modal-mobile {
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Line clamping utility */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Custom breakpoint for extra small screens */
+@media (min-width: 475px) {
+  .xs\:inline {
+    display: inline;
+  }
+}
+
+/* Improved touch feedback */
+.touch-feedback {
+  -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1);
+  tap-highlight-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Smooth scrolling for mobile */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Focus styles for keyboard navigation */
+.focus-visible\:ring-mobile:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Modal backdrop blur optimization for mobile */
+.backdrop-blur-mobile {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Grid auto-fit for responsive avatars */
+.avatar-grid-responsive {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .avatar-grid-responsive {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+/* Optimized animations for mobile */
+@media (max-width: 640px) {
+  .mobile-animation {
+    animation-duration: 0.2s;
+    transition-duration: 0.2s;
+  }
+}
+
+/* Prevent zoom on input focus (iOS Safari) */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  font-size: 16px;
+}
+
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"], 
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
