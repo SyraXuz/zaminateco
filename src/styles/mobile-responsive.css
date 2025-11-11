@@ -280,3 +280,103 @@ select {
     font-size: 16px; /* Prevents zoom on iOS */
   }
 }
+
+/* Spline 3D iframe optimizations - Complete transparency overlay */
+.spline-iframe-container {
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: transparent !important;
+  background-color: transparent !important;
+  overflow: hidden;
+}
+
+.spline-iframe-container iframe {
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  background: transparent !important;
+  background-color: transparent !important;
+  mix-blend-mode: normal;
+  /* Force complete transparency */
+  opacity: 1;
+}
+
+/* Force transparency on iframe body/content */
+.spline-iframe-container iframe[src*="spline"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Hide Spline "Built with Spline" badge */
+.spline-iframe-container iframe[src*="spline"]::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 120px;
+  height: 40px;
+  background: transparent;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* Additional overlay effect to ensure website background shows through */
+.spline-iframe-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background: transparent;
+}
+
+/* Hide Spline badge using clip-path (alternative method) */
+.spline-iframe-container {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* Cover bottom right corner where badge appears */
+.spline-iframe-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 160px;
+  height: 50px;
+  background: transparent;
+  z-index: 25;
+  pointer-events: none;
+}
+
+/* Ensure text overlay covers badge completely */
+.spline-iframe-container > div[class*="absolute bottom-0 right-0"] {
+  z-index: 100 !important;
+}
+
+/* Performance optimizations for mobile devices */
+@media (max-width: 768px) {
+  .spline-iframe-container iframe {
+    /* Reduce quality on mobile for better performance */
+    image-rendering: auto;
+  }
+}
+
+/* Disable on very low-end devices or when user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .spline-iframe-container {
+    display: none;
+  }
+}
+
+/* Optimize for touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .spline-iframe-container iframe {
+    /* Ensure touch events work properly */
+    touch-action: pan-x pan-y;
+  }
+}

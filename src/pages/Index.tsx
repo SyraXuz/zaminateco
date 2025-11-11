@@ -43,14 +43,14 @@ export default function Index() {
   return (
     <Layout title={t('home')}>
       <div className="min-h-screen bg-background uzbek-pattern">
-        {/* Hero Section - Mobile Optimized */}
+        {/* Hero Section - Mobile Optimized with Space Management */}
         <section 
-          className="relative overflow-hidden bg-gradient-to-br from-green-600 via-blue-600 to-green-700 text-white hero-mobile"
+          className="relative overflow-hidden hero-mobile min-h-[600px] sm:min-h-[700px] md:min-h-[800px]"
           role="banner"
           aria-labelledby="hero-title"
         >
-          {/* Header with Logo - Mobile Optimized */}
-          <header className="flex items-center justify-between p-4 relative z-20 header-mobile">
+          {/* Header with Logo - Mobile Optimized - Fixed at top */}
+          <header className="flex items-center justify-between p-4 relative z-30 header-mobile" style={{ pointerEvents: 'auto', position: 'relative', background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)' }}>
             <div className="flex items-center space-x-2 sm:space-x-3">
               <img 
                 src="/logo.png" 
@@ -59,8 +59,8 @@ export default function Index() {
                 loading="eager"
               />
               <div>
-                <h1 className="text-sm sm:text-xl font-bold header-title-mobile">{t('appName')}</h1>
-                <p className="text-xs sm:text-sm opacity-90 header-tagline-mobile">{t('tagline')}</p>
+                <h1 className="text-sm sm:text-xl font-bold header-title-mobile text-gray-900">{t('appName')}</h1>
+                <p className="text-xs sm:text-sm opacity-90 header-tagline-mobile text-gray-700">{t('tagline')}</p>
               </div>
             </div>
             <div className="flex items-center space-x-1 sm:space-x-2">
@@ -68,7 +68,7 @@ export default function Index() {
               <Button 
                 size="sm" 
                 variant="secondary" 
-                className="bg-white/20 border-white/30 text-white hover:bg-white/30 h-8 w-8 p-0 sm:h-10 sm:w-auto sm:px-4"
+                className="bg-gray-200/80 border-gray-300 text-gray-900 hover:bg-gray-300/80 h-8 w-8 p-0 sm:h-10 sm:w-auto sm:px-4"
                 aria-label={t('notifications')}
               >
                 <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -76,48 +76,372 @@ export default function Index() {
             </div>
           </header>
 
-          {/* Hero Content - Mobile Optimized */}
-          <div className="px-3 pb-6 sm:px-4 sm:pb-8 relative z-10 hero-mobile">
-            <div className="absolute top-0 right-0 opacity-10">
-              <TreeIcon className="h-32 w-32 sm:h-64 sm:w-64" animated />
-            </div>
-            
-            <div className="relative z-10 max-w-4xl mx-auto text-center">
-              <h2 id="hero-title" className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 leading-tight hero-title-mobile">
-                {t('heroTitle')}
-              </h2>
-              <p className="text-sm sm:text-xl opacity-90 mb-4 sm:mb-6 leading-relaxed hero-subtitle-mobile">
-                {t('heroSubtitle')}
-              </p>
+          {/* Hero Content Layout - Creative Integration of Bot and Text */}
+          <div className="relative z-10 px-3 sm:px-4 py-6 sm:py-8 min-h-[500px] sm:min-h-[600px] lg:min-h-[700px]">
+            {/* Spline 3D Bot - Full Overlay Background */}
+            <div 
+              className="absolute inset-0 w-full h-full flex items-center justify-center spline-iframe-container" 
+              style={{ 
+                pointerEvents: 'auto',
+                background: 'transparent',
+                zIndex: 1
+              }}
+            >
+              {/* Spline iframe with complete transparency overlay */}
+              <iframe 
+                src='https://my.spline.design/r4xbot-2nktQYWyjsecuJLGCyScQOuM/' 
+                frameBorder='0' 
+                width='100%' 
+                height='100%'
+                className="absolute inset-0 w-full h-full"
+                style={{ 
+                  pointerEvents: 'auto',
+                  border: 'none',
+                  display: 'block',
+                  background: 'transparent',
+                  backgroundColor: 'transparent',
+                  mixBlendMode: 'normal',
+                  opacity: 1
+                }}
+                title="Spline 3D Interactive Robot"
+                loading="eager"
+                allow="autoplay; fullscreen; accelerometer; gyroscope"
+                allowFullScreen
+              />
               
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 max-w-3xl mx-auto">
-                <p className="text-sm sm:text-lg leading-relaxed hero-description-mobile">
-                  {t('heroDescription')}
-                </p>
+              {/* Creative "roots of change" overlay to fully cover Spline badge - Bottom Right */}
+              <div 
+                className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-50" 
+                style={{ pointerEvents: 'auto' }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onMouseUp={(e) => e.stopPropagation()}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.6, type: "spring", stiffness: 200 }}
+                  className="relative"
+                  style={{ pointerEvents: 'none' }}
+                >
+                  {/* Gradient background with decorative elements - Solid background to block clicks */}
+                  <div 
+                    className="relative overflow-hidden rounded-xl shadow-2xl" 
+                    style={{ 
+                      minWidth: '160px',
+                      minHeight: '50px',
+                      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(59, 130, 246, 0.25) 100%)',
+                      backdropFilter: 'blur(12px)',
+                      border: '1px solid rgba(34, 197, 94, 0.3)',
+                      padding: '10px 16px',
+                      pointerEvents: 'auto',
+                      cursor: 'default'
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      return false;
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      return false;
+                    }}
+                    onMouseUp={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      return false;
+                    }}
+                  >
+                    {/* Animated leaf pattern background - White */}
+                    <motion.div
+                      animate={{ 
+                        rotate: [0, 5, -5, 0],
+                        scale: [1, 1.05, 1]
+                      }}
+                      transition={{ 
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      className="absolute top-1 left-2 opacity-30"
+                      style={{ pointerEvents: 'none' }}
+                    >
+                      <Leaf className="w-6 h-6 text-white" />
+                    </motion.div>
+                    
+                    <motion.div
+                      animate={{ 
+                        rotate: [0, -5, 5, 0],
+                        scale: [1, 0.95, 1]
+                      }}
+                      transition={{ 
+                        duration: 3.5,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 0.5
+                      }}
+                      className="absolute bottom-1 right-2 opacity-25"
+                      style={{ pointerEvents: 'none' }}
+                    >
+                      <Leaf className="w-5 h-5 text-white" />
+                    </motion.div>
+                    
+                    {/* Decorative dots - White */}
+                    <motion.div
+                      animate={{ 
+                        opacity: [0.4, 0.7, 0.4],
+                        scale: [1, 1.2, 1]
+                      }}
+                      transition={{ 
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      className="absolute top-2 right-3 w-1.5 h-1.5 rounded-full bg-white/70"
+                      style={{ pointerEvents: 'none' }}
+                    />
+                    
+                    {/* Main slogan text - White color for visibility */}
+                    <div className="relative flex items-center justify-center gap-2" style={{ pointerEvents: 'none' }}>
+                      {/* Small leaf icon - White */}
+                      <motion.div
+                        animate={{ 
+                          rotate: [0, 15, -15, 0],
+                        }}
+                        transition={{ 
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        <Leaf className="w-3 h-3 text-white" />
+                      </motion.div>
+                      
+                      {/* White text */}
+                      <p 
+                        className="text-xs sm:text-sm font-bold whitespace-nowrap text-white"
+                        style={{ 
+                          fontSize: '12px',
+                          lineHeight: '1.3',
+                          letterSpacing: '1px',
+                          textTransform: 'uppercase',
+                          textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+                          pointerEvents: 'none'
+                        }}
+                      >
+                        roots of change
+                      </p>
+                      
+                      {/* Small decorative element - White */}
+                      <motion.div
+                        animate={{ 
+                          scale: [1, 1.3, 1],
+                          opacity: [0.6, 1, 0.6]
+                        }}
+                        transition={{ 
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                          delay: 0.3
+                        }}
+                        className="w-1 h-1 rounded-full bg-white"
+                        style={{ pointerEvents: 'none' }}
+                      />
+                    </div>
+                    
+                    {/* Shine effect overlay */}
+                    <motion.div
+                      animate={{ 
+                        x: ['-100%', '200%']
+                      }}
+                      transition={{ 
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "linear",
+                        repeatDelay: 2
+                      }}
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                      style={{ transform: 'skewX(-20deg)', pointerEvents: 'none' }}
+                    />
+                  </div>
+                </motion.div>
               </div>
+            </div>
+
+            {/* Text Content - Overlaid on top with creative positioning */}
+            <div className="relative z-20 flex flex-col justify-center items-center text-center min-h-[500px] sm:min-h-[600px] lg:min-h-[700px]" style={{ pointerEvents: 'none' }}>
+              {/* Spacer for top area - Bot will be visible in center */}
+              <div className="flex-1 min-h-[200px] sm:min-h-[250px] lg:min-h-[300px] w-full" style={{ pointerEvents: 'none' }} />
               
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center max-w-md mx-auto">
+              {/* Subtitle - Positioned below bot area with proper spacing */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="max-w-3xl mx-auto px-4 mb-4 sm:mb-6"
+              >
+                <p className="text-base sm:text-xl md:text-2xl opacity-90 leading-relaxed hero-subtitle-mobile text-gray-700 font-medium">
+                  {t('heroSubtitle')}
+                </p>
+              </motion.div>
+              
+              {/* Description Card - Positioned below subtitle with creative background */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="max-w-2xl mx-auto px-4 mb-4 sm:mb-6"
+                style={{ pointerEvents: 'auto' }}
+              >
+                <div 
+                  className="relative overflow-hidden rounded-2xl shadow-2xl p-4 sm:p-6"
+                  style={{ 
+                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(34, 197, 94, 0.2)',
+                  }}
+                >
+                  {/* Animated leaf pattern background */}
+                  <motion.div
+                    animate={{ 
+                      rotate: [0, 8, -8, 0],
+                      scale: [1, 1.1, 1],
+                      x: [0, 5, -5, 0]
+                    }}
+                    transition={{ 
+                      duration: 5,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="absolute top-2 left-3 opacity-20"
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    <Leaf className="w-12 h-12 sm:w-16 sm:h-16 text-green-500" />
+                  </motion.div>
+                  
+                  <motion.div
+                    animate={{ 
+                      rotate: [0, -6, 6, 0],
+                      scale: [1, 0.9, 1],
+                      x: [0, -4, 4, 0]
+                    }}
+                    transition={{ 
+                      duration: 4.5,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: 0.7
+                    }}
+                    className="absolute bottom-3 right-4 opacity-15"
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    <Leaf className="w-10 h-10 sm:w-14 sm:h-14 text-blue-500" />
+                  </motion.div>
+                  
+                  {/* Additional decorative leaf */}
+                  <motion.div
+                    animate={{ 
+                      rotate: [0, 10, -10, 0],
+                      opacity: [0.1, 0.2, 0.1]
+                    }}
+                    transition={{ 
+                      duration: 6,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: 1.2
+                    }}
+                    className="absolute top-1/2 left-1/4 opacity-10"
+                    style={{ pointerEvents: 'none', transform: 'translate(-50%, -50%)' }}
+                  >
+                    <Leaf className="w-8 h-8 text-green-400" />
+                  </motion.div>
+                  
+                  {/* Decorative dots */}
+                  <motion.div
+                    animate={{ 
+                      opacity: [0.3, 0.6, 0.3],
+                      scale: [1, 1.3, 1]
+                    }}
+                    transition={{ 
+                      duration: 2.5,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="absolute top-4 right-6 w-2 h-2 rounded-full bg-green-400"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  
+                  <motion.div
+                    animate={{ 
+                      opacity: [0.2, 0.5, 0.2],
+                      scale: [1, 1.2, 1]
+                    }}
+                    transition={{ 
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: 1
+                    }}
+                    className="absolute bottom-4 left-6 w-1.5 h-1.5 rounded-full bg-blue-400"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  
+                  {/* Main description text */}
+                  <div className="relative z-10">
+                    <p className="text-sm sm:text-base md:text-lg leading-relaxed hero-description-mobile text-gray-800 font-medium">
+                      {t('heroDescription')}
+                    </p>
+                  </div>
+                  
+                  {/* Shine effect overlay */}
+                  <motion.div
+                    animate={{ 
+                      x: ['-100%', '200%']
+                    }}
+                    transition={{ 
+                      duration: 4,
+                      repeat: Infinity,
+                      ease: "linear",
+                      repeatDelay: 3
+                    }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+                    style={{ transform: 'skewX(-20deg)', pointerEvents: 'none' }}
+                  />
+                </div>
+              </motion.div>
+              
+              {/* Action Buttons - Creative positioning */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md mx-auto px-4"
+                style={{ pointerEvents: 'auto' }}
+              >
                 <Button 
                   onClick={scrollToAbout}
-                  size="sm"
-                  className="bg-white text-green-700 hover:bg-gray-100 font-semibold text-xs sm:text-sm py-2 sm:py-3"
+                  size="lg"
+                  className="bg-green-600 text-white hover:bg-green-700 font-semibold text-sm sm:text-base py-3 sm:py-4 px-6 sm:px-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                  style={{ pointerEvents: 'auto' }}
                 >
                   {t('learnAboutProject')}
                 </Button>
-                <Link to="/map">
+                <Link to="/map" style={{ pointerEvents: 'auto' }}>
                   <Button 
-                    size="sm"
+                    size="lg"
                     variant="outline"
-                    className="border-2 border-white bg-white/10 text-white hover:bg-white/20 w-full sm:w-auto font-semibold text-xs sm:text-sm py-2 sm:py-3"
+                    className="border-2 border-green-600 bg-white/90 backdrop-blur-sm text-green-700 hover:bg-green-50 w-full sm:w-auto font-semibold text-sm sm:text-base py-3 sm:py-4 px-6 sm:px-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                    style={{ pointerEvents: 'auto' }}
                   >
                     {t('findCollectionPoints')}
                   </Button>
                 </Link>
-              </div>
+              </motion.div>
             </div>
           </div>
           
-          <UzbekPattern className="w-full h-1 sm:h-2 text-white opacity-30" />
+          <UzbekPattern className="w-full h-1 sm:h-2 text-gray-300 opacity-50 relative z-10" />
         </section>
 
         {/* Main Content - Mobile Optimized */}
