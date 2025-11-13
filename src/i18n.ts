@@ -67,6 +67,8 @@ i18n
   .init({
     resources,
     fallbackLng: 'en',
+    defaultNS: 'translation',
+    ns: ['translation', 'common', 'actions', 'profile', 'team', 'shop', 'stories'],
     debug: false,
 
     interpolation: {
@@ -80,6 +82,10 @@ i18n
 
     // Allow empty values to fallback to key
     returnEmptyString: false,
+    // Return key if translation not found (for debugging)
+    returnNull: false,
+    // Ensure proper fallback chain
+    fallbackNS: ['common', 'translation'],
   });
 
 export default i18n;

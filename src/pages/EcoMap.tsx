@@ -6,13 +6,47 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
 import { getCollectionPoints } from '@/lib/collectionData';
+import { getIconForProductOrCategory } from '@/lib/iconMatcher';
+import { useMemo } from 'react';
 import '../styles/mobile-responsive.css';
 
 export default function EcoMap() {
   const { t } = useTranslation();
   
   // Get translated collection points
-  const collectionPoints = getCollectionPoints(t);
+  const rawCollectionPoints = getCollectionPoints(t);
+  
+  // Get collection points with dynamically matched icons
+  const collectionPoints = useMemo(() => {
+    return rawCollectionPoints.map(point => {
+      // Try to match icon based on name first
+      let iconPath = getIconForProductOrCategory(point.name, point.image);
+      
+      // If name matching returned the fallback (original image), try type matching
+      // Only if the returned path is the same as the original fallback
+      if (iconPath === point.image) {
+        const typeMatched = getIconForProductOrCategory(point.type, point.image);
+        // Use type match if it's different from the original fallback
+        if (typeMatched !== point.image && typeMatched.startsWith('/images/')) {
+          iconPath = typeMatched;
+        }
+      }
+      
+      // Ensure we have a valid path
+      if (!iconPath || !iconPath.startsWith('/images/')) {
+        iconPath = point.type === 'plastic' 
+          ? '/images/compost_13285420.png' 
+          : point.type === 'tires' 
+          ? '/images/ECOBUSSTOP.png' 
+          : '/images/park.png';
+      }
+      
+      return {
+        ...point,
+        iconPath
+      };
+    });
+  }, [rawCollectionPoints]);
 
   return (
     <Layout title={t('ecoMap')}>
@@ -70,7 +104,7 @@ export default function EcoMap() {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="Tashkent Collection Points Map"
+                title={t('tashkentCollectionPointsMap', { ns: 'common' })}
               />
               <div className="absolute inset-0 pointer-events-none">
                 {/* Central Park Marker */}
@@ -116,12 +150,29 @@ export default function EcoMap() {
             {collectionPoints.map((point) => (
               <div key={point.id} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-2 sm:space-x-3">
-                  <div className={`p-1 sm:p-2 rounded-full ${
+                  <div className={`p-1 sm:p-2 rounded-full flex items-center justify-center ${
                     point.type === 'plastic' ? 'bg-green-100 text-green-600' :
                     point.type === 'tires' ? 'bg-blue-100 text-blue-600' :
                     'bg-purple-100 text-purple-600'
                   }`}>
-                    {point.emoji}
+                    <img 
+                      src={point.iconPath || point.image || `/images/${point.type === 'plastic' ? 'compost_13285420.png' : point.type === 'tires' ? 'ECOBUSSTOP.png' : 'park.png'}`}
+                      alt={point.name}
+                      className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
+                      loading="lazy"
+                      onError={(e) => {
+                        // Fallback to default icon if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        const fallback = point.type === 'plastic' 
+                          ? '/images/compost_13285420.png' 
+                          : point.type === 'tires' 
+                          ? '/images/ECOBUSSTOP.png' 
+                          : '/images/park.png';
+                        if (target.src !== fallback) {
+                          target.src = fallback;
+                        }
+                      }}
+                    />
                   </div>
                   <div>
                     <h3 className="font-medium text-sm sm:text-base">{point.name}</h3>

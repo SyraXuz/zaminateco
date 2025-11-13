@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TrendingUp, Calendar, MapPin, Heart, MessageCircle, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -7,6 +7,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import { useTranslation } from 'react-i18next';
+import { getIconForProductOrCategory } from '../lib/iconMatcher';
 import '../styles/mobile-responsive.css';
 
 // Sample story data with translation keys
@@ -14,6 +15,7 @@ const stories = [
   {
     id: 1,
     emoji: '🎉',
+    image: '/images/community_16119903.png',
     badgeType: 'update',
     titleKey: 'stories.pilotProgram.title',
     descriptionKey: 'stories.pilotProgram.description',
@@ -24,6 +26,7 @@ const stories = [
   {
     id: 2,
     emoji: '🏫',
+    image: '/images/school.png',
     badgeType: 'successStory',
     titleKey: 'stories.futureRecycling.title',
     descriptionKey: 'stories.futureRecycling.description',
@@ -34,6 +37,7 @@ const stories = [
   {
     id: 3,
     emoji: '🎤',
+    image: '/images/community_16119903.png',
     badgeType: 'education',
     titleKey: 'stories.educationalPrograms.title',
     descriptionKey: 'stories.educationalPrograms.description',
@@ -57,6 +61,7 @@ const communityStories = [
     environmentalImpactKey: 'stories.mahallTransformation.environmentalImpact',
     impactDescriptionKey: 'stories.mahallTransformation.impactDescription',
     emojis: ['🏗️', '♻️', '🏞️'],
+    images: ['/images/art-tiles.png', '/images/ECOBUSSTOP.png', '/images/forest_10089053.png'],
     likesKey: 'stories.mahallTransformation.likes',
     commentsKey: 'stories.mahallTransformation.comments',
     hashtags: ['#transformation', '#playground']
@@ -71,6 +76,7 @@ const communityStories = [
     dateKey: 'stories.teachingKids.date',
     locationKey: 'stories.teachingKids.location',
     emojis: ['👨‍👩‍👧‍👦', '📚', '🌱'],
+    images: ['/images/community_16119903.png', '/images/book_649180.png', '/images/plant-a-tree_6675353.png'],
     likesKey: 'stories.teachingKids.likes',
     commentsKey: 'stories.teachingKids.comments',
     hashtags: ['#education', '#children']
@@ -80,6 +86,71 @@ const communityStories = [
 export default function EcoStories() {
   const { t } = useTranslation(['stories', 'translation']);
   const [activeFilter, setActiveFilter] = useState('all');
+  
+  // Get stories with dynamically matched icons
+  const storiesWithIcons = useMemo(() => {
+    return stories.map(story => {
+      const title = t(story.titleKey, { ns: 'stories' });
+      const description = t(story.descriptionKey, { ns: 'stories' });
+      
+      // Try to match icon based on title first, then description
+      // Use a different fallback to detect if matching worked
+      let iconPath = getIconForProductOrCategory(title, null);
+      
+      // If no match found, try description
+      if (!iconPath || !iconPath.startsWith('/images/')) {
+        iconPath = getIconForProductOrCategory(description, null);
+      }
+      
+      // Special handling for "Future of Plastic" story
+      const titleLower = title.toLowerCase();
+      if (titleLower.includes('future') && titleLower.includes('plastic')) {
+        iconPath = '/images/Future of Plastic.png';
+      }
+      
+      // If still no match, use original image as fallback
+      if (!iconPath || !iconPath.startsWith('/images/')) {
+        iconPath = story.image;
+      }
+      
+      // Ensure we have a valid path
+      if (!iconPath || !iconPath.startsWith('/images/')) {
+        iconPath = story.image; // Use original as final fallback
+      }
+      
+      return {
+        ...story,
+        iconPath
+      };
+    });
+  }, [t]);
+  
+  // Get community stories with dynamically matched avatars
+  const communityStoriesWithIcons = useMemo(() => {
+    return communityStories.map(story => {
+      const authorName = t(story.nameKey, { ns: 'stories' });
+      
+      // Match avatar based on author name
+      let avatarImage = getIconForProductOrCategory(authorName, story.avatar);
+      
+      // If not matched, use default avatar images
+      if (avatarImage === story.avatar || !avatarImage.startsWith('/images/')) {
+        // Map author names to avatar images
+        if (authorName.toLowerCase().includes('bobur')) {
+          avatarImage = '/images/Bobur.png';
+        } else if (authorName.toLowerCase().includes('malika')) {
+          avatarImage = '/images/Malika.png';
+        } else {
+          avatarImage = story.avatar; // Keep emoji as fallback
+        }
+      }
+      
+      return {
+        ...story,
+        avatarImage
+      };
+    });
+  }, [t]);
 
   const filters = [
     { key: 'all', labelKey: 'filters.allContent' },
@@ -149,11 +220,26 @@ export default function EcoStories() {
             {t('sections.featuredContent', { ns: 'stories' })}
           </h3>
           <div className="space-y-3 sm:space-y-4">
-            {stories.map((story) => (
+            {storiesWithIcons.map((story) => (
               <Card key={story.id} className="eco-card-hover card-mobile">
                 <CardContent className="p-3 sm:p-4 card-content-mobile">
                   <div className="flex items-start space-x-2 sm:space-x-3">
-                    <span className="text-2xl sm:text-3xl">{story.emoji}</span>
+                    <img 
+                      src={story.iconPath || story.image || story.emoji} 
+                      alt="" 
+                      className="w-8 h-8 sm:w-10 sm:h-10 object-contain" 
+                      loading="lazy"
+                      onError={(e) => {
+                        // Fallback to original image or emoji if iconPath fails
+                        const target = e.target as HTMLImageElement;
+                        if (story.image && target.src !== story.image) {
+                          target.src = story.image;
+                        } else if (story.emoji && !target.src.includes('/images/')) {
+                          // If image fails, show emoji as text (would need a different approach)
+                          target.style.display = 'none';
+                        }
+                      }}
+                    />
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1 sm:mb-2">
                         <Badge className={`text-xs ${getBadgeStyle(story.badgeType)}`}>
@@ -186,14 +272,34 @@ export default function EcoStories() {
             ))}
 
             {/* Community Stories */}
-            {communityStories.map((story) => (
+            {communityStoriesWithIcons.map((story) => (
               <Card key={`community-${story.id}`} className="eco-card-hover card-mobile">
                 <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4 card-content-mobile">
                   <div className="flex items-start space-x-2 sm:space-x-3">
                     <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
-                      <AvatarFallback className="bg-green-100 text-green-700 text-sm sm:text-base">
-                        {story.avatar}
-                      </AvatarFallback>
+                      {story.avatarImage && story.avatarImage.startsWith('/images/') ? (
+                        <img 
+                          src={story.avatarImage} 
+                          alt={t(story.nameKey, { ns: 'stories' })} 
+                          className="w-full h-full object-cover rounded-full"
+                          onError={(e) => {
+                            // Fallback to emoji if image fails
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent && !parent.querySelector('.avatar-emoji-fallback')) {
+                              const emojiSpan = document.createElement('span');
+                              emojiSpan.className = 'avatar-emoji-fallback bg-green-100 text-green-700 text-sm sm:text-base flex items-center justify-center w-full h-full rounded-full';
+                              emojiSpan.textContent = story.avatar;
+                              parent.appendChild(emojiSpan);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <AvatarFallback className="bg-green-100 text-green-700 text-sm sm:text-base">
+                          {story.avatar}
+                        </AvatarFallback>
+                      )}
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center space-x-1 sm:space-x-2 mb-1">
@@ -231,12 +337,6 @@ export default function EcoStories() {
                         </p>
                       </div>
                     )}
-
-                    <div className="flex items-center space-x-1 mb-2 sm:mb-3">
-                      {story.emojis.map((emoji, index) => (
-                        <span key={index} className="text-lg sm:text-2xl">{emoji}</span>
-                      ))}
-                    </div>
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-gray-600">

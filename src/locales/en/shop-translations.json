@@ -123,5 +123,13 @@
   "bottomSection": {
     "title": "Shop",
     "description": "Every purchase helps transform waste into useful products while supporting environmental projects in Uzbekistan."
+  },
+  "partnerDescriptions": {
+    "taxiRides": "Taxi rides across Tashkent with comfort and economy options",
+    "coffeeShop": "Coffee, tea, pastries and light meals in city center",
+    "restaurant": "Traditional plov, shashlik, lagman and Uzbek cuisine",
+    "grocery": "Online grocery delivery: bread, meat, vegetables, household items",
+    "groceryStore": "Fresh fruits, vegetables, dairy products and cleaning supplies",
+    "airline": "Domestic and international flights from Tashkent airport"
   }
 }

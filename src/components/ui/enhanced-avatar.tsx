@@ -4,7 +4,8 @@ import { Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface EnhancedAvatarProps {
-  emoji: string;
+  emoji?: string;
+  image?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   glowColor?: 'green' | 'blue' | 'purple' | 'yellow' | 'red' | 'none';
   showCrown?: boolean;
@@ -42,6 +43,7 @@ const frameGradients = {
 
 export const EnhancedAvatar: React.FC<EnhancedAvatarProps> = ({
   emoji,
+  image,
   size = 'md',
   glowColor = 'none',
   showCrown = false,
@@ -109,8 +111,12 @@ export const EnhancedAvatar: React.FC<EnhancedAvatarProps> = ({
           />
         )}
         
-        {/* Emoji */}
-        <span className="relative z-10 select-none">{emoji}</span>
+        {/* Avatar Image or Emoji */}
+        {image ? (
+          <img src={image} alt="" className="relative z-10 w-full h-full object-contain rounded-full" loading="lazy" />
+        ) : emoji ? (
+          <span className="relative z-10 select-none">{emoji}</span>
+        ) : null}
         
         {/* Crown for special users */}
         {showCrown && (

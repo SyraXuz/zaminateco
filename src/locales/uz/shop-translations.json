@@ -123,5 +123,13 @@
   "bottomSection": {
     "title": "Do'kon",
     "description": "Har bir xarid chiqindilarni foydali mahsulotlarga aylantirishga yordam beradi va O'zbekistondagi ekologik loyihalarni qo'llab-quvvatlaydi."
+  },
+  "partnerDescriptions": {
+    "taxiRides": "Toshkent bo'ylab qulay va iqtisodiy variantlar bilan taksi sayohatlari",
+    "coffeeShop": "Shahar markazida qahva, choy, nonushta va yengil taomlar",
+    "restaurant": "An'anaviy osh, shashlik, lag'mon va o'zbek oshxonasi",
+    "grocery": "Onlayn oziq-ovqat yetkazib berish: non, go'sht, sabzavotlar, uy-ro'zg'or buyumlari",
+    "groceryStore": "Yangi mevalar, sabzavotlar, sut mahsulotlari va tozalash vositalari",
+    "airline": "Toshkent aeroportidan ichki va xalqaro reyslar"
   }
 }

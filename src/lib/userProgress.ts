@@ -332,43 +332,144 @@ export const PROFILE_FRAMES = {
   }
 };
 
-// Profile Backgrounds
-export const PROFILE_BACKGROUNDS = {
+// Profile Backgrounds with Iridescent Gradients
+export interface ThemeBackground {
+  name: string;
+  description: string;
+  unlocked: boolean;
+  style: string;
+  gradient: string; // CSS gradient string for more complex gradients
+  animation?: 'none' | 'shimmer' | 'pulse' | 'flow' | 'aurora';
+  category: 'nature' | 'energy' | 'cosmic' | 'ocean' | 'sunset' | 'neon' | 'pastel';
+}
+
+export const PROFILE_BACKGROUNDS: Record<string, ThemeBackground> = {
   default: {
     name: 'Default Gradient',
     description: 'Standard background',
     unlocked: true,
-    style: 'from-green-600 via-green-500 to-blue-600'
+    style: 'from-green-600 via-green-500 to-blue-600',
+    gradient: 'linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #2563eb 100%)',
+    animation: 'none',
+    category: 'nature'
   },
   forest_gradient: {
     name: 'Forest Harmony',
     description: 'For nature lovers',
     unlocked: true,
-    style: 'from-green-800 via-emerald-600 to-teal-500'
+    style: 'from-green-800 via-emerald-600 to-teal-500',
+    gradient: 'linear-gradient(135deg, #166534 0%, #059669 50%, #14b8a6 100%)',
+    animation: 'pulse',
+    category: 'nature'
   },
   solar_energy: {
     name: 'Solar Power',
     description: 'For renewable energy advocates',
     unlocked: false,
-    style: 'from-yellow-500 via-orange-500 to-red-500'
+    style: 'from-yellow-500 via-orange-500 to-red-500',
+    gradient: 'linear-gradient(135deg, #eab308 0%, #f97316 50%, #ef4444 100%)',
+    animation: 'shimmer',
+    category: 'energy'
   },
   cosmic_nature: {
     name: 'Cosmic Nature',
     description: 'Legendary background for eco stars',
     unlocked: false,
-    style: 'from-purple-900 via-blue-800 to-green-600'
+    style: 'from-purple-900 via-blue-800 to-green-600',
+    gradient: 'linear-gradient(135deg, #581c87 0%, #1e40af 50%, #16a34a 100%)',
+    animation: 'aurora',
+    category: 'cosmic'
   },
   biodiversity_garden: {
     name: 'Biodiversity Garden',
     description: 'For biodiversity guardians',
     unlocked: false,
-    style: 'from-pink-500 via-purple-500 to-indigo-600'
+    style: 'from-pink-500 via-purple-500 to-indigo-600',
+    gradient: 'linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #4f46e5 100%)',
+    animation: 'flow',
+    category: 'pastel'
   },
   future_tech: {
     name: 'Future Technology',
     description: 'For innovation masters',
     unlocked: false,
-    style: 'from-cyan-400 via-blue-500 to-purple-600'
+    style: 'from-cyan-400 via-blue-500 to-purple-600',
+    gradient: 'linear-gradient(135deg, #22d3ee 0%, #3b82f6 50%, #9333ea 100%)',
+    animation: 'shimmer',
+    category: 'neon'
+  },
+  // New Iridescent Themes
+  iridescent_emerald: {
+    name: 'Iridescent Emerald',
+    description: 'Shimmering green with iridescent shine',
+    unlocked: true,
+    style: 'from-emerald-400 via-teal-500 to-cyan-600',
+    gradient: 'linear-gradient(135deg, #34d399 0%, #14b8a6 50%, #0891b2 100%)',
+    animation: 'shimmer',
+    category: 'nature'
+  },
+  aurora_borealis: {
+    name: 'Aurora Borealis',
+    description: 'Northern lights inspired gradient',
+    unlocked: true,
+    style: 'from-green-400 via-blue-500 to-purple-600',
+    gradient: 'linear-gradient(135deg, #4ade80 0%, #3b82f6 50%, #9333ea 100%)',
+    animation: 'aurora',
+    category: 'cosmic'
+  },
+  ocean_depths: {
+    name: 'Ocean Depths',
+    description: 'Deep blue with teal highlights',
+    unlocked: true,
+    style: 'from-blue-700 via-cyan-600 to-teal-500',
+    gradient: 'linear-gradient(135deg, #1d4ed8 0%, #0891b2 50%, #14b8a6 100%)',
+    animation: 'flow',
+    category: 'ocean'
+  },
+  sunset_blaze: {
+    name: 'Sunset Blaze',
+    description: 'Warm sunset colors',
+    unlocked: true,
+    style: 'from-orange-400 via-pink-500 to-purple-600',
+    gradient: 'linear-gradient(135deg, #fb923c 0%, #ec4899 50%, #9333ea 100%)',
+    animation: 'pulse',
+    category: 'sunset'
+  },
+  neon_eco: {
+    name: 'Neon Eco',
+    description: 'Vibrant neon green and cyan',
+    unlocked: false,
+    style: 'from-green-400 via-cyan-400 to-blue-500',
+    gradient: 'linear-gradient(135deg, #4ade80 0%, #22d3ee 50%, #3b82f6 100%)',
+    animation: 'shimmer',
+    category: 'neon'
+  },
+  pastel_dream: {
+    name: 'Pastel Dream',
+    description: 'Soft pastel colors',
+    unlocked: true,
+    style: 'from-pink-300 via-purple-300 to-indigo-400',
+    gradient: 'linear-gradient(135deg, #f9a8d4 0%, #c4b5fd 50%, #818cf8 100%)',
+    animation: 'pulse',
+    category: 'pastel'
+  },
+  prismatic_flow: {
+    name: 'Prismatic Flow',
+    description: 'Rainbow iridescent gradient',
+    unlocked: false,
+    style: 'from-red-400 via-yellow-400 via-green-400 to-blue-500',
+    gradient: 'linear-gradient(135deg, #f87171 0%, #fbbf24 25%, #4ade80 50%, #3b82f6 75%, #8b5cf6 100%)',
+    animation: 'flow',
+    category: 'neon'
+  },
+  moonlight_forest: {
+    name: 'Moonlight Forest',
+    description: 'Mystical dark green with blue',
+    unlocked: true,
+    style: 'from-slate-800 via-green-700 to-blue-800',
+    gradient: 'linear-gradient(135deg, #1e293b 0%, #15803d 50%, #1e40af 100%)',
+    animation: 'aurora',
+    category: 'nature'
   }
 };
 
@@ -491,6 +592,8 @@ export const calculateLevelProgress = (points: number, level: number) => {
 // Save/Load functions (localStorage for now, can be replaced with API calls)
 export const saveUserProgress = (progress: UserProgress): void => {
   localStorage.setItem('aziza_progress', JSON.stringify(progress));
+  // Dispatch custom event to notify other components of the update
+  window.dispatchEvent(new Event('userProgressUpdated'));
 };
 
 export const loadUserProgress = (): UserProgress => {

@@ -6,9 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ShoppingBag, Car, Coffee, Utensils, Package, Plane, ExternalLink, Coins } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
+import '../styles/mobile-responsive.css';
 
 const Partners = () => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
 
   const partners = [
     {
@@ -20,7 +24,7 @@ const Partners = () => {
       discount: '15',
       coinsRequired: 30,
       description: t('carrefourDesc'),
-      details: "Fresh fruits, vegetables, dairy products and cleaning supplies"
+      details: t('partnerDescriptions.groceryStore', { ns: 'shop' })
     },
     {
       id: 2,
@@ -31,7 +35,7 @@ const Partners = () => {
       discount: '10',
       coinsRequired: 25,
       description: t('yandexTaxiDesc'),
-      details: "Taxi rides across Tashkent with comfort and economy options"
+      details: t('partnerDescriptions.taxiRides', { ns: 'shop' })
     },
     {
       id: 3,
@@ -42,7 +46,7 @@ const Partners = () => {
       discount: '25',
       coinsRequired: 15,
       description: t('coffeeBeanDesc'),
-      details: "Coffee, tea, pastries and light meals in city center"
+      details: t('partnerDescriptions.coffeeShop', { ns: 'shop' })
     },
     {
       id: 4,
@@ -53,7 +57,7 @@ const Partners = () => {
       discount: '25',
       coinsRequired: 40,
       description: t('samarkandDesc'),
-      details: "Traditional plov, shashlik, lagman and Uzbek cuisine"
+      details: t('partnerDescriptions.restaurant', { ns: 'shop' })
     },
     {
       id: 5,
@@ -64,7 +68,7 @@ const Partners = () => {
       discount: '12',
       coinsRequired: 20,
       description: t('korzinkaDesc'),
-      details: "Online grocery delivery: bread, meat, vegetables, household items"
+      details: t('partnerDescriptions.grocery', { ns: 'shop' })
     },
     {
       id: 6,
@@ -75,94 +79,131 @@ const Partners = () => {
       discount: '5',
       coinsRequired: 100,
       description: t('uzbekistanAirwaysDesc'),
-      details: "Domestic and international flights from Tashkent airport"
+      details: t('partnerDescriptions.airline', { ns: 'shop' })
     }
   ];
 
   return (
     <Layout title={t('ourPartners')}>
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
+      <div className={cn("min-h-screen bg-gradient-to-br from-green-50 to-blue-50", isMobile ? "p-2" : "p-4")}>
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <div className={cn("text-center", isMobile ? "mb-6" : "mb-12")}>
+            <h1 className={cn(
+              "font-bold text-gray-900",
+              isMobile ? "text-xl mb-2" : "text-4xl mb-4"
+            )}>
               {t('ourPartners')}
             </h1>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <p className={cn(
+              "text-gray-600 max-w-3xl mx-auto",
+              isMobile ? "text-xs px-2" : "text-lg"
+            )}>
               {t('partnersDescription')}
             </p>
             
             {/* Stats */}
-            <div className="flex justify-center gap-8 mt-8">
+            <div className={cn(
+              "flex justify-center",
+              isMobile ? "gap-3 mt-4" : "gap-8 mt-8"
+            )}>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">6</div>
-                <div className="text-sm text-gray-500">{t('activePartners')}</div>
+                <div className={cn("font-bold text-green-600", isMobile ? "text-base" : "text-2xl")}>6</div>
+                <div className={cn("text-gray-500", isMobile ? "text-[10px]" : "text-sm")}>{t('activePartners')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">25%</div>
-                <div className="text-sm text-gray-500">{t('maxDiscount')}</div>
+                <div className={cn("font-bold text-blue-600", isMobile ? "text-base" : "text-2xl")}>25%</div>
+                <div className={cn("text-gray-500", isMobile ? "text-[10px]" : "text-sm")}>{t('maxDiscount')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">15</div>
-                <div className="text-sm text-gray-500">{t('minCoinsRequired')}</div>
+                <div className={cn("font-bold text-purple-600", isMobile ? "text-base" : "text-2xl")}>15</div>
+                <div className={cn("text-gray-500", isMobile ? "text-[10px]" : "text-sm")}>{t('minCoinsRequired')}</div>
               </div>
             </div>
           </div>
 
           {/* Partners Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <div className={cn(
+            "grid grid-cols-1",
+            isMobile ? "gap-3 mb-6" : "md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"
+          )}>
             {partners.map((partner) => {
               const IconComponent = partner.icon;
               return (
-                <Card key={partner.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
+                <Card key={partner.id} className={cn(
+                  "transition-shadow",
+                  isMobile ? "" : "hover:shadow-lg"
+                )}>
+                  <CardHeader className={cn(isMobile ? "pb-2 p-3" : "pb-3")}>
                     <div className="flex items-center justify-between">
-                      <div className={`p-2 rounded-lg ${partner.color} text-white`}>
-                        <IconComponent className="h-6 w-6" />
+                      <div className={cn(
+                        `rounded-lg ${partner.color} text-white flex items-center justify-center`,
+                        isMobile ? "p-1.5" : "p-2"
+                      )}>
+                        <IconComponent className={cn(isMobile ? "h-4 w-4" : "h-6 w-6")} />
                       </div>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className={cn(isMobile ? "text-[10px] px-1.5 py-0.5" : "text-xs")}>
                         {partner.category}
                       </Badge>
                     </div>
-                    <CardTitle className="text-lg">{partner.name}</CardTitle>
-                    <CardDescription className="text-sm">
+                    <CardTitle className={cn(isMobile ? "text-sm mb-1" : "text-lg")}>{partner.name}</CardTitle>
+                    <CardDescription className={cn(isMobile ? "text-xs" : "text-sm")}>
                       {partner.description}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <p className="text-sm text-gray-600">{partner.details}</p>
-                      
-                      <div className="flex items-center justify-between">
-                        <Badge className={`${partner.color} text-white hover:${partner.color}/80`}>
-                          {partner.discount}% {t('off')}
-                        </Badge>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Coins className="h-4 w-4 mr-1" />
-                          {partner.coinsRequired} {t('required')}
-                        </div>
+                  <CardContent className={cn(isMobile ? "p-3 space-y-2" : "space-y-3")}>
+                    <p className={cn(isMobile ? "text-[10px] text-gray-600" : "text-sm text-gray-600")}>{partner.details}</p>
+                    
+                    <div className={cn(
+                      "flex items-center justify-between",
+                      isMobile ? "mb-2" : ""
+                    )}>
+                      <Badge className={cn(
+                        `${partner.color} text-white`,
+                        isMobile ? "text-[10px] px-1.5 py-0.5" : ""
+                      )}>
+                        {partner.discount}% {t('off')}
+                      </Badge>
+                      <div className={cn(
+                        "flex items-center text-gray-500",
+                        isMobile ? "text-[10px]" : "text-sm"
+                      )}>
+                        <Coins className={cn(isMobile ? "h-3 w-3 mr-0.5" : "h-4 w-4 mr-1")} />
+                        {partner.coinsRequired} {t('required')}
                       </div>
-                      
-                      <Button 
-                        className="w-full" 
-                        variant={partner.coinsRequired <= 50 ? "default" : "outline"}
-                      >
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        {t('viewOffer')}
-                      </Button>
                     </div>
+                    
+                    <Button 
+                      className={cn(
+                        "w-full",
+                        isMobile ? "h-9 text-xs py-2" : ""
+                      )}
+                      variant="default"
+                      style={{ touchAction: 'manipulation' }}
+                    >
+                      <ExternalLink className={cn(isMobile ? "h-3 w-3 mr-1.5" : "h-4 w-4 mr-2")} />
+                      {t('viewOffer')}
+                    </Button>
                   </CardContent>
                 </Card>
               );
             })}
           </div>
 
-          <Separator className="my-12" />
+          <Separator className={cn(isMobile ? "my-6" : "my-12")} />
 
           {/* How to Use Section */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-center mb-8">{t('howToUseOffers')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className={cn(isMobile ? "mb-6" : "mb-12")}>
+            <h2 className={cn(
+              "font-bold text-center",
+              isMobile ? "text-base mb-4" : "text-2xl mb-8"
+            )}>
+              {t('howToUseOffers')}
+            </h2>
+            <div className={cn(
+              "grid grid-cols-2",
+              isMobile ? "gap-3" : "md:grid-cols-2 lg:grid-cols-4 gap-6"
+            )}>
               {[
                 {
                   step: "1",
@@ -186,23 +227,45 @@ const Partners = () => {
                 }
               ].map((item) => (
                 <div key={item.step} className="text-center">
-                  <div className={`w-12 h-12 rounded-full ${item.color} flex items-center justify-center font-bold text-lg mx-auto mb-3`}>
+                  <div className={cn(
+                    `rounded-full ${item.color} flex items-center justify-center font-bold mx-auto mb-2`,
+                    isMobile ? "w-10 h-10 text-sm" : "w-12 h-12 text-lg mb-3"
+                  )}>
                     {item.step}
                   </div>
-                  <p className="text-sm text-gray-600">{item.title}</p>
+                  <p className={cn(isMobile ? "text-[10px] text-gray-600" : "text-sm text-gray-600")}>{item.title}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Call to Action */}
-          <div className="bg-gradient-to-r from-green-500 to-blue-600 rounded-lg p-8 text-center text-white mb-20">
-            <h3 className="text-2xl font-bold mb-4">{t('startEarningToday')}</h3>
-            <p className="mb-6 opacity-90">
+          <div className={cn(
+            "bg-gradient-to-r from-green-500 to-blue-600 rounded-lg text-center text-white",
+            isMobile ? "p-4 mb-16" : "p-8 mb-20"
+          )}>
+            <h3 className={cn(
+              "font-bold",
+              isMobile ? "text-base mb-2" : "text-2xl mb-4"
+            )}>
+              {t('startEarningToday')}
+            </h3>
+            <p className={cn(
+              "opacity-90",
+              isMobile ? "text-xs mb-3" : "mb-6"
+            )}>
               {t('startEarningDescription')}
             </p>
-            <Button size="lg" variant="secondary" className="bg-white text-green-600 hover:bg-gray-100">
-              <Coins className="h-5 w-5 mr-2" />
+            <Button 
+              size={isMobile ? "default" : "lg"} 
+              variant="secondary" 
+              className={cn(
+                "bg-white text-green-600 hover:bg-gray-100",
+                isMobile ? "h-9 text-xs py-2 px-4" : ""
+              )}
+              style={{ touchAction: 'manipulation' }}
+            >
+              <Coins className={cn(isMobile ? "h-3 w-3 mr-1.5" : "h-5 w-5 mr-2")} />
               {t('startCollecting')}
             </Button>
           </div>

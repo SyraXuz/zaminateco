@@ -14,20 +14,89 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { currentUser, globalStats, goals2026 } from '@/lib/mockData';
 import { getNewsItems } from '@/lib/newsData';
 import { USER_DATA, calculateLevel, calculateLevelProgress } from '@/lib/userData';
-import { TreeIcon, RecyclingIcon, UzbekPattern } from '@/components/EcoIcons';
+import { UzbekPattern } from '@/components/EcoIcons';
 import { useTranslation } from 'react-i18next';
+import { loadUserProgress, PROFILE_BACKGROUNDS, UserProgress } from '@/lib/userProgress';
+import { getAvatarImage } from '@/lib/avatarImages';
+import { EnhancedAvatar } from '@/components/ui/enhanced-avatar';
+import { useEffect, useMemo, lazy, Suspense } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { SplineRobot } from '@/components/SplineRobot';
 import '../styles/mobile-responsive.css';
 
 export default function Index() {
   const { t } = useTranslation();
   const [coinsVisible, setCoinsVisible] = useState(true);
+  const [userProgress, setUserProgress] = useState<UserProgress>(() => loadUserProgress());
+  const isMobile = useIsMobile();
 
-  // FIXED: Use centralized data for consistency
-  const currentLevel = calculateLevel(USER_DATA.ecoPoints);
-  const { progress: levelProgress, pointsToNext } = calculateLevelProgress(USER_DATA.ecoPoints);
+  // Listen for storage changes to update when profile changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const savedProgress = loadUserProgress();
+      setUserProgress(savedProgress);
+    };
+
+    // Listen for storage events (when localStorage changes in other tabs/windows)
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Listen for custom event (when localStorage changes in same tab)
+    window.addEventListener('userProgressUpdated', handleStorageChange);
+    
+    // Also check on focus (when user comes back to this tab)
+    const handleFocus = () => {
+      handleStorageChange();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    // Initial load
+    handleStorageChange();
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userProgressUpdated', handleStorageChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  // Use userProgress data if available, otherwise fall back to USER_DATA - Memoized for performance
+  const displayData = useMemo(() => {
+    const ecoCoins = userProgress?.ecoCoins ?? USER_DATA.ecoCoins;
+    const ecoPoints = userProgress?.ecoPoints ?? USER_DATA.ecoPoints;
+    const name = userProgress?.name ?? USER_DATA.name;
+    const avatar = userProgress?.activeAvatar ?? USER_DATA.avatar;
+    const background = userProgress?.profileBackground 
+      ? (PROFILE_BACKGROUNDS[userProgress.profileBackground]?.gradient || 'linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #2563eb 100%)')
+      : 'linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #2563eb 100%)';
+    
+    const level = calculateLevel(ecoPoints);
+    const { progress, pointsToNext } = calculateLevelProgress(ecoPoints);
+    
+    return {
+      ecoCoins,
+      ecoPoints,
+      name,
+      avatar,
+      background,
+      level,
+      levelProgress: progress,
+      pointsToNext
+    };
+  }, [userProgress]);
+
+  const { 
+    ecoCoins: displayEcoCoins, 
+    ecoPoints: displayEcoPoints, 
+    name: displayName, 
+    avatar: displayAvatar, 
+    background: displayBackground,
+    level: currentLevel,
+    levelProgress,
+    pointsToNext
+  } = displayData;
   
-  // Get translated news items
-  const newsItems = getNewsItems(t);
+  // Get translated news items - Memoized to prevent unnecessary recalculations
+  const newsItems = useMemo(() => getNewsItems(t), [t]);
 
   const scrollToAbout = () => {
     const aboutSection = document.getElementById('about-section');
@@ -76,179 +145,266 @@ export default function Index() {
             </div>
           </header>
 
-          {/* Hero Content Layout - Creative Integration of Bot and Text */}
-          <div className="relative z-10 px-3 sm:px-4 py-6 sm:py-8 min-h-[500px] sm:min-h-[600px] lg:min-h-[700px]">
-            {/* Spline 3D Bot - Full Overlay Background */}
-            <div 
-              className="absolute inset-0 w-full h-full flex items-center justify-center spline-iframe-container" 
-              style={{ 
-                pointerEvents: 'auto',
-                background: 'transparent',
-                zIndex: 1
-              }}
-            >
-              {/* Spline iframe with complete transparency overlay */}
-              <iframe 
-                src='https://my.spline.design/r4xbot-2nktQYWyjsecuJLGCyScQOuM/' 
-                frameBorder='0' 
-                width='100%' 
-                height='100%'
-                className="absolute inset-0 w-full h-full"
-                style={{ 
-                  pointerEvents: 'auto',
-                  border: 'none',
-                  display: 'block',
-                  background: 'transparent',
-                  backgroundColor: 'transparent',
-                  mixBlendMode: 'normal',
-                  opacity: 1
-                }}
-                title="Spline 3D Interactive Robot"
-                loading="eager"
-                allow="autoplay; fullscreen; accelerometer; gyroscope"
-                allowFullScreen
-              />
-              
-              {/* Creative "roots of change" overlay to fully cover Spline badge - Bottom Right */}
-              <div 
-                className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-50" 
-                style={{ pointerEvents: 'auto' }}
-                onClick={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                onMouseUp={(e) => e.stopPropagation()}
-              >
+          {/* Hero Content Layout - Mobile Optimized */}
+          {isMobile ? (
+            /* Mobile Layout: Robot takes most space, Spline text visible, consistent cards below */
+            <div className="relative z-10">
+              {/* Robot Section - Properly Sized to Show Full Spline Scene Text */}
+              <div className="relative w-full mb-4 rounded-xl overflow-hidden bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center" style={{ height: '44.55vh', minHeight: '324px', maxHeight: '389px', width: '100%' }}>
+                <SplineRobot />
+              </div>
+
+              {/* Text Content - Combined Interactive Section */}
+              <div className="px-3 sm:px-4">
+                {/* Combined Interactive Card with Enhanced Design */}
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.8, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: 0.6, type: "spring", stiffness: 200 }}
-                  className="relative"
-                  style={{ pointerEvents: 'none' }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
+                  className="relative overflow-hidden rounded-2xl shadow-2xl p-4 sm:p-5"
+                  style={{ 
+                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(59, 130, 246, 0.3) 50%, rgba(147, 51, 234, 0.2) 100%)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    border: '2px solid rgba(34, 197, 94, 0.4)',
+                    boxShadow: '0 8px 32px rgba(34, 197, 94, 0.2)',
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  {/* Gradient background with decorative elements - Solid background to block clicks */}
-                  <div 
-                    className="relative overflow-hidden rounded-xl shadow-2xl" 
+                  {/* Animated leaf pattern - Top Left */}
+                  <motion.div
+                    animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.1, 1] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-3 left-3 opacity-30"
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    <Leaf className="w-6 h-6 text-green-500" />
+                  </motion.div>
+                  
+                  {/* Animated leaf pattern - Bottom Right */}
+                  <motion.div
+                    animate={{ rotate: [0, -6, 6, 0], scale: [1, 0.9, 1] }}
+                    transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
+                    className="absolute bottom-3 right-3 opacity-25"
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    <Leaf className="w-5 h-5 text-green-500" />
+                  </motion.div>
+                  
+                  {/* Decorative dots */}
+                  <motion.div
+                    animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.3, 1] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-4 right-6 w-2 h-2 rounded-full bg-green-400"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  
+                  <motion.div
+                    animate={{ opacity: [0.2, 0.5, 0.2], scale: [1, 1.2, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                    className="absolute bottom-4 left-6 w-1.5 h-1.5 rounded-full bg-blue-400"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  
+                  {/* Combined Text Content */}
+                  <div className="relative z-10 space-y-3">
+                    {/* Subtitle */}
+                    <motion.p 
+                      className="text-sm sm:text-base leading-relaxed text-gray-800 font-semibold"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      {t('heroSubtitle')}
+                    </motion.p>
+                    
+                    {/* Divider */}
+                    <div className="h-px bg-gradient-to-r from-transparent via-green-400/50 to-transparent" />
+                    
+                    {/* Description */}
+                    <motion.p 
+                      className="text-xs sm:text-sm leading-relaxed text-gray-700 font-medium"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      {t('heroDescription')}
+                    </motion.p>
+                  </div>
+                  
+                  {/* Enhanced Shine effect */}
+                  <motion.div
+                    animate={{ x: ['-100%', '200%'] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "linear", repeatDelay: 3 }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    style={{ transform: 'skewX(-20deg)', pointerEvents: 'none' }}
+                  />
+                  
+                  {/* Pulsing glow effect */}
+                  <motion.div
+                    animate={{ opacity: [0.1, 0.3, 0.1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute inset-0"
                     style={{ 
-                      minWidth: '160px',
-                      minHeight: '50px',
-                      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(59, 130, 246, 0.25) 100%)',
+                      background: 'radial-gradient(circle at center, rgba(34, 197, 94, 0.2) 0%, transparent 70%)',
+                      pointerEvents: 'none' 
+                    }}
+                  />
+                </motion.div>
+                
+                {/* Compact Action Buttons - Horizontal, Space Efficient */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="flex flex-row gap-2"
+                >
+                  <Button 
+                    onClick={scrollToAbout}
+                    className="flex-1 bg-green-600 text-white hover:bg-green-700 font-semibold text-xs py-2 px-3 shadow-md transition-all h-auto min-h-[40px]"
+                  >
+                    {t('learnAboutProject')}
+                  </Button>
+                  <Link to="/map" className="flex-1">
+                    <Button 
+                      variant="outline"
+                      className="w-full border-2 border-green-600 bg-white/90 backdrop-blur-sm text-green-700 hover:bg-green-50 font-semibold text-xs py-2 px-3 shadow-md transition-all h-auto min-h-[40px]"
+                    >
+                      {t('findCollectionPoints')}
+                    </Button>
+                  </Link>
+                </motion.div>
+              </div>
+            </div>
+          ) : (
+            /* Desktop Layout: Original design */
+            <div className="relative z-10 px-3 sm:px-4 py-6 sm:py-8 min-h-[500px] sm:min-h-[600px] lg:min-h-[700px]">
+              {/* Optimized Spline 3D Bot - Lazy loaded with Intersection Observer */}
+              <SplineRobot />
+
+              {/* Text Content - Overlaid on top with creative positioning */}
+              <div className="relative z-20 flex flex-col justify-center items-center text-center min-h-[500px] sm:min-h-[600px] lg:min-h-[700px]" style={{ pointerEvents: 'none' }}>
+                {/* Spacer for top area - Bot will be visible in center */}
+                <div className="flex-1 min-h-[200px] sm:min-h-[250px] lg:min-h-[300px] w-full" style={{ pointerEvents: 'none' }} />
+                
+                {/* Subtitle - Positioned below bot area with proper spacing */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
+                  className="max-w-3xl mx-auto px-4 mb-4 sm:mb-6"
+                >
+                  <p className="text-base sm:text-xl md:text-2xl opacity-90 leading-relaxed hero-subtitle-mobile text-gray-700 font-medium">
+                    {t('heroSubtitle')}
+                  </p>
+                </motion.div>
+                
+                {/* Description Card - Positioned below subtitle with creative background */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  className="max-w-2xl mx-auto px-4 mb-4 sm:mb-6"
+                  style={{ pointerEvents: 'auto' }}
+                >
+                  <div 
+                    className="relative overflow-hidden rounded-2xl shadow-2xl p-4 sm:p-6"
+                    style={{ 
+                      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%)',
                       backdropFilter: 'blur(12px)',
-                      border: '1px solid rgba(34, 197, 94, 0.3)',
-                      padding: '10px 16px',
-                      pointerEvents: 'auto',
-                      cursor: 'default'
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      return false;
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      return false;
-                    }}
-                    onMouseUp={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      return false;
+                      border: '1px solid rgba(34, 197, 94, 0.2)',
                     }}
                   >
-                    {/* Animated leaf pattern background - White */}
+                    {/* Animated leaf pattern background */}
                     <motion.div
                       animate={{ 
-                        rotate: [0, 5, -5, 0],
-                        scale: [1, 1.05, 1]
+                        rotate: [0, 8, -8, 0],
+                        scale: [1, 1.1, 1],
+                        x: [0, 5, -5, 0]
                       }}
                       transition={{ 
-                        duration: 4,
+                        duration: 5,
                         repeat: Infinity,
                         ease: "easeInOut"
                       }}
-                      className="absolute top-1 left-2 opacity-30"
+                      className="absolute top-2 left-3 opacity-20"
                       style={{ pointerEvents: 'none' }}
                     >
-                      <Leaf className="w-6 h-6 text-white" />
+                      <Leaf className="w-12 h-12 sm:w-16 sm:w-16 text-green-500" />
                     </motion.div>
                     
                     <motion.div
                       animate={{ 
-                        rotate: [0, -5, 5, 0],
-                        scale: [1, 0.95, 1]
+                        rotate: [0, -6, 6, 0],
+                        scale: [1, 0.9, 1],
+                        x: [0, -4, 4, 0]
                       }}
                       transition={{ 
-                        duration: 3.5,
+                        duration: 4.5,
                         repeat: Infinity,
                         ease: "easeInOut",
-                        delay: 0.5
+                        delay: 0.7
                       }}
-                      className="absolute bottom-1 right-2 opacity-25"
+                      className="absolute bottom-3 right-4 opacity-15"
                       style={{ pointerEvents: 'none' }}
                     >
-                      <Leaf className="w-5 h-5 text-white" />
+                      <Leaf className="w-10 h-10 sm:w-14 sm:h-14 text-blue-500" />
                     </motion.div>
                     
-                    {/* Decorative dots - White */}
+                    {/* Additional decorative leaf */}
                     <motion.div
                       animate={{ 
-                        opacity: [0.4, 0.7, 0.4],
-                        scale: [1, 1.2, 1]
+                        rotate: [0, 10, -10, 0],
+                        opacity: [0.1, 0.2, 0.1]
                       }}
                       transition={{ 
-                        duration: 2,
+                        duration: 6,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 1.2
+                      }}
+                      className="absolute top-1/2 left-1/4 opacity-10"
+                      style={{ pointerEvents: 'none', transform: 'translate(-50%, -50%)' }}
+                    >
+                      <Leaf className="w-8 h-8 text-green-400" />
+                    </motion.div>
+                    
+                    {/* Decorative dots */}
+                    <motion.div
+                      animate={{ 
+                        opacity: [0.3, 0.6, 0.3],
+                        scale: [1, 1.3, 1]
+                      }}
+                      transition={{ 
+                        duration: 2.5,
                         repeat: Infinity,
                         ease: "easeInOut"
                       }}
-                      className="absolute top-2 right-3 w-1.5 h-1.5 rounded-full bg-white/70"
+                      className="absolute top-4 right-6 w-2 h-2 rounded-full bg-green-400"
                       style={{ pointerEvents: 'none' }}
                     />
                     
-                    {/* Main slogan text - White color for visibility */}
-                    <div className="relative flex items-center justify-center gap-2" style={{ pointerEvents: 'none' }}>
-                      {/* Small leaf icon - White */}
-                      <motion.div
-                        animate={{ 
-                          rotate: [0, 15, -15, 0],
-                        }}
-                        transition={{ 
-                          duration: 3,
-                          repeat: Infinity,
-                          ease: "easeInOut"
-                        }}
-                        style={{ pointerEvents: 'none' }}
-                      >
-                        <Leaf className="w-3 h-3 text-white" />
-                      </motion.div>
-                      
-                      {/* White text */}
-                      <p 
-                        className="text-xs sm:text-sm font-bold whitespace-nowrap text-white"
-                        style={{ 
-                          fontSize: '12px',
-                          lineHeight: '1.3',
-                          letterSpacing: '1px',
-                          textTransform: 'uppercase',
-                          textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
-                          pointerEvents: 'none'
-                        }}
-                      >
-                        roots of change
+                    <motion.div
+                      animate={{ 
+                        opacity: [0.2, 0.5, 0.2],
+                        scale: [1, 1.2, 1]
+                      }}
+                      transition={{ 
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 1
+                      }}
+                      className="absolute bottom-4 left-6 w-1.5 h-1.5 rounded-full bg-blue-400"
+                      style={{ pointerEvents: 'none' }}
+                    />
+                    
+                    {/* Main description text */}
+                    <div className="relative z-10">
+                      <p className="text-sm sm:text-base md:text-lg leading-relaxed hero-description-mobile text-gray-800 font-medium">
+                        {t('heroDescription')}
                       </p>
-                      
-                      {/* Small decorative element - White */}
-                      <motion.div
-                        animate={{ 
-                          scale: [1, 1.3, 1],
-                          opacity: [0.6, 1, 0.6]
-                        }}
-                        transition={{ 
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                          delay: 0.3
-                        }}
-                        className="w-1 h-1 rounded-full bg-white"
-                        style={{ pointerEvents: 'none' }}
-                      />
                     </div>
                     
                     {/* Shine effect overlay */}
@@ -257,189 +413,47 @@ export default function Index() {
                         x: ['-100%', '200%']
                       }}
                       transition={{ 
-                        duration: 3,
+                        duration: 4,
                         repeat: Infinity,
                         ease: "linear",
-                        repeatDelay: 2
+                        repeatDelay: 3
                       }}
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
                       style={{ transform: 'skewX(-20deg)', pointerEvents: 'none' }}
                     />
                   </div>
                 </motion.div>
-              </div>
-            </div>
-
-            {/* Text Content - Overlaid on top with creative positioning */}
-            <div className="relative z-20 flex flex-col justify-center items-center text-center min-h-[500px] sm:min-h-[600px] lg:min-h-[700px]" style={{ pointerEvents: 'none' }}>
-              {/* Spacer for top area - Bot will be visible in center */}
-              <div className="flex-1 min-h-[200px] sm:min-h-[250px] lg:min-h-[300px] w-full" style={{ pointerEvents: 'none' }} />
-              
-              {/* Subtitle - Positioned below bot area with proper spacing */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="max-w-3xl mx-auto px-4 mb-4 sm:mb-6"
-              >
-                <p className="text-base sm:text-xl md:text-2xl opacity-90 leading-relaxed hero-subtitle-mobile text-gray-700 font-medium">
-                  {t('heroSubtitle')}
-                </p>
-              </motion.div>
-              
-              {/* Description Card - Positioned below subtitle with creative background */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="max-w-2xl mx-auto px-4 mb-4 sm:mb-6"
-                style={{ pointerEvents: 'auto' }}
-              >
-                <div 
-                  className="relative overflow-hidden rounded-2xl shadow-2xl p-4 sm:p-6"
-                  style={{ 
-                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(34, 197, 94, 0.2)',
-                  }}
-                >
-                  {/* Animated leaf pattern background */}
-                  <motion.div
-                    animate={{ 
-                      rotate: [0, 8, -8, 0],
-                      scale: [1, 1.1, 1],
-                      x: [0, 5, -5, 0]
-                    }}
-                    transition={{ 
-                      duration: 5,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                    className="absolute top-2 left-3 opacity-20"
-                    style={{ pointerEvents: 'none' }}
-                  >
-                    <Leaf className="w-12 h-12 sm:w-16 sm:h-16 text-green-500" />
-                  </motion.div>
-                  
-                  <motion.div
-                    animate={{ 
-                      rotate: [0, -6, 6, 0],
-                      scale: [1, 0.9, 1],
-                      x: [0, -4, 4, 0]
-                    }}
-                    transition={{ 
-                      duration: 4.5,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: 0.7
-                    }}
-                    className="absolute bottom-3 right-4 opacity-15"
-                    style={{ pointerEvents: 'none' }}
-                  >
-                    <Leaf className="w-10 h-10 sm:w-14 sm:h-14 text-blue-500" />
-                  </motion.div>
-                  
-                  {/* Additional decorative leaf */}
-                  <motion.div
-                    animate={{ 
-                      rotate: [0, 10, -10, 0],
-                      opacity: [0.1, 0.2, 0.1]
-                    }}
-                    transition={{ 
-                      duration: 6,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: 1.2
-                    }}
-                    className="absolute top-1/2 left-1/4 opacity-10"
-                    style={{ pointerEvents: 'none', transform: 'translate(-50%, -50%)' }}
-                  >
-                    <Leaf className="w-8 h-8 text-green-400" />
-                  </motion.div>
-                  
-                  {/* Decorative dots */}
-                  <motion.div
-                    animate={{ 
-                      opacity: [0.3, 0.6, 0.3],
-                      scale: [1, 1.3, 1]
-                    }}
-                    transition={{ 
-                      duration: 2.5,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                    className="absolute top-4 right-6 w-2 h-2 rounded-full bg-green-400"
-                    style={{ pointerEvents: 'none' }}
-                  />
-                  
-                  <motion.div
-                    animate={{ 
-                      opacity: [0.2, 0.5, 0.2],
-                      scale: [1, 1.2, 1]
-                    }}
-                    transition={{ 
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: 1
-                    }}
-                    className="absolute bottom-4 left-6 w-1.5 h-1.5 rounded-full bg-blue-400"
-                    style={{ pointerEvents: 'none' }}
-                  />
-                  
-                  {/* Main description text */}
-                  <div className="relative z-10">
-                    <p className="text-sm sm:text-base md:text-lg leading-relaxed hero-description-mobile text-gray-800 font-medium">
-                      {t('heroDescription')}
-                    </p>
-                  </div>
-                  
-                  {/* Shine effect overlay */}
-                  <motion.div
-                    animate={{ 
-                      x: ['-100%', '200%']
-                    }}
-                    transition={{ 
-                      duration: 4,
-                      repeat: Infinity,
-                      ease: "linear",
-                      repeatDelay: 3
-                    }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
-                    style={{ transform: 'skewX(-20deg)', pointerEvents: 'none' }}
-                  />
-                </div>
-              </motion.div>
-              
-              {/* Action Buttons - Creative positioning */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md mx-auto px-4"
-                style={{ pointerEvents: 'auto' }}
-              >
-                <Button 
-                  onClick={scrollToAbout}
-                  size="lg"
-                  className="bg-green-600 text-white hover:bg-green-700 font-semibold text-sm sm:text-base py-3 sm:py-4 px-6 sm:px-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                
+                {/* Action Buttons - Creative positioning */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4 }}
+                  className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md mx-auto px-4"
                   style={{ pointerEvents: 'auto' }}
                 >
-                  {t('learnAboutProject')}
-                </Button>
-                <Link to="/map" style={{ pointerEvents: 'auto' }}>
                   <Button 
+                    onClick={scrollToAbout}
                     size="lg"
-                    variant="outline"
-                    className="border-2 border-green-600 bg-white/90 backdrop-blur-sm text-green-700 hover:bg-green-50 w-full sm:w-auto font-semibold text-sm sm:text-base py-3 sm:py-4 px-6 sm:px-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                    className="bg-green-600 text-white hover:bg-green-700 font-semibold text-sm sm:text-base py-3 sm:py-4 px-6 sm:px-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                     style={{ pointerEvents: 'auto' }}
                   >
-                    {t('findCollectionPoints')}
+                    {t('learnAboutProject')}
                   </Button>
-                </Link>
-              </motion.div>
+                  <Link to="/map" style={{ pointerEvents: 'auto' }}>
+                    <Button 
+                      size="lg"
+                      variant="outline"
+                      className="border-2 border-green-600 bg-white/90 backdrop-blur-sm text-green-700 hover:bg-green-50 w-full sm:w-auto font-semibold text-sm sm:text-base py-3 sm:py-4 px-6 sm:px-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                      style={{ pointerEvents: 'auto' }}
+                    >
+                      {t('findCollectionPoints')}
+                    </Button>
+                  </Link>
+                </motion.div>
+              </div>
             </div>
-          </div>
+          )}
           
           <UzbekPattern className="w-full h-1 sm:h-2 text-gray-300 opacity-50 relative z-10" />
         </section>
@@ -448,7 +462,10 @@ export default function Index() {
         <div className="p-2 sm:p-4 space-y-3 sm:space-y-6 space-y-mobile">
           {/* Welcome Back Section - Mobile Optimized */}
           <motion.section 
-            className="bg-gradient-to-br from-green-600 via-green-500 to-blue-600 text-white overflow-hidden relative shadow-xl rounded-xl"
+            className="text-white overflow-hidden relative shadow-xl rounded-xl"
+            style={{
+              background: displayBackground
+            }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -477,7 +494,7 @@ export default function Index() {
               {/* Welcome Header - Mobile Optimized */}
               <div className="text-center w-full mb-3 sm:mb-4">
                 <h3 className="text-sm sm:text-xl font-semibold welcome-title-mobile">
-                  {t('welcomeBackUser')}, <span className="text-yellow-300">{USER_DATA.name}</span>!
+                  {t('welcomeBackUser')}, <span className="text-yellow-300">{displayName}</span>!
                 </h3>
                 <p className="text-white/80 mt-1 text-center text-xs sm:text-sm welcome-subtitle-mobile">{t('continueImpactMessage')}</p>
               </div>
@@ -485,21 +502,17 @@ export default function Index() {
               <div className="flex items-start justify-between mb-3 sm:mb-4">
                 <div className="flex items-center space-x-2 sm:space-x-4">
                   <div className="relative">
-                    <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-white/20 avatar-mobile">
-                      <AvatarFallback className="text-lg sm:text-2xl bg-white/20 text-white">
-                        {USER_DATA.avatar}
-                      </AvatarFallback>
-                    </Avatar>
-                    <motion.div 
-                      className="absolute -bottom-1 -right-1 bg-yellow-400 text-yellow-900 rounded-full p-0.5 sm:p-1"
-                      animate={{ rotate: [0, 10, -10, 0] }}
-                      transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                    >
-                      <Crown className="h-2 w-2 sm:h-3 sm:w-3" />
-                    </motion.div>
+                    <EnhancedAvatar
+                      emoji={displayAvatar}
+                      image={getAvatarImage(displayAvatar)}
+                      size={isMobile ? "sm" : "md"}
+                      glowColor="green"
+                      showCrown={true}
+                      profileFrame={userProgress?.profileFrame}
+                    />
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-sm sm:text-xl font-bold user-name-mobile">{USER_DATA.name}</h2>
+                    <h2 className="text-sm sm:text-xl font-bold user-name-mobile">{displayName}</h2>
                     <p className="text-white/80 text-xs sm:text-sm user-role-mobile">{t('climateHero')}</p>
                     <div className="flex items-center space-x-2 sm:space-x-3 mt-1 sm:mt-2 text-xs text-white/70 user-info-mobile">
                       <div className="flex items-center">
@@ -554,7 +567,7 @@ export default function Index() {
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
-                    {coinsVisible ? USER_DATA.ecoCoins : '***'}
+                    {coinsVisible ? displayEcoCoins : '***'}
                   </motion.div>
                 </motion.div>
 
@@ -577,7 +590,7 @@ export default function Index() {
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
-                    {USER_DATA.ecoPoints.toLocaleString()}
+                    {displayEcoPoints.toLocaleString()}
                   </motion.div>
                 </motion.div>
               </div>
@@ -602,7 +615,7 @@ export default function Index() {
                     </div>
                   </div>
                   <Badge className="bg-white/20 text-white border-white/30 text-xs level-badge-mobile">
-                    {USER_DATA.ecoPoints.toLocaleString()} pts
+                    {displayEcoPoints.toLocaleString()} pts
                   </Badge>
                 </div>
                 <div className="space-y-1 sm:space-y-2">
@@ -741,7 +754,7 @@ export default function Index() {
               <CardContent className="grid grid-cols-2 gap-2 sm:gap-3 card-content-mobile gap-mobile">
                 <Link to="/map">
                   <Button className="min-h-[3rem] sm:min-h-[5rem] h-auto w-full flex-col bg-green-600 hover:bg-green-700 eco-card-hover p-2 sm:p-3 action-button-mobile">
-                    <span className="text-lg sm:text-2xl mb-1 sm:mb-2 action-emoji-mobile" aria-hidden="true">📍</span>
+                    <img src="/images/location_5174778.png" alt="" className="w-6 h-6 sm:w-8 sm:h-8 mb-1 sm:mb-2 object-contain" aria-hidden="true" loading="lazy" />
                     <span className="text-xs font-medium text-center text-white leading-tight break-words hyphens-auto px-1 action-text-mobile">
                       {t('findCollectionPoints')}
                     </span>
@@ -749,7 +762,7 @@ export default function Index() {
                 </Link>
                 <Link to="/vote">
                   <Button className="min-h-[3rem] sm:min-h-[5rem] h-auto w-full flex-col bg-blue-600 hover:bg-blue-700 eco-card-hover p-2 sm:p-3 action-button-mobile">
-                    <span className="text-lg sm:text-2xl mb-1 sm:mb-2 action-emoji-mobile" aria-hidden="true">🗳️</span>
+                    <img src="/images/vote_15269306.png" alt="" className="w-6 h-6 sm:w-8 sm:h-8 mb-1 sm:mb-2 object-contain" aria-hidden="true" loading="lazy" />
                     <span className="text-xs font-medium text-center text-white leading-tight break-words hyphens-auto px-1 action-text-mobile">
                       {t('voteOnProjects')}
                     </span>
@@ -757,7 +770,7 @@ export default function Index() {
                 </Link>
                 <Link to="/actions">
                   <Button className="min-h-[3rem] sm:min-h-[5rem] h-auto w-full flex-col bg-purple-600 hover:bg-purple-700 eco-card-hover p-2 sm:p-3 action-button-mobile">
-                    <span className="text-lg sm:text-2xl mb-1 sm:mb-2 action-emoji-mobile" aria-hidden="true">📅</span>
+                    <img src="/images/event.png" alt="" className="w-6 h-6 sm:w-8 sm:h-8 mb-1 sm:mb-2 object-contain" aria-hidden="true" loading="lazy" />
                     <span className="text-xs font-medium text-center text-white leading-tight break-words hyphens-auto px-1 action-text-mobile">
                       {t('eventsButton')}
                     </span>
@@ -765,7 +778,7 @@ export default function Index() {
                 </Link>
                 <Link to="/shop">
                   <Button className="min-h-[3rem] sm:min-h-[5rem] h-auto w-full flex-col bg-orange-600 hover:bg-orange-700 eco-card-hover p-2 sm:p-3 action-button-mobile">
-                    <span className="text-lg sm:text-2xl mb-1 sm:mb-2 action-emoji-mobile" aria-hidden="true">🛒</span>
+                    <img src="/images/eco-bag_10158203.png" alt="" className="w-6 h-6 sm:w-8 sm:h-8 mb-1 sm:mb-2 object-contain" aria-hidden="true" loading="lazy" />
                     <span className="text-xs font-medium text-center text-white leading-tight break-words hyphens-auto px-1 action-text-mobile">
                       {t('shopButton')}
                     </span>
@@ -821,92 +834,176 @@ export default function Index() {
                   </Link>
                 </div>
 
-                {/* Navigation Links Section */}
+                {/* Navigation Links Section - Mobile Optimized */}
                 <motion.div 
                   className="mt-8 pt-6 border-t border-gray-200"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
                 >
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 text-center">
                     {t('exploreMore')}
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* Partners Link */}
-                    <motion.div
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Link to="/partners">
-                        <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-green-200 bg-gradient-to-br from-green-50 to-white">
-                          <CardContent className="p-4 text-center">
-                            <div className="text-3xl mb-3">🤝</div>
-                            <h4 className="font-semibold text-green-800 mb-2">{t('ourPartnersLink')}</h4>
-                            <p className="text-xs text-gray-600 mb-3">
-                              {t('discoverExclusiveDiscounts')}
-                            </p>
-                            <Button 
-                              size="sm" 
-                              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
-                            >
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              {t('viewPartners')}
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    </motion.div>
+                  {isMobile ? (
+                    /* Mobile: Single Row Horizontal Scroll - Optimized */
+                    <div className="flex flex-row gap-3 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+                      {/* Partners Link */}
+                      <motion.div
+                        whileTap={{ scale: 0.98 }}
+                        className="flex-shrink-0"
+                        style={{ width: 'calc(100vw - 2rem)', maxWidth: '280px', minWidth: '260px' }}
+                      >
+                        <Link to="/partners">
+                          <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-green-200 bg-gradient-to-br from-green-50 to-white">
+                            <CardContent className="p-3 sm:p-4 text-center flex flex-col h-full min-h-[200px]">
+                              <img src="/images/partners_7967044.png" alt="" className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 object-contain" loading="lazy" />
+                              <h4 className="font-semibold text-green-800 mb-1.5 text-sm sm:text-base">{t('ourPartnersLink')}</h4>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-3 flex-1 leading-relaxed">
+                                {t('discoverExclusiveDiscounts')}
+                              </p>
+                              <Button 
+                                size="sm" 
+                                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-xs sm:text-sm py-2 h-auto"
+                              >
+                                <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5" />
+                                {t('viewPartners')}
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      </motion.div>
 
-                    {/* Team Link */}
-                    <motion.div
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Link to="/team">
-                        <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-blue-200 bg-gradient-to-br from-blue-50 to-white">
-                          <CardContent className="p-4 text-center">
-                            <div className="text-3xl mb-3">👥</div>
-                            <h4 className="font-semibold text-blue-800 mb-2">{t('meetOurTeam')}</h4>
-                            <p className="text-xs text-gray-600 mb-3">
-                              {t('passionatePeopleBehind')}
-                            </p>
-                            <Button 
-                              size="sm" 
-                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                            >
-                              <UserCheck className="h-4 w-4 mr-2" />
-                              {t('meetTeam')}
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    </motion.div>
+                      {/* Team Link */}
+                      <motion.div
+                        whileTap={{ scale: 0.98 }}
+                        className="flex-shrink-0"
+                        style={{ width: 'calc(100vw - 2rem)', maxWidth: '280px', minWidth: '260px' }}
+                      >
+                        <Link to="/team">
+                          <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+                            <CardContent className="p-3 sm:p-4 text-center flex flex-col h-full min-h-[200px]">
+                              <img src="/images/meet-the-team_15916616.png" alt="" className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 object-contain" loading="lazy" />
+                              <h4 className="font-semibold text-blue-800 mb-1.5 text-sm sm:text-base">{t('meetOurTeam')}</h4>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-3 flex-1 leading-relaxed">
+                                {t('passionatePeopleBehind')}
+                              </p>
+                              <Button 
+                                size="sm" 
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm py-2 h-auto"
+                              >
+                                <UserCheck className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5" />
+                                {t('meetTeam')}
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      </motion.div>
 
-                    {/* Contact Link */}
-                    <motion.div
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Link to="/contacts">
-                        <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-purple-200 bg-gradient-to-br from-purple-50 to-white">
-                          <CardContent className="p-4 text-center">
-                            <div className="text-3xl mb-3">📞</div>
-                            <h4 className="font-semibold text-purple-800 mb-2">{t('contactUsButton')}</h4>
-                            <p className="text-xs text-gray-600 mb-3">
-                              {t('getInTouchPartnerships')}
-                            </p>
-                            <Button 
-                              size="sm" 
-                              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold"
-                            >
-                              <Mail className="h-4 w-4 mr-2" />
-                              {t('contactUsButton')}
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    </motion.div>
-                  </div>
+                      {/* Contact Link */}
+                      <motion.div
+                        whileTap={{ scale: 0.98 }}
+                        className="flex-shrink-0"
+                        style={{ width: 'calc(100vw - 2rem)', maxWidth: '280px', minWidth: '260px' }}
+                      >
+                        <Link to="/contacts">
+                          <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-purple-200 bg-gradient-to-br from-purple-50 to-white">
+                            <CardContent className="p-3 sm:p-4 text-center flex flex-col h-full min-h-[200px]">
+                              <img src="/images/contact-us.png" alt="" className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 object-contain" loading="lazy" />
+                              <h4 className="font-semibold text-purple-800 mb-1.5 text-sm sm:text-base">{t('contactUsButton')}</h4>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-3 flex-1 leading-relaxed">
+                                {t('getInTouchPartnerships')}
+                              </p>
+                              <Button 
+                                size="sm" 
+                                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm py-2 h-auto"
+                              >
+                                <Mail className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5" />
+                                {t('contactUsButton')}
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      </motion.div>
+                    </div>
+                  ) : (
+                    /* Desktop: Grid Layout */
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {/* Partners Link */}
+                      <motion.div
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Link to="/partners">
+                          <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-green-200 bg-gradient-to-br from-green-50 to-white">
+                            <CardContent className="p-4 text-center">
+                              <img src="/images/partners_7967044.png" alt="" className="w-12 h-12 mx-auto mb-3 object-contain" loading="lazy" />
+                              <h4 className="font-semibold text-green-800 mb-2">{t('ourPartnersLink')}</h4>
+                              <p className="text-xs text-gray-600 mb-3">
+                                {t('discoverExclusiveDiscounts')}
+                              </p>
+                              <Button 
+                                size="sm" 
+                                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                              >
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                {t('viewPartners')}
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      </motion.div>
+
+                      {/* Team Link */}
+                      <motion.div
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Link to="/team">
+                          <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+                            <CardContent className="p-4 text-center">
+                              <img src="/images/meet-the-team_15916616.png" alt="" className="w-12 h-12 mx-auto mb-3 object-contain" loading="lazy" />
+                              <h4 className="font-semibold text-blue-800 mb-2">{t('meetOurTeam')}</h4>
+                              <p className="text-xs text-gray-600 mb-3">
+                                {t('passionatePeopleBehind')}
+                              </p>
+                              <Button 
+                                size="sm" 
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                              >
+                                <UserCheck className="h-4 w-4 mr-2" />
+                                {t('meetTeam')}
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      </motion.div>
+
+                      {/* Contact Link */}
+                      <motion.div
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Link to="/contacts">
+                          <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-purple-200 bg-gradient-to-br from-purple-50 to-white">
+                            <CardContent className="p-4 text-center">
+                              <img src="/images/contact-us.png" alt="" className="w-12 h-12 mx-auto mb-3 object-contain" loading="lazy" />
+                              <h4 className="font-semibold text-purple-800 mb-2">{t('contactUsButton')}</h4>
+                              <p className="text-xs text-gray-600 mb-3">
+                                {t('getInTouchPartnerships')}
+                              </p>
+                              <Button 
+                                size="sm" 
+                                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+                              >
+                                <Mail className="h-4 w-4 mr-2" />
+                                {t('contactUsButton')}
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      </motion.div>
+                    </div>
+                  )}
                 </motion.div>
               </CardContent>
             </Card>
@@ -1007,7 +1104,7 @@ export default function Index() {
           {/* Bottom Action Buttons - Mobile Optimized */}
           <section className="text-center py-4 sm:py-8 space-y-4 sm:space-y-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl bottom-section-mobile">
             <div className="space-y-3 sm:space-y-4">
-              <RecyclingIcon className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-green-600 icon-lg-mobile" />
+              <img src="/images/compost_13285420.png" alt="" className="h-12 w-12 sm:h-16 sm:w-16 mx-auto object-contain" loading="lazy" />
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 bottom-title-mobile">
                 {t('readyForBiggerImpact')}
               </h2>

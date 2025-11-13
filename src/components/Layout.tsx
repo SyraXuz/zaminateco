@@ -18,7 +18,7 @@ export default function Layout({ children, title }: LayoutProps) {
     { path: '/', icon: Home, label: t('home') },
     { path: '/map', icon: MapPin, label: t('ecoMap') },
     { path: '/vote', icon: Vote, label: t('ecoVote') },
-    { path: '/actions', icon: Calendar, label: t('actions') },
+    { path: '/actions', icon: Calendar, label: t('ecoActions') },
     { path: '/shop', icon: ShoppingBag, label: t('shop') },
     { path: '/stories', icon: BookOpen, label: t('stories') },
     { path: '/profile', icon: User, label: t('profile') }
@@ -41,7 +41,7 @@ export default function Layout({ children, title }: LayoutProps) {
                   />
                   <div>
                     <h1 className="text-lg font-bold text-gray-900">ZAMINAT.eco</h1>
-                    <p className="text-sm text-gray-600">Ecological Movement</p>
+                    <p className="text-sm text-gray-600">{t('tagline')}</p>
                   </div>
                 </Link>
               </div>

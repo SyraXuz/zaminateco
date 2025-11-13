@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -66,6 +66,7 @@ import {
   UserProgress, AZIZA_PROGRESS, PROFILE_FRAMES, PROFILE_BACKGROUNDS,
   loadUserProgress, saveUserProgress, calculateLevelProgress as calcLevelProgress
 } from '@/lib/userProgress';
+import { getAvatarImage } from '@/lib/avatarImages';
 
 // Enhanced animation variants
 const containerVariants = {
@@ -158,6 +159,7 @@ const Profile: React.FC = () => {
   const [coinsVisible, setCoinsVisible] = useState(true);
   const [levelExpanded, setLevelExpanded] = useState(false);
   const [isAvatarSelectorOpen, setIsAvatarSelectorOpen] = useState(false);
+  const touchHandledRef = useRef(false);
 
   // Update user progress when component mounts
   useEffect(() => {
@@ -197,6 +199,7 @@ const Profile: React.FC = () => {
     {
       id: 1,
       emoji: "🌳",
+      image: "/images/plant-a-tree_6675353.png",
       title: t('plantTree'),
       description: t('plantTreeDesc'),
       coins: 50
@@ -204,6 +207,7 @@ const Profile: React.FC = () => {
     {
       id: 2,
       emoji: "🎁",
+      image: "/images/Children's Souvenirs.png",
       title: t('childrenSouvenirs'),
       description: t('childrenSouvenirsDesc'),
       coins: 75
@@ -211,6 +215,7 @@ const Profile: React.FC = () => {
     {
       id: 3,
       emoji: "🏠",
+      image: "/images/Home Decor Set.png",
       title: t('homeDecorSet'),
       description: t('homeDecorSetDesc'),
       coins: 150
@@ -218,6 +223,7 @@ const Profile: React.FC = () => {
     {
       id: 4,
       emoji: "📚",
+      image: "/images/Eco Education Kit.png",
       title: t('ecoEducationKit'),
       description: t('ecoEducationKitDesc'),
       coins: 100
@@ -338,12 +344,12 @@ const Profile: React.FC = () => {
       >
         <Card className="hover:shadow-lg transition-all duration-300 group h-full border-2 hover:border-green-200">
           <CardContent className="p-3 sm:p-4 text-center space-y-3">
-            <motion.span 
-              className="text-2xl sm:text-3xl inline-block group-hover:scale-110 transition-transform duration-300"
+            <motion.div 
+              className="inline-block group-hover:scale-110 transition-transform duration-300"
               whileHover={{ rotate: [0, -10, 10, 0] }}
             >
-              {reward.emoji}
-            </motion.span>
+              <img src={reward.image || reward.emoji} alt={reward.title} className="w-10 h-10 sm:w-12 sm:h-12 object-contain" loading="lazy" />
+            </motion.div>
             <div>
               <h4 className="font-medium text-sm sm:text-base">{reward.title}</h4>
               <p className="text-xs text-gray-600 mt-1 line-clamp-2">{reward.description}</p>
@@ -558,7 +564,7 @@ const Profile: React.FC = () => {
     <div className="grid grid-cols-2 gap-4">
       <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
         <CardContent className="p-4 text-center">
-          <div className="text-2xl mb-1">♻️</div>
+          <img src="/images/ECOBUSSTOP.png" alt="" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
           <div className="text-lg font-bold text-green-600">{userProgress.wasteCollected}kg</div>
           <div className="text-xs text-green-600">{t('wasteCollected')}</div>
         </CardContent>
@@ -566,7 +572,7 @@ const Profile: React.FC = () => {
       
       <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
         <CardContent className="p-4 text-center">
-          <div className="text-2xl mb-1">🌳</div>
+          <img src="/images/plant-a-tree_6675353.png" alt="" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
           <div className="text-lg font-bold text-blue-600">{userProgress.treesPlanted}</div>
           <div className="text-xs text-blue-600">{t('treesPlanted')}</div>
         </CardContent>
@@ -574,7 +580,7 @@ const Profile: React.FC = () => {
       
       <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
         <CardContent className="p-4 text-center">
-          <div className="text-2xl mb-1">🎉</div>
+          <img src="/images/community_16119903.png" alt="" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
           <div className="text-lg font-bold text-purple-600">{userProgress.eventsAttended}</div>
           <div className="text-xs text-purple-600">{t('eventsAttended')}</div>
         </CardContent>
@@ -582,7 +588,7 @@ const Profile: React.FC = () => {
       
       <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
         <CardContent className="p-4 text-center">
-          <div className="text-2xl mb-1">👥</div>
+          <img src="/images/meet-the-team_15916616.png" alt="" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
           <div className="text-lg font-bold text-orange-600">{userProgress.referrals}</div>
           <div className="text-xs text-orange-600">{t('friendsReferred')}</div>
         </CardContent>
@@ -632,9 +638,93 @@ const Profile: React.FC = () => {
           >
             {/* Enhanced Profile Header with Dynamic Background */}
             <motion.div variants={itemVariants}>
-              <Card className={`bg-gradient-to-br ${currentBackground.style} text-white overflow-hidden relative shadow-xl border-0`}>
+              <Card 
+                className="text-white overflow-hidden relative shadow-xl border-0"
+                style={{
+                  background: currentBackground.gradient || `linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #2563eb 100%)`
+                }}
+              >
                 {/* Dynamic Background Elements */}
                 <div className="absolute inset-0 overflow-hidden">
+                  {/* Theme-specific animations */}
+                  {currentBackground.animation === 'shimmer' && (
+                    <motion.div
+                      animate={{
+                        backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                      className="absolute inset-0 opacity-30"
+                      style={{
+                        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                        backgroundSize: '200% 100%'
+                      }}
+                    />
+                  )}
+                  
+                  {currentBackground.animation === 'aurora' && (
+                    <motion.div
+                      animate={{
+                        x: ['-50%', '50%'],
+                        rotate: [0, 360],
+                        scale: [1, 1.2, 1]
+                      }}
+                      transition={{
+                        duration: 8,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      className="absolute inset-0 opacity-20"
+                      style={{
+                        background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, transparent 70%)',
+                        width: '200%',
+                        height: '200%',
+                        left: '-50%',
+                        top: '-50%'
+                      }}
+                    />
+                  )}
+                  
+                  {currentBackground.animation === 'flow' && (
+                    <motion.div
+                      animate={{
+                        backgroundPosition: ['0% 0%', '100% 100%']
+                      }}
+                      transition={{
+                        duration: 5,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        repeatType: "reverse"
+                      }}
+                      className="absolute inset-0 opacity-25"
+                      style={{
+                        background: `linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%)`,
+                        backgroundSize: '200% 200%'
+                      }}
+                    />
+                  )}
+                  
+                  {currentBackground.animation === 'pulse' && (
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.1, 1],
+                        opacity: [0.1, 0.3, 0.1]
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      className="absolute inset-0"
+                      style={{
+                        background: 'radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, transparent 70%)'
+                      }}
+                    />
+                  )}
+
                   {/* Floating particles */}
                   {[...Array(8)].map((_, i) => (
                     <motion.div 
@@ -671,10 +761,27 @@ const Profile: React.FC = () => {
                       <div className="relative group">
                         <div 
                           className="relative z-10 cursor-pointer"
-                          onClick={() => setIsAvatarSelectorOpen(true)}
+                          onClick={(e) => {
+                            if (!touchHandledRef.current) {
+                              setIsAvatarSelectorOpen(true);
+                            }
+                            touchHandledRef.current = false;
+                          }}
+                          onTouchStart={(e) => {
+                            touchHandledRef.current = true;
+                          }}
+                          onTouchEnd={(e) => {
+                            e.stopPropagation();
+                            if (touchHandledRef.current) {
+                              setIsAvatarSelectorOpen(true);
+                              touchHandledRef.current = false;
+                            }
+                          }}
+                          style={{ touchAction: 'manipulation' }}
                         >
                           <EnhancedAvatar
                             emoji={userProgress.activeAvatar}
+                            image={getAvatarImage(userProgress.activeAvatar)}
                             size="xl"
                             glowColor="green"
                             showCrown={true}
@@ -686,7 +793,23 @@ const Profile: React.FC = () => {
                           className="absolute -bottom-2 -right-2 bg-white/20 backdrop-blur-sm rounded-full p-2 
                                    opacity-0 group-hover:opacity-100 transition-all duration-200 
                                    hover:bg-white/30 hover:scale-110"
-                          onClick={() => setIsAvatarSelectorOpen(true)}
+                          onClick={(e) => {
+                            if (!touchHandledRef.current) {
+                              setIsAvatarSelectorOpen(true);
+                            }
+                            touchHandledRef.current = false;
+                          }}
+                          onTouchStart={(e) => {
+                            touchHandledRef.current = true;
+                          }}
+                          onTouchEnd={(e) => {
+                            e.stopPropagation();
+                            if (touchHandledRef.current) {
+                              setIsAvatarSelectorOpen(true);
+                              touchHandledRef.current = false;
+                            }
+                          }}
+                          style={{ touchAction: 'manipulation' }}
                           whileHover={{ scale: 1.2, rotate: 15 }}
                           transition={{ type: "spring", stiffness: 400, damping: 10 }}
                         >
@@ -1351,9 +1474,22 @@ const Profile: React.FC = () => {
       {/* Enhanced Avatar System Modal - FIXED PROPS */}
       <EnhancedAvatarSystem
         isOpen={isAvatarSelectorOpen}
-        onClose={() => setIsAvatarSelectorOpen(false)}
+        onClose={() => {
+          setIsAvatarSelectorOpen(false);
+          // Reload progress after closing to ensure theme is updated
+          const savedProgress = loadUserProgress();
+          setUserProgress(savedProgress);
+        }}
         selectedAvatar={userProgress.activeAvatar}
         onAvatarSelect={handleAvatarSelect}
+        onThemeChange={(themeId) => {
+          // Use functional update to ensure we have the latest state
+          setUserProgress((prevProgress) => {
+            const updated = { ...prevProgress, profileBackground: themeId };
+            saveUserProgress(updated);
+            return updated;
+          });
+        }}
       />
     </Layout>
   );

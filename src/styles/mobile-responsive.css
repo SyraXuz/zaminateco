@@ -14,6 +14,25 @@
     touch-action: manipulation;
   }
   
+  /* Fix double-tap issue on mobile - remove 300ms delay */
+  .cursor-pointer,
+  button,
+  [role="button"],
+  [onclick],
+  [onClick] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Avatar clickable elements - immediate touch response */
+  .relative.group,
+  .cursor-pointer {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
   /* Modal optimizations */
   .modal-mobile {
     margin: 8px;
@@ -281,9 +300,9 @@ select {
   }
 }
 
-/* Spline 3D iframe optimizations - Complete transparency overlay */
+/* Spline 3D iframe optimizations - Complete transparency overlay with performance enhancements */
 .spline-iframe-container {
-  will-change: transform;
+  will-change: transform, opacity;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
@@ -291,10 +310,16 @@ select {
   background: transparent !important;
   background-color: transparent !important;
   overflow: hidden;
+  /* GPU acceleration */
+  contain: layout style paint;
+  /* Optimize rendering */
+  isolation: isolate;
+  /* Reduce repaints */
+  content-visibility: auto;
 }
 
 .spline-iframe-container iframe {
-  will-change: transform;
+  will-change: transform, opacity;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   image-rendering: -webkit-optimize-contrast;
@@ -304,6 +329,12 @@ select {
   mix-blend-mode: normal;
   /* Force complete transparency */
   opacity: 1;
+  /* Performance optimizations */
+  contain: strict;
+  /* Reduce layout shifts */
+  content-visibility: auto;
+  /* Optimize for smooth animations */
+  transform-style: preserve-3d;
 }
 
 /* Force transparency on iframe body/content */
@@ -379,4 +410,121 @@ select {
     /* Ensure touch events work properly */
     touch-action: pan-x pan-y;
   }
+}
+
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Enhanced Modal Responsive Sizing */
+@media (max-width: 640px) {
+  /* Use dynamic viewport height for mobile browsers */
+  .modal-responsive {
+    max-height: min(90dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem));
+    width: min(calc(100vw - 1rem), 420px);
+    margin-left: max(0.5rem, env(safe-area-inset-left));
+    margin-right: max(0.5rem, env(safe-area-inset-right));
+  }
+}
+
+/* Small mobile devices (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  .modal-responsive {
+    width: calc(100vw - 0.75rem);
+    max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1.5rem));
+  }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 896px) and (orientation: landscape) {
+  .modal-responsive {
+    max-height: min(85dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1rem));
+    width: min(calc(100vw - 1rem), 600px);
+  }
+}
+
+/* Tablet sizes */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .modal-responsive {
+    max-width: min(90vw, 600px);
+    max-height: min(90vh, calc(100vh - 2rem));
+  }
+}
+
+/* Large screens */
+@media (min-width: 1025px) {
+  .modal-responsive {
+    max-width: min(90vw, 1200px);
+    max-height: min(90vh, calc(100vh - 2rem));
+  }
+}
+
+/* Theme Animation Styles for Profile Badge */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes aurora {
+  0%, 100% {
+    transform: translateX(-50%) translateY(-50%) rotate(0deg) scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateX(-50%) translateY(-50%) rotate(180deg) scale(1.2);
+    opacity: 0.4;
+  }
+}
+
+@keyframes flow {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.1);
+  }
+}
+
+/* Iridescent effect for themes */
+.theme-shimmer {
+  animation: shimmer 3s linear infinite;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+  background-size: 200% 100%;
+}
+
+.theme-aurora {
+  animation: aurora 8s ease-in-out infinite;
+}
+
+.theme-flow {
+  animation: flow 5s ease-in-out infinite;
+  background-size: 200% 200%;
+}
+
+.theme-pulse {
+  animation: pulse-glow 4s ease-in-out infinite;
 }

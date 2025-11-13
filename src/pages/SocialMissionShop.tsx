@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ShoppingBag, TrendingUp, Phone, Info } from 'lucide-react';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useTranslation } from 'react-i18next';
+import { useIsMobile } from '../hooks/use-mobile';
+import { cn } from '@/lib/utils';
+import { getIconForProductOrCategory } from '../lib/iconMatcher';
 
 // Sample product data with translation keys
 const productData = [
   {
     id: 1,
     emoji: '🏗️',
+    image: '/images/art-tiles.png',
     nameKey: 'products.epdmFreeTiles.name',
     descriptionKey: 'products.epdmFreeTiles.description',
     infoKey: 'products.epdmFreeTiles.info',
@@ -21,6 +25,7 @@ const productData = [
   {
     id: 2,
     emoji: '🛝',
+    image: '/images/Eco Bench.png',
     nameKey: 'products.epdmRubberEcotiles.name',
     descriptionKey: 'products.epdmRubberEcotiles.description',
     infoKey: 'products.epdmRubberEcotiles.info',
@@ -31,6 +36,7 @@ const productData = [
   {
     id: 3,
     emoji: '🧱',
+    image: '/images/EcoBrick.png',
     nameKey: 'products.ecoBrick.name',
     descriptionKey: 'products.ecoBrick.description',
     categoryKey: 'products.ecoBrick.category',
@@ -40,6 +46,7 @@ const productData = [
   {
     id: 4,
     emoji: '🗑️',
+    image: '/images/Waste Bin.png',
     nameKey: 'products.wasteBin.name',
     descriptionKey: 'products.wasteBin.description',
     categoryKey: 'products.wasteBin.category',
@@ -49,6 +56,7 @@ const productData = [
   {
     id: 5,
     emoji: '🪴',
+    image: '/images/Garden Planter.png',
     nameKey: 'products.gardenPlanter.name',
     descriptionKey: 'products.gardenPlanter.description',
     categoryKey: 'products.gardenPlanter.category',
@@ -58,6 +66,7 @@ const productData = [
   {
     id: 6,
     emoji: '🪑',
+    image: '/images/Eco Bench.png',
     nameKey: 'products.ecoBench.name',
     descriptionKey: 'products.ecoBench.description',
     categoryKey: 'products.ecoBench.category',
@@ -67,6 +76,7 @@ const productData = [
   {
     id: 7,
     emoji: '🚲',
+    image: '/images/ECOBIKE RACK.png',
     nameKey: 'products.ecobikeRack.name',
     descriptionKey: 'products.ecobikeRack.description',
     categoryKey: 'products.ecobikeRack.category',
@@ -76,6 +86,7 @@ const productData = [
   {
     id: 8,
     emoji: '🚌',
+    image: '/images/ECOBUSSTOP.png',
     nameKey: 'products.ecobusStop.name',
     descriptionKey: 'products.ecobusStop.description',
     categoryKey: 'products.ecobusStop.category',
@@ -85,6 +96,7 @@ const productData = [
   {
     id: 9,
     emoji: '🎨',
+    image: '/images/art-tiles.png',
     nameKey: 'products.playgroundBlock.name',
     descriptionKey: 'products.playgroundBlock.description',
     categoryKey: 'products.playgroundBlock.category',
@@ -94,6 +106,7 @@ const productData = [
   {
     id: 10,
     emoji: '🏙️',
+    image: '/images/green-city_5994274.png',
     nameKey: 'products.ecostreetFurniture.name',
     descriptionKey: 'products.ecostreetFurniture.description',
     categoryKey: 'products.ecostreetFurniture.category',
@@ -101,25 +114,39 @@ const productData = [
   }
 ];
 
-// Category data with translation keys
+// Category data with translation keys and icon images
+// Note: Icon files exist in public/images/ folder:
+// - construction.png (lowercase)
+// - recreation.png (lowercase)
+// - Furniture.png
+// - Infrastructure.png
+// - playground.png
 const categoryData = [
   {
     emoji: '🏗️',
+    image: '/images/art-tiles.png',
+    iconImage: '/images/construction.png', // Construction icon
     nameKey: 'categories.construction.name',
     descriptionKey: 'categories.construction.description'
   },
   {
     emoji: '🛝',
+    image: '/images/Eco Bench.png',
+    iconImage: '/images/recreation.png', // Recreation icon
     nameKey: 'categories.recreation.name',
     descriptionKey: 'categories.recreation.description'
   },
   {
     emoji: '🪑',
+    image: '/images/Eco Bench.png',
+    iconImage: '/images/Furniture.png', // Furniture icon
     nameKey: 'categories.furniture.name',
     descriptionKey: 'categories.furniture.description'
   },
   {
     emoji: '🏙️',
+    image: '/images/green-city_5994274.png',
+    iconImage: '/images/Infrastructure.png', // Infrastructure icon
     nameKey: 'categories.infrastructure.name',
     descriptionKey: 'categories.infrastructure.description'
   }
@@ -127,36 +154,76 @@ const categoryData = [
 
 export default function SocialMissionShop() {
   const { t } = useTranslation(['shop', 'translation']);
+  const isMobile = useIsMobile();
+  
+  // Get product icons dynamically based on translated names
+  const productsWithIcons = useMemo(() => {
+    return productData.map(product => {
+      const productName = t(product.nameKey, { ns: 'shop' });
+      const categoryName = t(product.categoryKey, { ns: 'shop' });
+      const iconPath = getIconForProductOrCategory(productName, product.image);
+      
+      return {
+        ...product,
+        iconPath,
+        productName,
+        categoryName
+      };
+    });
+  }, [t]);
+  
+  // Get category icons dynamically based on translated names
+  const categoriesWithIcons = useMemo(() => {
+    return categoryData.map(category => {
+      const categoryName = t(category.nameKey, { ns: 'shop' });
+      const iconPath = getIconForProductOrCategory(categoryName, category.iconImage || category.image);
+      
+      return {
+        ...category,
+        iconPath,
+        categoryName
+      };
+    });
+  }, [t]);
 
   return (
     <Layout title={t('shop', { ns: 'translation' })}>
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-white">
-        <div className="p-2 sm:p-4 space-y-3 sm:space-y-6 space-y-mobile">
+        <div className={cn("w-full", isMobile ? "p-2 space-y-3" : "p-4 space-y-6")}>
           {/* Header */}
-          <div className="text-center space-y-1 sm:space-y-2">
-            <h2 className="text-lg sm:text-2xl font-bold section-title-mobile">
+          <div className={cn("text-center", isMobile ? "space-y-1" : "space-y-2")}>
+            <h2 className={cn(
+              "font-bold",
+              isMobile ? "text-base" : "text-lg sm:text-2xl"
+            )}>
               {t('title', { ns: 'shop' })}
             </h2>
-            <p className="text-gray-600 text-sm sm:text-base">
+            <p className={cn(
+              "text-gray-600",
+              isMobile ? "text-xs" : "text-sm sm:text-base"
+            )}>
               {t('subtitle', { ns: 'shop' })}
             </p>
           </div>
 
           {/* Stats */}
-          <Card className="bg-gradient-to-r from-green-50 to-blue-50 card-mobile">
-            <CardContent className="p-3 sm:p-4 card-content-mobile">
-              <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
+          <Card className="bg-gradient-to-r from-green-50 to-blue-50">
+            <CardContent className={cn(isMobile ? "p-2" : "p-3 sm:p-4")}>
+              <div className={cn(
+                "grid grid-cols-3 text-center",
+                isMobile ? "gap-1.5" : "gap-2 sm:gap-4"
+              )}>
                 <div>
-                  <div className="text-lg sm:text-2xl font-bold text-green-600 stats-value-mobile">2,500</div>
-                  <div className="text-xs sm:text-sm text-gray-600">{t('stats.kgRecycled', { ns: 'shop' })}</div>
+                  <div className={cn("font-bold text-green-600", isMobile ? "text-sm" : "text-lg sm:text-2xl")}>2,500</div>
+                  <div className={cn("text-gray-600", isMobile ? "text-[10px]" : "text-xs sm:text-sm")}>{t('stats.kgRecycled', { ns: 'shop' })}</div>
                 </div>
                 <div>
-                  <div className="text-lg sm:text-2xl font-bold text-blue-600 stats-value-mobile">156</div>
-                  <div className="text-xs sm:text-sm text-gray-600">{t('stats.productsSold', { ns: 'shop' })}</div>
+                  <div className={cn("font-bold text-blue-600", isMobile ? "text-sm" : "text-lg sm:text-2xl")}>156</div>
+                  <div className={cn("text-gray-600", isMobile ? "text-[10px]" : "text-xs sm:text-sm")}>{t('stats.productsSold', { ns: 'shop' })}</div>
                 </div>
                 <div>
-                  <div className="text-lg sm:text-2xl font-bold text-purple-600 stats-value-mobile">12</div>
-                  <div className="text-xs sm:text-sm text-gray-600">{t('stats.projectsFunded', { ns: 'shop' })}</div>
+                  <div className={cn("font-bold text-purple-600", isMobile ? "text-sm" : "text-lg sm:text-2xl")}>12</div>
+                  <div className={cn("text-gray-600", isMobile ? "text-[10px]" : "text-xs sm:text-sm")}>{t('stats.projectsFunded', { ns: 'shop' })}</div>
                 </div>
               </div>
             </CardContent>
@@ -164,71 +231,125 @@ export default function SocialMissionShop() {
 
           {/* Eco Products Section */}
           <section>
-            <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center section-title-mobile">
-              <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600 icon-md-mobile" />
+            <h3 className={cn(
+              "font-semibold flex items-center",
+              isMobile ? "text-sm mb-2" : "text-lg sm:text-xl mb-3 sm:mb-4"
+            )}>
+              <ShoppingBag className={cn("text-green-600", isMobile ? "h-3 w-3 mr-1.5" : "h-4 w-4 sm:h-5 sm:w-5 mr-2")} />
               {t('sections.ecoProducts', { ns: 'shop' })}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-              {productData.map((product) => (
-                <Card key={product.id} className="eco-card-hover card-mobile">
-                  <CardContent className="p-3 sm:p-4 space-y-2 sm:space-y-3 card-content-mobile">
+            <div className={cn(
+              "grid grid-cols-1",
+              isMobile ? "gap-2" : "md:grid-cols-2 gap-3 sm:gap-4"
+            )}>
+              {productsWithIcons.map((product) => (
+                <Card key={product.id} className="eco-card-hover">
+                  <CardContent className={cn(
+                    isMobile ? "p-2 space-y-1.5" : "p-3 sm:p-4 space-y-2 sm:space-y-3"
+                  )}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1 sm:mb-2">
-                          <span className="text-lg sm:text-2xl">{product.emoji}</span>
+                        <div className={cn(
+                          "flex items-center",
+                          isMobile ? "space-x-1.5 mb-1" : "space-x-2 mb-1 sm:mb-2"
+                        )}>
+                          <img 
+                            src={product.iconPath || product.image || product.emoji} 
+                            alt={product.productName} 
+                            className={cn(
+                              "object-contain flex-shrink-0",
+                              isMobile ? "w-10 h-10" : "w-12 h-12 sm:w-14 sm:h-14"
+                            )}
+                            style={{ 
+                              minWidth: isMobile ? '40px' : '48px', 
+                              minHeight: isMobile ? '40px' : '48px',
+                              maxWidth: 'none',
+                              maxHeight: 'none'
+                            }}
+                            loading="lazy"
+                            onError={(e) => {
+                              // Fallback to emoji if image fails to load
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent && !parent.querySelector('.emoji-fallback')) {
+                                const emojiSpan = document.createElement('span');
+                                emojiSpan.className = 'emoji-fallback text-xl';
+                                emojiSpan.textContent = product.emoji;
+                                parent.appendChild(emojiSpan);
+                              }
+                            }}
+                          />
                           <div>
-                            <h4 className="font-medium text-xs sm:text-sm">
+                            <h4 className={cn(
+                              "font-medium",
+                              isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                            )}>
                               {t(product.nameKey, { ns: 'shop' })}
                             </h4>
-                            <Badge className="text-xs">
+                            <Badge className={cn(isMobile ? "text-[9px] px-1 py-0" : "text-xs")}>
                               {t(product.categoryKey, { ns: 'shop' })}
                             </Badge>
                           </div>
                         </div>
-                        <p className="text-xs text-gray-600 mb-1 sm:mb-2">
+                        <p className={cn(
+                          "text-gray-600",
+                          isMobile ? "text-[10px] mb-1" : "text-xs mb-1 sm:mb-2"
+                        )}>
                           {t(product.descriptionKey, { ns: 'shop' })}
                         </p>
                         {product.infoKey && (
-                          <p className="text-xs text-blue-600 mb-1 sm:mb-2">
-                            <Info className="h-2 w-2 sm:h-3 sm:w-3 inline mr-0.5 sm:mr-1" />
+                          <p className={cn(
+                            "text-blue-600",
+                            isMobile ? "text-[10px] mb-1" : "text-xs mb-1 sm:mb-2"
+                          )}>
+                            <Info className={cn("inline", isMobile ? "h-2 w-2 mr-0.5" : "h-2 w-2 sm:h-3 sm:w-3 mr-0.5 sm:mr-1")} />
                             {t(product.infoKey, { ns: 'shop' })}
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="space-y-1 sm:space-y-2">
+                    <div className={cn(isMobile ? "space-y-1" : "space-y-1 sm:space-y-2")}>
                       <div className="text-center">
                         {product.isCallForPrice ? (
-                          <div className="text-sm sm:text-lg font-bold text-orange-600 mb-1 sm:mb-2">
+                          <div className={cn(
+                            "font-bold text-orange-600",
+                            isMobile ? "text-xs mb-1" : "text-sm sm:text-lg mb-1 sm:mb-2"
+                          )}>
                             {t('pricing.callForPrice', { ns: 'shop' })}
                           </div>
                         ) : (
                           <>
-                            <div className="text-sm sm:text-xl font-bold text-green-600 mb-1 stats-value-mobile">
+                            <div className={cn(
+                              "font-bold text-green-600",
+                              isMobile ? "text-xs mb-0.5" : "text-sm sm:text-xl mb-1"
+                            )}>
                               {product.price}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className={cn(isMobile ? "text-[9px]" : "text-xs") + " text-gray-500"}>
                               {t(product.pricingKey, { ns: 'shop' })}
                             </div>
                           </>
                         )}
                       </div>
                       <Button 
-                        className={`w-full text-xs sm:text-sm py-1 sm:py-2 h-7 sm:h-9 ${
+                        className={cn(
+                          "w-full",
+                          isMobile ? "h-8 text-[10px] py-1" : "text-xs sm:text-sm py-1 sm:py-2 h-7 sm:h-9",
                           product.isCallForPrice 
                             ? 'bg-background hover:bg-accent hover:text-accent-foreground border border-input' 
                             : 'bg-green-600 hover:bg-green-700 text-primary-foreground'
-                        }`}
+                        )}
                         variant={product.isCallForPrice ? "outline" : "default"}
                       >
                         {product.isCallForPrice ? (
                           <>
-                            <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 icon-sm-mobile" />
+                            <Phone className={cn(isMobile ? "h-2.5 w-2.5 mr-1" : "h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2")} />
                             {t('buttons.contactUs', { ns: 'shop' })}
                           </>
                         ) : (
                           <>
-                            <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 icon-sm-mobile" />
+                            <ShoppingBag className={cn(isMobile ? "h-2.5 w-2.5 mr-1" : "h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2")} />
                             {t('buttons.addToCart', { ns: 'shop' })}
                           </>
                         )}
@@ -241,13 +362,19 @@ export default function SocialMissionShop() {
           </section>
 
           {/* How It Works */}
-          <Card className="bg-blue-50 card-mobile">
-            <CardHeader className="card-header-mobile">
-              <CardTitle className="text-blue-800 text-lg sm:text-2xl section-title-mobile">
+          <Card className="bg-blue-50">
+            <CardHeader className={cn(isMobile ? "p-2 pb-1" : "p-4")}>
+              <CardTitle className={cn(
+                "text-blue-800",
+                isMobile ? "text-sm" : "text-lg sm:text-2xl"
+              )}>
                 {t('sections.howItWorks', { ns: 'shop' })}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-blue-700 card-content-mobile">
+            <CardContent className={cn(
+              "text-blue-700",
+              isMobile ? "p-2 pt-1 space-y-1 text-[10px]" : "space-y-1 sm:space-y-2 text-xs sm:text-sm"
+            )}>
               <p>
                 • <strong>{t('howItWorksPoints.recycledMaterials.title', { ns: 'shop' })}</strong> {t('howItWorksPoints.recycledMaterials.description', { ns: 'shop' })}
               </p>
@@ -265,19 +392,65 @@ export default function SocialMissionShop() {
 
           {/* Popular Categories */}
           <section>
-            <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center section-title-mobile">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600 icon-md-mobile" />
+            <h3 className={cn(
+              "font-semibold flex items-center",
+              isMobile ? "text-sm mb-2" : "text-lg sm:text-xl mb-3 sm:mb-4"
+            )}>
+              <TrendingUp className={cn("text-green-600", isMobile ? "h-3 w-3 mr-1.5" : "h-4 w-4 sm:h-5 sm:w-5 mr-2")} />
               {t('sections.popularCategories', { ns: 'shop' })}
             </h3>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              {categoryData.map((category, index) => (
-                <Card key={index} className="eco-card-hover cursor-pointer card-mobile">
-                  <CardContent className="p-3 sm:p-4 text-center card-content-mobile">
-                    <span className="text-2xl sm:text-3xl mb-1 sm:mb-2 block">{category.emoji}</span>
-                    <h4 className="font-medium text-sm sm:text-base">
-                      {t(category.nameKey, { ns: 'shop' })}
+            <div className={cn(
+              "grid grid-cols-2",
+              isMobile ? "gap-1.5" : "gap-2 sm:gap-3"
+            )}>
+              {categoriesWithIcons.map((category, index) => (
+                <Card key={index} className="eco-card-hover cursor-pointer">
+                  <CardContent className={cn(
+                    "text-center flex flex-col items-center",
+                    isMobile ? "p-2" : "p-3 sm:p-4"
+                  )}>
+                    <div className={cn(
+                      "flex items-center justify-center mb-1 rounded-full bg-gradient-to-br from-green-50 to-blue-50 flex-shrink-0",
+                      isMobile ? "w-16 h-16 p-2" : "w-20 h-20 sm:w-24 sm:h-24 p-3"
+                    )}>
+                      <img 
+                        src={category.iconPath || category.iconImage || category.image} 
+                        alt={category.categoryName} 
+                          className={cn(
+                            "object-contain flex-shrink-0",
+                            isMobile ? "h-10 w-10" : "h-12 w-12 sm:h-14 sm:w-14"
+                          )}
+                          style={{ 
+                            minWidth: isMobile ? '40px' : '48px', 
+                            minHeight: isMobile ? '40px' : '48px',
+                            maxWidth: 'none',
+                            maxHeight: 'none'
+                          }}
+                        loading="lazy"
+                        onError={(e) => {
+                          // Fallback to emoji if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent && !parent.querySelector('.emoji-fallback')) {
+                            const emojiSpan = document.createElement('span');
+                            emojiSpan.className = 'emoji-fallback text-2xl';
+                            emojiSpan.textContent = category.emoji;
+                            parent.appendChild(emojiSpan);
+                          }
+                        }}
+                      />
+                    </div>
+                    <h4 className={cn(
+                      "font-medium",
+                      isMobile ? "text-xs mb-0.5" : "text-sm sm:text-base mb-1"
+                    )}>
+                      {category.categoryName}
                     </h4>
-                    <p className="text-xs text-gray-600">
+                    <p className={cn(
+                      "text-gray-600",
+                      isMobile ? "text-[10px] line-clamp-2" : "text-xs"
+                    )}>
                       {t(category.descriptionKey, { ns: 'shop' })}
                     </p>
                   </CardContent>
@@ -287,21 +460,38 @@ export default function SocialMissionShop() {
           </section>
 
           {/* Bottom CTA Section */}
-          <Card className="bg-gradient-to-r from-green-50 to-blue-50 card-mobile">
-            <CardContent className="p-4 sm:p-6 text-center card-content-mobile">
-              <h3 className="text-lg sm:text-xl font-bold mb-2 bottom-title-mobile">
+          <Card className="bg-gradient-to-r from-green-50 to-blue-50">
+            <CardContent className={cn(
+              "text-center",
+              isMobile ? "p-3" : "p-4 sm:p-6"
+            )}>
+              <h3 className={cn(
+                "font-bold",
+                isMobile ? "text-sm mb-1.5" : "text-lg sm:text-xl mb-2"
+              )}>
                 {t('bottomSection.title', { ns: 'shop' })}
               </h3>
-              <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base bottom-description-mobile">
+              <p className={cn(
+                "text-gray-600",
+                isMobile ? "text-xs mb-2" : "mb-3 sm:mb-4 text-sm sm:text-base"
+              )}>
                 {t('bottomSection.description', { ns: 'shop' })}
               </p>
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
-                <Button className="bg-green-600 hover:bg-green-700 text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6 bottom-button-mobile">
-                  <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 icon-sm-mobile" />
+              <div className={cn(
+                "flex justify-center",
+                isMobile ? "flex-col gap-1.5" : "flex-col sm:flex-row gap-2 sm:gap-3"
+              )}>
+                <Button className={cn(
+                  "bg-green-600 hover:bg-green-700",
+                  isMobile ? "h-8 text-xs py-1.5 px-3" : "text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6"
+                )}>
+                  <ShoppingBag className={cn(isMobile ? "h-2.5 w-2.5 mr-1" : "h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2")} />
                   {t('buttons.startShopping', { ns: 'shop' })}
                 </Button>
-                <Button variant="outline" className="text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6 bottom-button-mobile">
-                  <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 icon-sm-mobile" />
+                <Button variant="outline" className={cn(
+                  isMobile ? "h-8 text-xs py-1.5 px-3" : "text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6"
+                )}>
+                  <Phone className={cn(isMobile ? "h-2.5 w-2.5 mr-1" : "h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2")} />
                   {t('buttons.contactForBulkOrders', { ns: 'shop' })}
                 </Button>
               </div>

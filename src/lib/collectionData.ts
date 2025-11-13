@@ -6,7 +6,8 @@ export const getCollectionPoints = (t: (key: string) => string) => [
     collected: '1250.5',
     status: 'active',
     distance: '2.3',
-    emoji: '🗂️'
+    emoji: '🗂️',
+    image: '/images/park.png'
   },
   {
     id: 2,
@@ -15,7 +16,8 @@ export const getCollectionPoints = (t: (key: string) => string) => [
     collected: '890.2',
     status: 'active',
     distance: '2.3',
-    emoji: '♻️'
+    emoji: '♻️',
+    image: '/images/compost_13285420.png'
   },
   {
     id: 3,
@@ -24,6 +26,7 @@ export const getCollectionPoints = (t: (key: string) => string) => [
     collected: '456.8',
     status: 'active',
     distance: '2.3',
-    emoji: '🛞'
+    emoji: '🛞',
+    image: '/images/ECOBUSSTOP.png'
   }
 ];

@@ -32,6 +32,8 @@ import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { votingProjects } from '../lib/mockData';
 import { useTranslation } from '../hooks/useTranslation';
+import { getIconForProductOrCategory } from '../lib/iconMatcher';
+import { useMemo } from 'react';
 
 // Types for completed projects
 interface TimelineItem {
@@ -209,13 +211,42 @@ function EcoVote() {
         return project.category;
     }
   };
+  
+  // Get projects with dynamically matched icons
+  const projectsWithIcons = useMemo(() => {
+    return votingProjects.map(project => {
+      const projectTitle = getTranslatedTitle(project);
+      const projectCategory = project.category;
+      
+      // Try to match icon based on title first, then category, then original title
+      let iconPath = getIconForProductOrCategory(projectTitle, project.image);
+      
+      // If title matching didn't work well, try category
+      if (iconPath === project.image || !iconPath.startsWith('/images/')) {
+        iconPath = getIconForProductOrCategory(projectCategory, project.image);
+      }
+      
+      // If still not found, try original title
+      if (iconPath === project.image || !iconPath.startsWith('/images/')) {
+        iconPath = getIconForProductOrCategory(project.title, project.image);
+      }
+      
+      return {
+        ...project,
+        iconPath,
+        translatedTitle: projectTitle,
+        translatedDescription: getTranslatedDescription(project),
+        translatedLocation: getTranslatedLocation(project)
+      };
+    });
+  }, [t]);
 
-  // Translate voting projects
-  const translatedProjects = votingProjects.map(project => ({
+  // Translate voting projects with icons
+  const translatedProjects = projectsWithIcons.map(project => ({
     ...project,
-    title: getTranslatedTitle(project as VotingProject),
-    description: getTranslatedDescription(project as VotingProject),
-    location: getTranslatedLocation(project as VotingProject),
+    title: project.translatedTitle,
+    description: project.translatedDescription,
+    location: project.translatedLocation,
     category: getTranslatedCategory(project as VotingProject)
   }));
 
@@ -226,7 +257,7 @@ function EcoVote() {
       id: 'completed-1',
       title: t('ecoPlaygroundAtSchool12'),
       description: t('ecoPlaygroundDescription'),
-      image: '🎪',
+      image: '/images/community_16119903.png',
       location: t('shaykhantaurDistrict'),
       completedDate: new Date('2025-08-15'),
       materialsUsed: 1800,
@@ -235,8 +266,8 @@ function EcoVote() {
       co2Saved: 2.4,
       treesEquivalent: 120,
       beforeAfter: {
-        before: '🏚️',
-        after: '🎪'
+        before: '/images/forest_10089053.png',
+        after: '/images/community_16119903.png'
       },
       timeline: [
         { date: '2025-06-01', event: t('projectApproved'), votes: 1250 },
@@ -244,7 +275,7 @@ function EcoVote() {
         { date: '2025-07-01', event: t('constructionStarted') },
         { date: '2025-08-15', event: t('projectCompleted') }
       ],
-      gallery: ['🏗️', '🚧', '👷', '🎪'],
+      gallery: ['/images/art-tiles.png', '/images/ECOBUSSTOP.png', '/images/meet-the-team_15916616.png', '/images/community_16119903.png'],
       satisfaction: 96,
       views: 15420,
       shares: 234
@@ -253,7 +284,7 @@ function EcoVote() {
       id: 'completed-2',
       title: t('communityGardenBenches'),
       description: t('communityBenchesDescription'),
-      image: '🪑',
+      image: '/images/Eco Bench.png',
       location: t('alisherNavoiPark'),
       completedDate: new Date('2025-07-22'),
       materialsUsed: 960,
@@ -262,8 +293,8 @@ function EcoVote() {
       co2Saved: 1.2,
       treesEquivalent: 60,
       beforeAfter: {
-        before: '🌳',
-        after: '🪑'
+        before: '/images/plant-a-tree_6675353.png',
+        after: '/images/Eco Bench.png'
       },
       timeline: [
         { date: '2025-05-10', event: t('projectApproved'), votes: 890 },
@@ -271,7 +302,7 @@ function EcoVote() {
         { date: '2025-06-10', event: t('installationStarted') },
         { date: '2025-07-22', event: t('projectCompleted') }
       ],
-      gallery: ['🔧', '🪑', '🌳', '👨‍👩‍👧‍👦'],
+      gallery: ['/images/ECOBUSSTOP.png', '/images/Eco Bench.png', '/images/plant-a-tree_6675353.png', '/images/community_16119903.png'],
       satisfaction: 89,
       views: 8930,
       shares: 156
@@ -332,7 +363,7 @@ function EcoVote() {
                   whileTap={{ scale: 0.95 }}
                   animate={isAnimating ? { rotateY: 180 } : { rotateY: 0 }}
                 >
-                  {project.gallery[currentImageIndex]}
+                  <img src={project.gallery[currentImageIndex]} alt="" className="w-full h-full object-contain" loading="lazy" />
                 </motion.div>
                 
                 {/* Image counter */}
@@ -601,7 +632,27 @@ function EcoVote() {
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 sm:gap-4">
                           <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-3">
                             <div className="relative">
-                              <span className="text-2xl sm:text-3xl md:text-4xl">{project.image}</span>
+                              <img 
+                                src={project.iconPath || project.image} 
+                                alt={project.title} 
+                                className="w-12 h-12 sm:w-16 sm:h-16 object-contain" 
+                                loading="lazy"
+                                onError={(e) => {
+                                  // Fallback to emoji if image fails to load
+                                  const target = e.target as HTMLImageElement;
+                                  if (project.image && project.image.length < 10) {
+                                    // It's an emoji, show it as text
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent && !parent.querySelector('.emoji-fallback')) {
+                                      const emojiSpan = document.createElement('span');
+                                      emojiSpan.className = 'emoji-fallback text-2xl sm:text-3xl';
+                                      emojiSpan.textContent = project.image;
+                                      parent.appendChild(emojiSpan);
+                                    }
+                                  }
+                                }}
+                              />
                               <div className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center font-bold">
                                 {index + 1}
                               </div>

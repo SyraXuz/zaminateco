@@ -7,7 +7,7 @@ const navigationItems = [
   { path: '/', icon: Home, labelKey: 'home' as const },
   { path: '/map', icon: MapPin, labelKey: 'ecoMap' as const },
   { path: '/vote', icon: Vote, labelKey: 'ecoVote' as const },
-  { path: '/actions', icon: Calendar, labelKey: 'actions' as const },
+  { path: '/actions', icon: Calendar, labelKey: 'ecoActions' as const },
   { path: '/shop', icon: ShoppingBag, labelKey: 'shop' as const },
   { path: '/stories', icon: BookOpen, labelKey: 'stories' as const },
   { path: '/profile', icon: User, labelKey: 'profile' as const }
@@ -21,7 +21,27 @@ const secondaryNavigationItems = [
 
 export default function Navigation() {
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation('common'); // Specify 'common' namespace
+
+  // Helper function to get translation with proper fallback
+  const getTranslation = (key: string): string => {
+    // Explicitly get translation from 'common' namespace
+    const translation = t(key, { ns: 'common' });
+    
+    // If translation is missing or returns the key, use explicit fallbacks
+    if (!translation || translation === key) {
+      const fallbacks: Record<string, Record<string, string>> = {
+        en: { ecoActions: 'EcoActions' },
+        ru: { ecoActions: 'ЭкоДействия' },
+        uz: { ecoActions: 'EkoHarakatlar' }
+      };
+      const currentLang = i18n.language || 'en';
+      const langKey = currentLang.split('-')[0]; // Get base language (en, ru, uz)
+      return fallbacks[langKey as keyof typeof fallbacks]?.[key] || key;
+    }
+    
+    return translation;
+  };
 
   return (
     <>
@@ -45,7 +65,7 @@ export default function Navigation() {
               >
                 <Icon className="h-4 w-4 mb-0.5 flex-shrink-0" />
                 <span className="text-[10px] font-medium text-center leading-tight break-words hyphens-auto max-w-full">
-                  {t(item.labelKey)}
+                  {getTranslation(item.labelKey)}
                 </span>
               </Link>
             );
@@ -73,7 +93,7 @@ export default function Navigation() {
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  <span className="font-medium">{t(item.labelKey)}</span>
+                  <span className="font-medium">{t(item.labelKey, { ns: 'common' })}</span>
                 </Link>
               );
             })}
@@ -99,7 +119,7 @@ export default function Navigation() {
                       ? "text-green-600 bg-green-50"
                       : "text-gray-600 hover:text-green-600 hover:bg-green-50"
                   )}
-                  title={t(item.labelKey)}
+                  title={t(item.labelKey, { ns: 'common' })}
                 >
                   <Icon className="h-4 w-4" />
                 </Link>
