@@ -81,13 +81,21 @@ class ApiClient {
       }
 
       if (!response.ok) {
+        // Don't throw error for 401/403 - let the calling code handle it
+        if (response.status === 401 || response.status === 403) {
+          const error = await response.json().catch(() => ({ message: response.statusText }));
+          throw new Error(error.message || `API Error: ${response.statusText}`);
+        }
         const error = await response.json().catch(() => ({ message: response.statusText }));
         throw new Error(error.message || `API Error: ${response.statusText}`);
       }
 
       return response.json();
-    } catch (error) {
-      console.error('API Request failed:', error);
+    } catch (error: any) {
+      // Only log non-network errors
+      if (error.message && !error.message.includes('Failed to fetch')) {
+        console.error('API Request failed:', error);
+      }
       throw error;
     }
   }
@@ -194,13 +202,20 @@ class ApiClient {
   }
 
   // Projects
-  async getProjects(status?: string) {
-    const query = status ? `?status=${status}` : '';
-    return this.request<any[]>(`/projects${query}`);
+  async getProjects(status?: string, sortBy?: string) {
+    const query = new URLSearchParams();
+    if (status) query.append('status', status);
+    if (sortBy) query.append('sortBy', sortBy);
+    const queryString = query.toString();
+    return this.request<any[]>(`/projects${queryString ? `?${queryString}` : ''}`);
   }
 
   async getProject(id: string) {
     return this.request<any>(`/projects/${id}`);
+  }
+
+  async getProjectResults(id: string) {
+    return this.request<any>(`/projects/${id}/results`);
   }
 
   async voteForProject(projectId: string) {
@@ -209,10 +224,10 @@ class ApiClient {
     });
   }
 
-  async donateToProject(projectId: string, amount: number, currency: string) {
+  async donateToProject(projectId: string, amount: number, currency: string, paymentProvider?: string) {
     return this.request<any>(`/projects/${projectId}/donate`, {
       method: 'POST',
-      body: JSON.stringify({ amount, currency }),
+      body: JSON.stringify({ amount, currency, paymentProvider }),
     });
   }
 
@@ -226,6 +241,10 @@ class ApiClient {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+  }
+
+  async getUserStats(userId: string) {
+    return this.request<any>(`/users/${userId}/stats`);
   }
 
   // Events
@@ -263,6 +282,75 @@ class ApiClient {
     return this.request<any[]>(`/locations/nearby?${query}`);
   }
 
+  // Collections
+  async getCollectionPoints(filters?: { materialType?: string; district?: string; status?: string; limit?: number }) {
+    const query = new URLSearchParams(filters as any).toString();
+    return this.request<any[]>(`/collection-points${query ? `?${query}` : ''}`);
+  }
+
+  async getCollectionPoint(id: string) {
+    return this.request<any>(`/collection-points/${id}`);
+  }
+
+  async createCollection(data: { collectionPointId: string; materialType: string; weightKg: number; photoUrl?: string }) {
+    return this.request<any>('/collections', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getUserCollections(userId: string) {
+    return this.request<any[]>(`/collections/user/${userId}`);
+  }
+
+  // Waste Logs
+  async createWasteLog(data: { weightKg: number; category: string; location?: string; photoURL?: string; date?: string }) {
+    return this.request<any>('/waste-logs', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getUserWasteLogs(userId?: string, filters?: { status?: string; category?: string; limit?: number; offset?: number }) {
+    const query = new URLSearchParams();
+    if (filters?.status) query.append('status', filters.status);
+    if (filters?.category) query.append('category', filters.category);
+    if (filters?.limit) query.append('limit', filters.limit.toString());
+    if (filters?.offset) query.append('offset', filters.offset.toString());
+    const queryString = query.toString();
+    const endpoint = userId ? `/waste-logs/user/${userId}` : '/waste-logs/me';
+    return this.request<any[]>(`${endpoint}${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getWasteLogStats(userId?: string) {
+    const query = userId ? `?userId=${userId}` : '';
+    return this.request<any>(`/waste-logs/stats${query}`);
+  }
+
+  async getWasteLog(id: string) {
+    return this.request<any>(`/waste-logs/${id}`);
+  }
+
+  async deleteWasteLog(id: string) {
+    return this.request<any>(`/waste-logs/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // News & Content
+  async getNews(filters?: { limit?: number; offset?: number; search?: string }) {
+    const query = new URLSearchParams();
+    if (filters?.limit) query.append('limit', filters.limit.toString());
+    if (filters?.offset) query.append('offset', filters.offset.toString());
+    if (filters?.search) query.append('search', filters.search);
+    const queryString = query.toString();
+    return this.request<any[]>(`/news${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getNewsArticle(slug: string) {
+    return this.request<any>(`/news/${slug}`);
+  }
+
   // Shop
   async getProducts(category?: string) {
     const query = category ? `?category=${category}` : '';
@@ -273,14 +361,44 @@ class ApiClient {
     return this.request<any>(`/shop/products/${id}`);
   }
 
-  // Stories
-  async getStories(category?: string) {
-    const query = category ? `?category=${category}` : '';
-    return this.request<any[]>(`/stories${query}`);
+  async createOrder(data: { items: Array<{ productId: string; quantity: number }>; shippingAddress: any }) {
+    return this.request<any>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
-  async getStory(id: string) {
-    return this.request<any>(`/stories/${id}`);
+  async getOrder(id: string) {
+    return this.request<any>(`/orders/${id}`);
+  }
+
+  // Stories
+  async getStories(category?: string, type?: string, language?: string, search?: string) {
+    const query = new URLSearchParams();
+    if (category) query.append('category', category);
+    if (type) query.append('type', type);
+    if (language) query.append('language', language);
+    if (search) query.append('search', search);
+    const queryString = query.toString();
+    return this.request<any[]>(`/posts${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getStory(slug: string) {
+    return this.request<any>(`/posts/${slug}`);
+  }
+
+  async reactToPost(postId: string, reactionType: string) {
+    return this.request<any>(`/posts/${postId}/reactions`, {
+      method: 'POST',
+      body: JSON.stringify({ reactionType }),
+    });
+  }
+
+  async commentOnPost(postId: string, content: string) {
+    return this.request<any>(`/posts/${postId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
   }
 
   // Leaderboard
@@ -290,6 +408,52 @@ class ApiClient {
       ...(limit && { limit: limit.toString() }),
     }).toString();
     return this.request<any[]>(`/leaderboard${query ? `?${query}` : ''}`);
+  }
+
+  // Achievements
+  async getAchievements() {
+    return this.request<any[]>('/achievements');
+  }
+
+  async getUserAchievements(userId: string) {
+    return this.request<any[]>(`/users/${userId}/achievements`);
+  }
+
+  // Rewards
+  async getRewards() {
+    return this.request<any[]>('/rewards');
+  }
+
+  async redeemReward(rewardId: string) {
+    return this.request<any>(`/rewards/${rewardId}/redeem`, {
+      method: 'POST',
+    });
+  }
+
+  // Notifications
+  async getNotifications(page?: number, limit?: number) {
+    const query = new URLSearchParams({
+      ...(page && { page: page.toString() }),
+      ...(limit && { limit: limit.toString() }),
+    }).toString();
+    return this.request<any[]>(`/notifications${query ? `?${query}` : ''}`);
+  }
+
+  async markNotificationsRead(notificationIds?: string[]) {
+    return this.request<any>('/notifications/mark-read', {
+      method: 'POST',
+      body: JSON.stringify({ notificationIds }),
+    });
+  }
+
+  // Impact Stats
+  async getImpactStats() {
+    return this.request<any>('/impact/stats');
+  }
+
+  // Search
+  async search(query: string) {
+    return this.request<any>(`/search?q=${encodeURIComponent(query)}`);
   }
 
   // Upload
@@ -323,4 +487,3 @@ export const apiClient = new ApiClient(API_BASE_URL);
 
 // Export types
 export type { ApiResponse };
-

@@ -63,7 +63,7 @@ export class ProjectsService {
     return project;
   }
 
-  async vote(projectId: string, userId: string) {
+  async vote(projectId: string, userId: string, voteData?: { location?: string; impactArea?: string }) {
     // Check if already voted
     const existingVote = await this.prisma.vote.findUnique({
       where: {
@@ -78,19 +78,35 @@ export class ProjectsService {
       throw new BadRequestException('You have already voted for this project');
     }
 
-    // Create vote
+    // Get project to determine impact area if not provided
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    // Map category to impact area
+    const impactAreaMap: Record<string, string> = {
+      school: 'SCHOOL',
+      park: 'PARK',
+      mahalla: 'MAHALLA',
+      kindergarten: 'KINDERGARTEN',
+      hospital: 'HOSPITAL',
+      street: 'STREET',
+    };
+
+    const impactArea = voteData?.impactArea || impactAreaMap[project.category.toLowerCase()] || 'OTHER';
+
+    // Create vote with location and impact area
     await this.prisma.vote.create({
       data: {
         userId,
         projectId,
-      },
-    });
-
-    // Update project vote count
-    const project = await this.prisma.project.update({
-      where: { id: projectId },
-      data: {
-        currentVotes: { increment: 1 },
+        location: voteData?.location || project.district,
+        impactArea: impactArea as any,
+        voteDate: new Date(),
       },
     });
 

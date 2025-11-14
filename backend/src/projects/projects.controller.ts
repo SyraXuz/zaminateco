@@ -2,6 +2,7 @@ import { Controller, Get, Post, Param, Body, Query, UseGuards, Request } from '@
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { VoteDto } from './dto/vote.dto';
 
 @ApiTags('projects')
 @Controller('projects')
@@ -33,8 +34,8 @@ export class ProjectsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cast or change vote for a project' })
-  async vote(@Param('id') id: string, @Request() req) {
-    return this.projectsService.vote(id, req.user.userId);
+  async vote(@Param('id') id: string, @Request() req, @Body() voteDto?: VoteDto) {
+    return this.projectsService.vote(id, req.user.userId, voteDto);
   }
 
   @Post(':id/donate')

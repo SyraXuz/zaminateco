@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/hooks/useAuth';
+import { apiClient } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { 
   Settings, 
@@ -161,6 +163,7 @@ const benefitItemVariants = {
 const Profile: React.FC = () => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   
   // Load user progress from localStorage or use default
   const [userProgress, setUserProgress] = useState<UserProgress>(() => loadUserProgress());
@@ -172,12 +175,37 @@ const Profile: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(false);
   const touchHandledRef = useRef(false);
+  const [loading, setLoading] = useState(true);
 
-  // Update user progress when component mounts
+  // Load user data from backend if authenticated
   useEffect(() => {
-    const savedProgress = loadUserProgress();
-    setUserProgress(savedProgress);
-  }, []);
+    const loadUserData = async () => {
+      if (isAuthenticated && user) {
+        try {
+          const userData = await apiClient.getUserProfile();
+          // Merge backend data with local progress
+          if (userData?.profile) {
+            setUserProgress(prev => ({
+              ...prev,
+              name: `${userData.firstName} ${userData.lastName}`,
+              ecoPoints: userData.profile.ecoPoints || prev.ecoPoints,
+              ecoCoins: userData.profile.ecoCoins || prev.ecoCoins,
+              level: userData.profile.level || prev.level,
+              avatar: userData.avatar || prev.activeAvatar,
+            }));
+          }
+        } catch (error) {
+          console.error('Failed to load user data:', error);
+          // Fall back to localStorage data
+        }
+      }
+      setLoading(false);
+    };
+
+    if (!authLoading) {
+      loadUserData();
+    }
+  }, [isAuthenticated, user, authLoading]);
 
   // Calculate level progress
   const { progress: levelProgress, pointsToNext } = calcLevelProgress(userProgress.ecoPoints, userProgress.level);
@@ -399,13 +427,13 @@ const Profile: React.FC = () => {
             <div className={cn(isMobile ? "space-y-1.5" : "space-y-2")}>
               <div className={cn("flex items-center justify-between", isMobile ? "text-[10px]" : "text-xs")}>
                 <span className="text-gray-500">{t('progress')}</span>
-                <span className={isAvailable ? 'text-green-600' : 'text-orange-600'}>
-                  {userProgress.ecoCoins}/{reward.coins} 🪙
+                <span className={cn("flex items-center gap-1", isAvailable ? 'text-green-600' : 'text-orange-600')}>
+                  {userProgress.ecoCoins}/{reward.coins} <img src="/images/eco coins.png" alt="eco coins" className={cn("inline-block", isMobile ? "h-3 w-3" : "h-4 w-4")} />
                 </span>
               </div>
               <Progress value={progress} className={cn(isMobile ? "h-1.5" : "h-2")} />
-              <div className={cn("font-bold text-green-600", isMobile ? "text-xs" : "text-sm")}>
-                {reward.coins} 🪙
+              <div className={cn("font-bold text-green-600 flex items-center gap-1", isMobile ? "text-xs" : "text-sm")}>
+                {reward.coins} <img src="/images/eco coins.png" alt="eco coins" className={cn("inline-block", isMobile ? "h-3 w-3" : "h-4 w-4")} />
               </div>
               <Button 
                 className={cn(
@@ -490,8 +518,8 @@ const Profile: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500 font-medium">{t('required')}:</span>
-                <span className={`font-bold ${isAvailable ? 'text-green-600' : 'text-red-500'}`}>
-                  {offer.minCoins} 🪙
+                <span className={cn("font-bold flex items-center gap-1", isAvailable ? 'text-green-600' : 'text-red-500')}>
+                  {offer.minCoins} <img src="/images/eco coins.png" alt="eco coins" className="h-4 w-4 inline-block" />
                 </span>
               </div>
               
@@ -512,7 +540,7 @@ const Profile: React.FC = () => {
                   ) : (
                     <>
                       <Coins className="h-4 w-4 mr-2" />
-                      {t('need')} {offer.minCoins - userProgress.ecoCoins} {t('more')} 🪙
+                      {t('need')} {offer.minCoins - userProgress.ecoCoins} {t('more')} <img src="/images/eco coins.png" alt="eco coins" className="h-4 w-4 inline-block ml-1" />
                     </>
                   )}
                 </Button>
@@ -612,7 +640,7 @@ const Profile: React.FC = () => {
     <div className="grid grid-cols-2 gap-4">
       <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
         <CardContent className="p-4 text-center">
-          <img src="/images/ECOBUSSTOP.png" alt="" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
+          <img src="/images/ECOBUSSTOP.png" alt="Eco Bus Stop" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
           <div className="text-lg font-bold text-green-600">{userProgress.wasteCollected}kg</div>
           <div className="text-xs text-green-600">{t('wasteCollected', { ns: 'profile' })}</div>
         </CardContent>
@@ -620,7 +648,7 @@ const Profile: React.FC = () => {
       
       <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
         <CardContent className="p-4 text-center">
-          <img src="/images/plant-a-tree_6675353.png" alt="" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
+          <img src="/images/plant-a-tree_6675353.png" alt="Plant a Tree" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
           <div className="text-lg font-bold text-blue-600">{userProgress.treesPlanted}</div>
           <div className="text-xs text-blue-600">{t('treesPlanted', { ns: 'profile' })}</div>
         </CardContent>
@@ -628,7 +656,7 @@ const Profile: React.FC = () => {
       
       <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
         <CardContent className="p-4 text-center">
-          <img src="/images/community_16119903.png" alt="" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
+          <img src="/images/community_16119903.png" alt="Community" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
           <div className="text-lg font-bold text-purple-600">{userProgress.eventsAttended}</div>
           <div className="text-xs text-purple-600">{t('eventsAttended', { ns: 'profile' })}</div>
         </CardContent>
@@ -636,7 +664,7 @@ const Profile: React.FC = () => {
       
       <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
         <CardContent className="p-4 text-center">
-          <img src="/images/meet-the-team_15916616.png" alt="" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
+          <img src="/images/meet-the-team_15916616.png" alt="Meet the Team" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
           <div className="text-lg font-bold text-orange-600">{userProgress.referrals}</div>
           <div className="text-xs text-orange-600">{t('friendsReferred', { ns: 'profile' })}</div>
         </CardContent>
@@ -658,7 +686,9 @@ const Profile: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">50</div>
-              <div className="text-sm text-gray-600">🪙 {t('perReferral')}</div>
+              <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                <img src="/images/eco coins.png" alt="eco coins" className="h-4 w-4 inline-block" /> {t('perReferral')}
+              </div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{userProgress.referrals * 50}</div>
@@ -1544,7 +1574,7 @@ const Profile: React.FC = () => {
                               className="text-sm text-gray-600 flex items-center space-x-2"
                               whileHover={{ scale: 1.05 }}
                             >
-                              <span className="text-lg">🪙</span>
+                              <img src="/images/eco coins.png" alt="eco coins" className="h-5 w-5 inline-block" />
                               <span>{userProgress.ecoCoins}</span>
                             </motion.div>
                           </CardTitle>
@@ -1608,10 +1638,8 @@ const Profile: React.FC = () => {
                                   </div>
                                 </div>
                                 <div className="flex items-center space-x-2 flex-shrink-0">
-                                  <div className={`font-semibold text-sm sm:text-base ${
-                                    transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
-                                  }`}>
-                                    {transaction.amount > 0 ? '+' : ''}{transaction.amount} 🪙
+                                  <div className={cn("font-semibold text-sm sm:text-base flex items-center gap-1", transaction.amount > 0 ? 'text-green-600' : 'text-red-600')}>
+                                    {transaction.amount > 0 ? '+' : ''}{transaction.amount} <img src="/images/eco coins.png" alt="eco coins" className="h-4 w-4 inline-block" />
                                   </div>
                                   <ChevronRight className="h-4 w-4 text-gray-400" />
                                 </div>
@@ -1642,8 +1670,8 @@ const Profile: React.FC = () => {
                               <Badge className="bg-blue-100 text-blue-700 text-xs">
                                 {PARTNER_OFFERS.filter(offer => userProgress.ecoCoins >= offer.minCoins).length} {t('available')}
                               </Badge>
-                              <div className="flex items-center text-sm text-gray-600">
-                                <span className="text-lg mr-1">🪙</span>
+                              <div className="flex items-center text-sm text-gray-600 gap-1">
+                                <img src="/images/eco coins.png" alt="eco coins" className="h-5 w-5 inline-block" />
                                 {userProgress.ecoCoins}
                               </div>
                             </div>

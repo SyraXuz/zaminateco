@@ -1,4 +1,5 @@
 import { Wallet, Coins, Gift, Star, TrendingUp, ShoppingBag, CircleDollarSign, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { toast } from 'sonner';
 
 export default function EcoWallet() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const transactions = [
     { id: '1', type: 'earn', amount: 50, description: 'Plastic collection at Central Park', time: '2 hours ago' },
@@ -129,7 +131,7 @@ export default function EcoWallet() {
                     variant="outline" 
                     className="w-full"
                     onClick={() => {
-                      window.location.href = '/partners';
+                      navigate('/partners');
                     }}
                   >
                     {t('viewOffers')}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Layout from '@/components/Layout';
 import { Badge } from "@/components/ui/badge";
@@ -161,6 +162,7 @@ const PartnerCard = ({ partner, isMobile }: { partner: any; isMobile: boolean })
 const Partners = () => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   // Safe translation helper with fallbacks
   const safeTranslate = (key: string, defaultValue: string, ns?: string) => {
@@ -574,7 +576,7 @@ const Partners = () => {
                   style={{ touchAction: 'manipulation' }}
                   onClick={() => {
                     // Navigate to actions page to start collecting eco coins
-                    window.location.href = '/actions';
+                    navigate('/actions');
                   }}
                 >
                   <Coins className={cn("mr-1", isMobile ? "h-3 w-3" : "h-4 w-4")} />

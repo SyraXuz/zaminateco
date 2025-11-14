@@ -33,9 +33,10 @@ import { Progress } from '../components/ui/progress';
 import { votingProjects } from '../lib/mockData';
 import { useTranslation } from '../hooks/useTranslation';
 import { getIconForProductOrCategory } from '../lib/iconMatcher';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import DonationDialog from '../components/DonationDialog';
+import { apiClient } from '../lib/api-client';
 
 // Types for completed projects
 interface TimelineItem {
@@ -147,6 +148,47 @@ function EcoVote() {
   const [isPlaying, setIsPlaying] = useState({});
   const [donationDialogOpen, setDonationDialogOpen] = useState(false);
   const [selectedProjectForDonation, setSelectedProjectForDonation] = useState<VotingProject | null>(null);
+  const [projects, setProjects] = useState<VotingProject[]>(votingProjects);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch projects from backend
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const status = activeTab === 'active' ? 'ACTIVE' : 'COMPLETED';
+        const backendProjects = await apiClient.getProjects(status, 'votes');
+        
+        if (backendProjects && Array.isArray(backendProjects) && backendProjects.length > 0) {
+          // Transform backend data to match frontend format
+          const transformedProjects: VotingProject[] = backendProjects.map((p: any) => ({
+            id: p.id,
+            title: p.title,
+            description: p.description,
+            image: p.imageUrl || '🏫',
+            location: p.district || p.location || '',
+            category: p.category || 'general',
+            status: p.status?.toLowerCase() || 'active',
+            currentVotes: p.voteCount || 0,
+            totalVotes: p.targetVotes || 1000,
+            deadline: p.endDate ? new Date(p.endDate) : new Date(),
+            requiredMaterials: p.materialsRequiredKg || 0,
+            donationTarget: p.budgetRequired || 0,
+            donationRaised: p.fundsRaised || 0,
+          }));
+          setProjects(transformedProjects);
+        }
+      } catch (error) {
+        // Fallback to mock data if backend is unavailable
+        console.warn('Failed to fetch projects from backend, using mock data:', error);
+        setProjects(votingProjects);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [activeTab]);
 
   const formatCurrency = (amount: number) => {
     return `${(amount / 1000000).toFixed(1)}M ${t('currency')}`;
@@ -218,7 +260,7 @@ function EcoVote() {
 
   // Get projects with dynamically matched icons
   const projectsWithIcons = useMemo(() => {
-    return votingProjects.map(project => {
+    return projects.map(project => {
       const projectTitle = getTranslatedTitle(project);
       const projectCategory = project.category;
       
@@ -259,10 +301,6 @@ function EcoVote() {
 
   // Translate voting projects with icons
   const translatedProjects = projectsWithIcons.map(project => {
-    // Debug: Log iconPath for project ID 1
-    if (project.id === '1') {
-      // Icon path set for playground project
-    }
     return {
       ...project,
       iconPath: project.iconPath, // Explicitly preserve iconPath
@@ -386,7 +424,7 @@ function EcoVote() {
                   whileTap={{ scale: 0.95 }}
                   animate={isAnimating ? { rotateY: 180 } : { rotateY: 0 }}
                 >
-                  <img src={project.gallery[currentImageIndex]} alt="" className="w-full h-full object-contain" loading="lazy" />
+                  <img src={project.gallery[currentImageIndex]} alt={project.title} className="w-full h-full object-contain" loading="lazy" />
                 </motion.div>
                 
                 {/* Image counter */}
@@ -782,9 +820,34 @@ function EcoVote() {
                           >
                             <Button 
                               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 sm:py-3 shadow-lg hover:shadow-xl transition-all duration-300 text-sm"
-                              onClick={() => {
-                                setSelectedProject(project);
-                                toast.success(t('voteRecorded', { defaultValue: 'Your vote has been recorded!' }));
+                              onClick={async () => {
+                                try {
+                                  await apiClient.voteForProject(project.id);
+                                  toast.success(t('voteRecorded', { defaultValue: 'Your vote has been recorded!' }));
+                                  // Refresh projects to get updated vote count
+                                  const status = activeTab === 'active' ? 'ACTIVE' : 'COMPLETED';
+                                  const updatedProjects = await apiClient.getProjects(status, 'votes');
+                                  if (updatedProjects && Array.isArray(updatedProjects) && updatedProjects.length > 0) {
+                                    const transformedProjects: VotingProject[] = updatedProjects.map((p: any) => ({
+                                      id: p.id,
+                                      title: p.title,
+                                      description: p.description,
+                                      image: p.imageUrl || '🏫',
+                                      location: p.district || p.location || '',
+                                      category: p.category || 'general',
+                                      status: p.status?.toLowerCase() || 'active',
+                                      currentVotes: p.voteCount || 0,
+                                      totalVotes: p.targetVotes || 1000,
+                                      deadline: p.endDate ? new Date(p.endDate) : new Date(),
+                                      requiredMaterials: p.materialsRequiredKg || 0,
+                                      donationTarget: p.budgetRequired || 0,
+                                      donationRaised: p.fundsRaised || 0,
+                                    }));
+                                    setProjects(transformedProjects);
+                                  }
+                                } catch (error: any) {
+                                  toast.error(error.message || t('voteError') || 'Failed to submit vote');
+                                }
                               }}
                             >
                               <Vote className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />

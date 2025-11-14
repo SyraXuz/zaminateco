@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { EnhancedAvatar } from './enhanced-avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PROFILE_BACKGROUNDS, ThemeBackground, loadUserProgress, saveUserProgress, UserProgress } from '@/lib/userProgress';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface EnhancedAvatarSystemProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
   const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
   const isMobile = useIsMobile();
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const { t } = useTranslation();
 
   // Track viewport size for responsive modal sizing - Deferred for performance
   useEffect(() => {
@@ -113,34 +115,34 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
   // Completely flat data - no nested objects
   const avatarEmojis = ['👩‍🌾', '🌱', '🌿', '🌳', '♻️', '🌍', '💧', '☀️', '⚡', '🔥', '🌟', '🔮', '🦋'];
   const avatarImages = ['/images/Eco Farmer.png', '/images/Green Sprout.png', '/images/Leaf Guardian.png', '/images/Tree Protector.png', '/images/Recycling Hero.png', '/images/Earth Guardian.png', '/images/Water Saver.png', '/images/Solar Champion.png', '/images/Energy Saver.png', '/images/Climate Warrior.png', '/images/Eco Star.png', '/images/Future Visionary.png', '/images/Nature Lover.png'];
-  const avatarNames = ['Eco Farmer', 'Green Sprout', 'Leaf Guardian', 'Tree Protector', 'Recycling Hero', 'Earth Guardian', 'Water Saver', 'Solar Champion', 'Energy Saver', 'Climate Warrior', 'Eco Star', 'Future Visionary', 'Nature Lover'];
-  const avatarDescs = ['Your sustainability journey begins', 'New growth, fresh starts', 'Protector of nature', 'Guardian of the forest', 'Master of waste transformation', 'Protector of our planet', 'Champion of water conservation', 'Advocate for renewable energy', 'Master of energy efficiency', 'Leader in climate action', 'Ultimate environmental champion', 'Pioneer of sustainability innovation', 'Guardian of biodiversity'];
+  const avatarNameKeys = ['avatarEcoFarmer', 'avatarGreenSprout', 'avatarLeafGuardian', 'avatarTreeProtector', 'avatarRecyclingHero', 'avatarEarthGuardian', 'avatarWaterSaver', 'avatarSolarChampion', 'avatarEnergySaver', 'avatarClimateWarrior', 'avatarEcoStar', 'avatarFutureVisionary', 'avatarNatureLover'];
+  const avatarDescKeys = ['avatarDescEcoFarmer', 'avatarDescGreenSprout', 'avatarDescLeafGuardian', 'avatarDescTreeProtector', 'avatarDescRecyclingHero', 'avatarDescEarthGuardian', 'avatarDescWaterSaver', 'avatarDescSolarChampion', 'avatarDescEnergySaver', 'avatarDescClimateWarrior', 'avatarDescEcoStar', 'avatarDescFutureVisionary', 'avatarDescNatureLover'];
   const avatarRarities = ['common', 'common', 'common', 'rare', 'rare', 'rare', 'epic', 'epic', 'epic', 'epic', 'legendary', 'legendary', 'legendary'];
   const avatarUnlocked = [true, true, true, true, true, true, true, true, false, false, false, false, false];
   const avatarTasks = ['', '', '', '', '', '', '', '', 'energy_master', 'climate_action', 'eco_champion', 'innovation_leader', 'biodiversity_protector'];
 
-  const taskTitles = {
-    'energy_master': 'Energy Master Challenge',
-    'climate_action': 'Climate Action Hero',
-    'eco_champion': 'Ultimate Eco Champion',
-    'innovation_leader': 'Sustainability Innovation Leader',
-    'biodiversity_protector': 'Biodiversity Protection Champion'
+  const taskTitleKeys = {
+    'energy_master': 'taskEnergyMaster',
+    'climate_action': 'taskClimateAction',
+    'eco_champion': 'taskEcoChampion',
+    'innovation_leader': 'taskInnovationLeader',
+    'biodiversity_protector': 'taskBiodiversityProtector'
   };
 
-  const taskDescs = {
-    'energy_master': 'Become a master of energy efficiency and unlock the Energy Saver avatar!',
-    'climate_action': 'Lead the fight against climate change!',
-    'eco_champion': 'Prove yourself as the ultimate environmental champion!',
-    'innovation_leader': 'Pioneer new ways to protect our planet!',
-    'biodiversity_protector': 'Become a guardian of nature\'s diversity!'
+  const taskDescKeys = {
+    'energy_master': 'taskDescEnergyMaster',
+    'climate_action': 'taskDescClimateAction',
+    'eco_champion': 'taskDescEcoChampion',
+    'innovation_leader': 'taskDescInnovationLeader',
+    'biodiversity_protector': 'taskDescBiodiversityProtector'
   };
 
-  const taskRewards = {
-    'energy_master': 'Energy Saver Avatar + 500 EcoPoints',
-    'climate_action': 'Climate Warrior Avatar + 750 EcoPoints',
-    'eco_champion': 'Eco Star Avatar + 1000 EcoPoints + Special Badge',
-    'innovation_leader': 'Future Visionary Avatar + 1200 EcoPoints + Innovation Badge',
-    'biodiversity_protector': 'Nature Lover Avatar + 1500 EcoPoints + Conservation Badge'
+  const taskRewardKeys = {
+    'energy_master': 'taskRewardEnergyMaster',
+    'climate_action': 'taskRewardClimateAction',
+    'eco_champion': 'taskRewardEcoChampion',
+    'innovation_leader': 'taskRewardInnovationLeader',
+    'biodiversity_protector': 'taskRewardBiodiversityProtector'
   };
 
   const taskReqs = {
@@ -205,10 +207,52 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
 
   if (!isOpen) return null;
 
+  // Helper function to get translated theme name
+  const getThemeName = (themeId: string): string => {
+    const themeNameKeys: Record<string, string> = {
+      'default': 'themeDefaultGradient',
+      'forest_gradient': 'themeForestHarmony',
+      'solar_energy': 'themeSolarPower',
+      'cosmic_nature': 'themeCosmicNature',
+      'biodiversity_garden': 'themeBiodiversityGarden',
+      'future_tech': 'themeFutureTechnology',
+      'iridescent_emerald': 'themeIridescentEmerald',
+      'aurora_borealis': 'themeAuroraBorealis',
+      'ocean_depths': 'themeOceanDepths',
+      'sunset_blaze': 'themeSunsetBlaze',
+      'neon_eco': 'themeNeonEco',
+      'pastel_dream': 'themePastelDream',
+      'prismatic_flow': 'themePrismaticFlow',
+      'moonlight_forest': 'themeMoonlightForest'
+    };
+    return t(themeNameKeys[themeId] || 'all');
+  };
+
+  // Helper function to get translated theme description
+  const getThemeDescription = (themeId: string): string => {
+    const themeDescKeys: Record<string, string> = {
+      'default': 'themeDescDefaultGradient',
+      'forest_gradient': 'themeDescForestHarmony',
+      'solar_energy': 'themeDescSolarPower',
+      'cosmic_nature': 'themeDescCosmicNature',
+      'biodiversity_garden': 'themeDescBiodiversityGarden',
+      'future_tech': 'themeDescFutureTechnology',
+      'iridescent_emerald': 'themeDescIridescentEmerald',
+      'aurora_borealis': 'themeDescAuroraBorealis',
+      'ocean_depths': 'themeDescOceanDepths',
+      'sunset_blaze': 'themeDescSunsetBlaze',
+      'neon_eco': 'themeDescNeonEco',
+      'pastel_dream': 'themeDescPastelDream',
+      'prismatic_flow': 'themeDescPrismaticFlow',
+      'moonlight_forest': 'themeDescMoonlightForest'
+    };
+    return t(themeDescKeys[themeId] || '');
+  };
+
   const unlockedCount = avatarUnlocked.filter(Boolean).length;
   const selectedName = activeTab === 'themes' 
-    ? (selectedTheme ? (PROFILE_BACKGROUNDS[selectedTheme]?.name || 'None') : 'None')
-    : (currentSelection ? (avatarNames[avatarEmojis.indexOf(currentSelection)] || 'None') : 'None');
+    ? (selectedTheme ? getThemeName(selectedTheme) : t('all'))
+    : (currentSelection ? t(avatarNameKeys[avatarEmojis.indexOf(currentSelection)] || 'all') : t('all'));
 
   return (
     <>
@@ -287,7 +331,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                   "font-bold text-gray-900 truncate flex-1 min-w-0",
                   isMobile ? "text-sm" : "text-xl sm:text-2xl"
                   )}>
-                  🎭 {isMobile ? "Avatars" : "Avatar & Achievement System"}
+                  🎭 {isMobile ? t('avatars') : t('avatarAchievementSystem')}
                   </h2>
                 <Button
                   variant="ghost"
@@ -325,7 +369,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     isMobile ? "text-xs px-1.5 py-0.5 h-6" : "text-xs sm:text-sm px-2 sm:px-3"
                   )}
                 >
-                  <span>{isMobile ? "🎭" : "🎭 Avatars"}</span>
+                  <span>{isMobile ? "🎭" : `🎭 ${t('avatars')}`}</span>
                 </Button>
                 <Button
                   variant={activeTab === 'quests' ? 'default' : 'ghost'}
@@ -336,7 +380,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     isMobile ? "text-xs px-1.5 py-0.5 h-6" : "text-xs sm:text-sm px-2 sm:px-3"
                   )}
                 >
-                  <span>{isMobile ? "⚔️" : "⚔️ Quests"}</span>
+                  <span>{isMobile ? "⚔️" : `⚔️ ${t('quests')}`}</span>
                 </Button>
                 <Button
                   variant={activeTab === 'frames' ? 'default' : 'ghost'}
@@ -347,7 +391,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     isMobile ? "text-xs px-1.5 py-0.5 h-6" : "text-xs sm:text-sm px-2 sm:px-3"
                   )}
                 >
-                  <span>{isMobile ? "🖼️" : "🖼️ Frames"}</span>
+                  <span>{isMobile ? "🖼️" : `🖼️ ${t('frames')}`}</span>
                 </Button>
                 <Button
                   variant={activeTab === 'themes' ? 'default' : 'ghost'}
@@ -358,7 +402,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     isMobile ? "text-xs px-1.5 py-0.5 h-6" : "text-xs sm:text-sm px-2 sm:px-3"
                   )}
                 >
-                  <span>{isMobile ? "🎨" : "🎨 Themes"}</span>
+                  <span>{isMobile ? "🎨" : `🎨 ${t('themes')}`}</span>
                 </Button>
               </div>
             </div>
@@ -367,7 +411,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
             {!isMobile && (
               <div className="border-b border-gray-200 bg-white px-4 py-2 flex items-center justify-between flex-shrink-0">
                 <div className="text-xs sm:text-sm text-gray-600">
-                  <span>Selected: <strong>{selectedName}</strong></span>
+                  <span>{t('selected')}: <strong>{selectedName}</strong></span>
                 </div>
                 <div className="flex gap-2">
                   <Button 
@@ -375,7 +419,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     size="sm"
                     onClick={onClose}
                   >
-                    Cancel
+                    {t('cancel')}
                   </Button>
                   <Button 
                     size="sm"
@@ -383,7 +427,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     onClick={handleConfirm}
                     disabled={activeTab === 'themes' ? !selectedTheme : !currentSelection}
                   >
-                    Confirm Selection
+                    {t('confirmSelection')}
                   </Button>
                 </div>
               </div>
@@ -424,9 +468,9 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
               {activeTab === 'avatars' && (
                 <div className="space-y-3" style={{ contain: 'layout style paint' }}>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-6 gap-2">
-                    <h3 className="text-sm sm:text-lg font-semibold">Avatar Collection</h3>
+                    <h3 className="text-sm sm:text-lg font-semibold">{t('avatarCollection')}</h3>
                     <Badge variant="outline" className="text-xs self-start sm:self-auto">
-                      {unlockedCount}/{avatarEmojis.length} unlocked
+                      {unlockedCount}/{avatarEmojis.length} {t('unlocked')}
                     </Badge>
                   </div>
 
@@ -444,8 +488,8 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     }}
                   >
                     {avatarEmojis.map((emoji, index) => {
-                      const name = avatarNames[index];
-                      const description = avatarDescs[index];
+                      const name = t(avatarNameKeys[index]);
+                      const description = t(avatarDescKeys[index]);
                       const rarity = avatarRarities[index];
                       const unlocked = avatarUnlocked[index];
                       const isSelected = currentSelection === emoji;
@@ -541,7 +585,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                                   variant="outline" 
                                   className={cn('text-xs mb-1', rarityBadgeStyles)}
                                 >
-                                  {rarity}
+                                  {t(rarity)}
                                 </Badge>
                                 {!isMobile && (
                                   <p className="text-xs text-gray-600 leading-tight px-1 line-clamp-2">
@@ -555,12 +599,12 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                                 {unlocked ? (
                                   <div className="flex items-center text-green-600 text-xs">
                                     <CheckCircle className="h-2 w-2 mr-1" />
-                                    <span className={isMobile ? "text-xs" : ""}>Available</span>
+                                    <span className={isMobile ? "text-xs" : ""}>{t('available')}</span>
                                   </div>
                                 ) : (
                                   <div className="flex items-center text-orange-600 text-xs">
                                     <Unlock className="h-2 w-2 mr-1" />
-                                    <span className={isMobile ? "text-xs" : ""}>Unlock</span>
+                                    <span className={isMobile ? "text-xs" : ""}>{t('unlock')}</span>
                                   </div>
                                 )}
                               </div>
@@ -577,7 +621,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
               {activeTab === 'quests' && (
                 <div className="text-center py-6 sm:py-12">
                   <p className="text-gray-500 text-sm sm:text-base">
-                    ⚔️ Quest system coming soon!
+                    ⚔️ {t('questSystemComingSoon')}
                   </p>
                 </div>
               )}
@@ -586,7 +630,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
               {activeTab === 'frames' && (
                 <div className="text-center py-6 sm:py-12">
                   <p className="text-gray-500 text-sm sm:text-base">
-                    🖼️ Avatar frames coming soon!
+                    🖼️ {t('avatarFramesComingSoon')}
                   </p>
                 </div>
               )}
@@ -598,16 +642,16 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                     <div>
                       <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
-                        🎨 Profile Themes
+                        🎨 {t('profileThemes')}
                       </h3>
                       <p className="text-xs sm:text-sm text-gray-600">
-                        Customize your profile badge background with iridescent gradients
+                        {t('customizeProfileBadge')}
                       </p>
                     </div>
                     {selectedTheme && (
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
-                          {PROFILE_BACKGROUNDS[selectedTheme]?.name || 'Default'}
+                          {getThemeName(selectedTheme)}
                         </Badge>
                         <Button
                           size="sm"
@@ -626,7 +670,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                           className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
                         >
                           <Save className="h-3 w-3 mr-1" />
-                          Save
+                          {t('save')}
                         </Button>
                       </div>
                     )}
@@ -653,7 +697,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                           onClick={() => setThemeCategory(cat)}
                           className="text-xs whitespace-nowrap"
                         >
-                          {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                          {cat === 'all' ? t('all') : t(`category${cat.charAt(0).toUpperCase() + cat.slice(1)}`)}
                         </Button>
                       ))}
                     </div>
@@ -667,7 +711,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                       className="mb-6"
                     >
                       <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                        <p className="text-xs font-semibold text-gray-700 mb-3">Live Preview</p>
+                        <p className="text-xs font-semibold text-gray-700 mb-3">{t('livePreview')}</p>
                         <div 
                           className="relative h-32 sm:h-40 rounded-lg overflow-hidden shadow-lg"
                           style={{
@@ -764,7 +808,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                           </div>
                         </div>
                         <p className="text-xs text-gray-600 mt-2 text-center">
-                          {PROFILE_BACKGROUNDS[selectedTheme]?.description}
+                          {getThemeDescription(selectedTheme)}
                         </p>
                       </div>
                     </motion.div>
@@ -904,7 +948,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                                     variant="outline" 
                                     className="text-xs bg-white/80 backdrop-blur-sm border-white/50"
                                   >
-                                    {theme.category}
+                                    {t(`category${theme.category.charAt(0).toUpperCase() + theme.category.slice(1)}`)}
                                   </Badge>
                                 </div>
                               </div>
@@ -912,10 +956,10 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                               {/* Theme Info */}
                               <div className="p-3 bg-white">
                                 <h4 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-1">
-                                  {theme.name}
+                                  {getThemeName(themeId)}
                                 </h4>
                                 <p className="text-xs text-gray-600 line-clamp-2">
-                                  {theme.description}
+                                  {getThemeDescription(themeId)}
                                 </p>
                                 {theme.animation && theme.animation !== 'none' && (
                                   <div className="mt-2 flex items-center gap-1">
@@ -945,14 +989,14 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     onClick={onClose}
                     className="flex-1 h-10 text-sm font-medium border-2"
                   >
-                    Cancel
+                    {t('cancel')}
                   </Button>
                   <Button 
                     className="flex-1 h-10 text-sm font-semibold bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 shadow-lg"
                     onClick={handleConfirm}
                     disabled={activeTab === 'themes' ? !selectedTheme : !currentSelection}
                   >
-                    Confirm
+                    {t('confirm')}
                   </Button>
                 </div>
               </div>
@@ -1008,7 +1052,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
               <div className="p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900">
-                    {taskTitles[selectedTaskId]}
+                    {t(taskTitleKeys[selectedTaskId])}
                   </h3>
                   <Button
                     variant="ghost"
@@ -1024,7 +1068,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                   taskDiffs[selectedTaskId] === 'hard' ? 'bg-red-100 text-red-800 border-red-300' :
                   'bg-yellow-100 text-yellow-800 border-yellow-300'
                 )}>
-                  {taskDiffs[selectedTaskId].charAt(0).toUpperCase() + taskDiffs[selectedTaskId].slice(1)} Challenge
+                  {t(taskDiffs[selectedTaskId])} {t('challenge')}
                 </Badge>
               </div>
               
@@ -1046,12 +1090,12 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                 onWheel={(e) => e.stopPropagation()}
               >
                 <p className="text-sm sm:text-base text-gray-600 mb-4 leading-relaxed">
-                  {taskDescs[selectedTaskId]}
+                  {t(taskDescKeys[selectedTaskId])}
                 </p>
                 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-900 mb-2">Requirements:</h4>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-2">{t('requirements')}:</h4>
                     <ul className="space-y-2">
                       {taskReqs[selectedTaskId] && taskReqs[selectedTaskId].map((req, index) => (
                         <li key={`req-${index}`} className="flex items-start text-sm text-gray-600">
@@ -1063,8 +1107,8 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                   </div>
                   
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <h4 className="text-sm font-semibold text-green-900 mb-1">Reward:</h4>
-                    <p className="text-sm text-green-700">{taskRewards[selectedTaskId]}</p>
+                    <h4 className="text-sm font-semibold text-green-900 mb-1">{t('reward')}:</h4>
+                    <p className="text-sm text-green-700">{t(taskRewardKeys[selectedTaskId])}</p>
                   </div>
                 </div>
               </div>
@@ -1081,14 +1125,14 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                       <Button
                         className="w-full h-10 text-sm font-semibold bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 active:scale-95 transition-all duration-200"
                       >
-                        Start Challenge
+                        {t('startChallenge')}
                       </Button>
                       <Button
                         variant="outline"
                         onClick={handleCloseTask}
                         className="w-full h-10 text-sm font-medium border-2 active:scale-95 transition-all duration-200"
                       >
-                        Close
+                        {t('close')}
                       </Button>
                     </>
                   ) : (
@@ -1098,12 +1142,12 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                         onClick={handleCloseTask}
                         className="flex-1 order-2 sm:order-1"
                       >
-                        Close
+                        {t('close')}
                       </Button>
                       <Button
                         className="flex-1 order-1 sm:order-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
                       >
-                        Start Challenge
+                        {t('startChallenge')}
                       </Button>
                     </>
                   )}

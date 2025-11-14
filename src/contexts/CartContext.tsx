@@ -7,12 +7,15 @@ export interface CartItem {
   price: string;
   image: string;
   quantity: number;
+  description?: string;
 }
 
 interface CartContextType {
   cart: CartItem[];
   cartCount: number;
-  addToCart: (product: { id: number; productName: string; price: string; image: string }) => void;
+  isCartOpen: boolean;
+  setIsCartOpen: (open: boolean) => void;
+  addToCart: (product: { id: number; productName: string; price: string; image: string; description?: string }) => void;
   removeFromCart: (productId: number) => void;
   updateQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
@@ -49,6 +52,7 @@ const saveCart = (cart: CartItem[]) => {
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>(loadCart);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Calculate cart count
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -71,7 +75,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   // Add item to cart
-  const addToCart = (product: { id: number; productName: string; price: string; image: string }) => {
+  const addToCart = (product: { id: number; productName: string; price: string; image: string; description?: string }) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
       
@@ -91,11 +95,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             price: product.price,
             image: product.image,
             quantity: 1,
+            description: product.description,
           },
         ];
       }
       
       saveCart(newCart);
+      setIsCartOpen(true); // Open cart when item is added
       return newCart;
     });
   };
@@ -145,6 +151,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const value: CartContextType = {
     cart,
     cartCount,
+    isCartOpen,
+    setIsCartOpen,
     addToCart,
     removeFromCart,
     updateQuantity,

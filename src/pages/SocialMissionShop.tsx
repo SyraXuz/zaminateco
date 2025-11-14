@@ -11,6 +11,8 @@ import { getIconForProductOrCategory } from '../lib/iconMatcher';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
+import CartSidebar from '../components/CartSidebar';
+import FloatingCartIcon from '../components/FloatingCartIcon';
 
 // Sample product data with translation keys
 // IMPORTANT: englishName is used for icon matching to ensure consistency across languages
@@ -383,8 +385,14 @@ export default function SocialMissionShop() {
                             window.open(`mailto:sukhrobjonrikhsiboev@gmail.com?subject=${encodeURIComponent(t('buttons.contactUs', { ns: 'shop' }))} - ${product.productName}&body=${encodeURIComponent(t('inquiryAboutProduct', { defaultValue: 'I am interested in this product:', ns: 'shop' }))} ${product.productName}`, '_blank');
                             toast.info(t('openingEmail', { defaultValue: 'Opening email client...', ns: 'shop' }));
                           } else {
-                            // Add to cart using context
-                            addToCart(product);
+                            // Add to cart using context with description
+                            addToCart({
+                              id: product.id,
+                              productName: product.productName,
+                              price: product.price,
+                              image: product.iconPath || product.image,
+                              description: t(product.descriptionKey, { ns: 'shop' }),
+                            });
                             toast.success(t('addedToCart', { defaultValue: 'Added to cart!', ns: 'shop' }));
                           }
                         }}
@@ -568,6 +576,8 @@ export default function SocialMissionShop() {
           </Card>
         </div>
       </div>
+      <CartSidebar />
+      <FloatingCartIcon />
     </Layout>
   );
 }

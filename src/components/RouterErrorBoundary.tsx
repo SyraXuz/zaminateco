@@ -3,6 +3,7 @@ import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 interface Props {
   children: ReactNode;
@@ -15,7 +16,7 @@ interface State {
   errorInfo: ErrorInfo | null;
 }
 
-class ErrorBoundary extends Component<Props, State> {
+class RouterErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -34,18 +35,14 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
+      console.error('RouterErrorBoundary caught an error:', error, errorInfo);
     }
 
     this.setState({
       error,
       errorInfo,
     });
-
-    // In production, you might want to log to an error reporting service
-    // Example: logErrorToService(error, errorInfo);
   }
 
   handleReset = () => {
@@ -62,7 +59,7 @@ class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
-      return <ErrorFallback error={this.state.error} onReset={this.handleReset} />;
+      return <RouterErrorFallback error={this.state.error} onReset={this.handleReset} />;
     }
 
     return this.props.children;
@@ -74,13 +71,8 @@ interface ErrorFallbackProps {
   onReset: () => void;
 }
 
-// Simple error fallback (used outside BrowserRouter)
-const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, onReset }) => {
+const RouterErrorFallback: React.FC<ErrorFallbackProps> = ({ error, onReset }) => {
   const { t } = useTranslation('common');
-
-  const handleGoHome = () => {
-    window.location.href = '/';
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-red-50 to-orange-50">
@@ -119,14 +111,15 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, onReset }) => {
               <RefreshCw className="h-4 w-4 mr-2" />
               {t('tryAgain', { defaultValue: 'Try Again' })}
             </Button>
-            <Button
-              variant="outline"
-              className="w-full flex-1"
-              onClick={handleGoHome}
-            >
-              <Home className="h-4 w-4 mr-2" />
-              {t('goHome', { defaultValue: 'Go Home' })}
-            </Button>
+            <Link to="/" className="flex-1">
+              <Button
+                variant="outline"
+                className="w-full"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                {t('goHome', { defaultValue: 'Go Home' })}
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
@@ -134,5 +127,5 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, onReset }) => {
   );
 };
 
-export default ErrorBoundary;
+export default RouterErrorBoundary;
 
