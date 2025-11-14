@@ -31,7 +31,7 @@ All emoji icons have been replaced with PNG images from the `svg` folder. All im
   - Education: `/images/book_649180.png`
   - Planting: `/images/plant-a-tree_6675353.png`
   - Cleanup: `/images/forest_10089053.png`
-  - Recycling: `/images/ECOBUSSTOP.png`
+  - Recycling: `/images/Plastic Recycling.png`
   - Awareness: `/images/community_16119903.png`
   - Waste Audit: `/images/eco_points_7986841.png`
 

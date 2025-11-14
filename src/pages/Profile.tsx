@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 import { 
   Settings, 
   Coins, 
@@ -50,7 +52,9 @@ import {
   Info,
   ChevronUp,
   ChevronDown,
-  Camera
+  Camera,
+  CircleDollarSign,
+  BadgeCheck
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -58,7 +62,11 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import Layout from '@/components/Layout';
+import { toast } from 'sonner';
 import { USER_DATA, calculateLevel, calculateLevelProgress, formatWasteAmount } from '@/lib/userData';
 import { EnhancedAvatar } from '@/components/ui/enhanced-avatar';
 import { EnhancedAvatarSystem } from '@/components/ui/enhanced-avatar-system';
@@ -152,6 +160,7 @@ const benefitItemVariants = {
 
 const Profile: React.FC = () => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   
   // Load user progress from localStorage or use default
   const [userProgress, setUserProgress] = useState<UserProgress>(() => loadUserProgress());
@@ -159,6 +168,9 @@ const Profile: React.FC = () => {
   const [coinsVisible, setCoinsVisible] = useState(true);
   const [levelExpanded, setLevelExpanded] = useState(false);
   const [isAvatarSelectorOpen, setIsAvatarSelectorOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [emailUpdates, setEmailUpdates] = useState(false);
   const touchHandledRef = useRef(false);
 
   // Update user progress when component mounts
@@ -187,13 +199,28 @@ const Profile: React.FC = () => {
     { id: 8, name: t('ecoChampion'), icon: '🌟', unlocked: true, description: t('ecoChampionDesc') }
   ];
 
-  const mockLeaderboard = [
-    { rank: 1, name: 'Aziza Karimova', points: 14400, avatar: '👩‍🌾' },
-    { rank: 2, name: 'Bobur Rahimov', points: 13200, avatar: '👨‍💼' },
-    { rank: 3, name: 'Dilnoza Saidova', points: 12800, avatar: '👩‍🎓' },
-    { rank: 4, name: 'Eldor Tursunov', points: 11900, avatar: '👨‍🔬' },
-    { rank: 5, name: 'Feruza Nazarova', points: 11200, avatar: '👩‍💻' }
+  // Leaderboard with current user at #1 and Uzbek names
+  const leaderboardData = [
+    { 
+      rank: 1, 
+      name: userProgress.name, 
+      points: userProgress.ecoPoints, 
+      avatar: userProgress.activeAvatar,
+      isCurrentUser: true
+    },
+    { rank: 2, name: 'Bobur Rahimov', points: 12400, avatar: '👨‍💼', isCurrentUser: false },
+    { rank: 3, name: 'Dilnoza Saidova', points: 11200, avatar: '👩‍🎓', isCurrentUser: false },
+    { rank: 4, name: 'Eldor Tursunov', points: 10800, avatar: '👨‍🔬', isCurrentUser: false },
+    { rank: 5, name: 'Feruza Nazarova', points: 9900, avatar: '👩‍💻', isCurrentUser: false },
+    { rank: 6, name: 'Gulnora Alimova', points: 9200, avatar: '👩‍🏫', isCurrentUser: false },
+    { rank: 7, name: 'Hasan Yusupov', points: 8800, avatar: '👨‍🌾', isCurrentUser: false },
+    { rank: 8, name: 'Iroda Toshmatova', points: 8500, avatar: '👩‍⚕️', isCurrentUser: false },
+    { rank: 9, name: 'Javohir Mirzayev', points: 8200, avatar: '👨‍🎓', isCurrentUser: false },
+    { rank: 10, name: 'Kamola Rustamova', points: 7900, avatar: '👩‍🎨', isCurrentUser: false }
   ];
+
+  // Keep old mockLeaderboard for backward compatibility
+  const mockLeaderboard = leaderboardData;
 
   const REWARDS_DATA = [
     {
@@ -338,33 +365,53 @@ const Profile: React.FC = () => {
 
     return (
       <motion.div
-        whileHover={{ scale: 1.02, y: -2 }}
+        whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}
         whileTap={{ scale: 0.98 }}
         className="cursor-pointer"
       >
-        <Card className="hover:shadow-lg transition-all duration-300 group h-full border-2 hover:border-green-200">
-          <CardContent className="p-3 sm:p-4 text-center space-y-3">
+        <Card className={cn(
+          "transition-all duration-300 group h-full border-2",
+          isMobile ? "" : "hover:shadow-lg hover:border-green-200"
+        )}>
+          <CardContent className={cn("text-center", isMobile ? "p-2 space-y-2" : "p-3 sm:p-4 space-y-3")}>
             <motion.div 
-              className="inline-block group-hover:scale-110 transition-transform duration-300"
-              whileHover={{ rotate: [0, -10, 10, 0] }}
+              className={cn("inline-block transition-transform duration-300", isMobile ? "" : "group-hover:scale-110")}
+              whileHover={isMobile ? {} : { rotate: [0, -10, 10, 0] }}
             >
-              <img src={reward.image || reward.emoji} alt={reward.title} className="w-10 h-10 sm:w-12 sm:h-12 object-contain" loading="lazy" />
+              <img 
+                src={reward.image || reward.emoji} 
+                alt={reward.title} 
+                className={cn(
+                  "object-contain",
+                  isMobile ? "w-8 h-8" : "w-10 h-10 sm:w-12 sm:h-12"
+                )} 
+                loading="lazy" 
+              />
             </motion.div>
             <div>
-              <h4 className="font-medium text-sm sm:text-base">{reward.title}</h4>
-              <p className="text-xs text-gray-600 mt-1 line-clamp-2">{reward.description}</p>
+              <h4 className={cn("font-medium", isMobile ? "text-xs" : "text-sm sm:text-base")}>
+                {reward.title}
+              </h4>
+              <p className={cn("text-gray-600 mt-1 line-clamp-2", isMobile ? "text-[10px]" : "text-xs")}>
+                {reward.description}
+              </p>
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
+            <div className={cn(isMobile ? "space-y-1.5" : "space-y-2")}>
+              <div className={cn("flex items-center justify-between", isMobile ? "text-[10px]" : "text-xs")}>
                 <span className="text-gray-500">{t('progress')}</span>
                 <span className={isAvailable ? 'text-green-600' : 'text-orange-600'}>
                   {userProgress.ecoCoins}/{reward.coins} 🪙
                 </span>
               </div>
-              <Progress value={progress} className="h-2" />
-              <div className="text-sm font-bold text-green-600">{reward.coins} 🪙</div>
+              <Progress value={progress} className={cn(isMobile ? "h-1.5" : "h-2")} />
+              <div className={cn("font-bold text-green-600", isMobile ? "text-xs" : "text-sm")}>
+                {reward.coins} 🪙
+              </div>
               <Button 
-                className="w-full h-9 text-xs transition-all duration-300" 
+                className={cn(
+                  "w-full transition-all duration-300",
+                  isMobile ? "h-10 text-xs min-h-[44px]" : "h-9 text-xs"
+                )} 
                 disabled={!isAvailable}
                 variant={isAvailable ? "default" : "secondary"}
                 onClick={() => {
@@ -377,6 +424,7 @@ const Profile: React.FC = () => {
                     saveUserProgress(updatedProgress);
                   }
                 }}
+                style={{ touchAction: 'manipulation' }}
               >
                 {isAvailable ? t('redeemNow') : t('needMoreCoins')}
               </Button>
@@ -566,7 +614,7 @@ const Profile: React.FC = () => {
         <CardContent className="p-4 text-center">
           <img src="/images/ECOBUSSTOP.png" alt="" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
           <div className="text-lg font-bold text-green-600">{userProgress.wasteCollected}kg</div>
-          <div className="text-xs text-green-600">{t('wasteCollected')}</div>
+          <div className="text-xs text-green-600">{t('wasteCollected', { ns: 'profile' })}</div>
         </CardContent>
       </Card>
       
@@ -574,7 +622,7 @@ const Profile: React.FC = () => {
         <CardContent className="p-4 text-center">
           <img src="/images/plant-a-tree_6675353.png" alt="" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
           <div className="text-lg font-bold text-blue-600">{userProgress.treesPlanted}</div>
-          <div className="text-xs text-blue-600">{t('treesPlanted')}</div>
+          <div className="text-xs text-blue-600">{t('treesPlanted', { ns: 'profile' })}</div>
         </CardContent>
       </Card>
       
@@ -582,7 +630,7 @@ const Profile: React.FC = () => {
         <CardContent className="p-4 text-center">
           <img src="/images/community_16119903.png" alt="" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
           <div className="text-lg font-bold text-purple-600">{userProgress.eventsAttended}</div>
-          <div className="text-xs text-purple-600">{t('eventsAttended')}</div>
+          <div className="text-xs text-purple-600">{t('eventsAttended', { ns: 'profile' })}</div>
         </CardContent>
       </Card>
       
@@ -590,7 +638,7 @@ const Profile: React.FC = () => {
         <CardContent className="p-4 text-center">
           <img src="/images/meet-the-team_15916616.png" alt="" className="w-8 h-8 mx-auto mb-1 object-contain" loading="lazy" />
           <div className="text-lg font-bold text-orange-600">{userProgress.referrals}</div>
-          <div className="text-xs text-orange-600">{t('friendsReferred')}</div>
+          <div className="text-xs text-orange-600">{t('friendsReferred', { ns: 'profile' })}</div>
         </CardContent>
       </Card>
     </div>
@@ -629,9 +677,15 @@ const Profile: React.FC = () => {
   return (
     <Layout title={t('profile')}>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-green-50/30 to-blue-50/30">
-        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
+        <div className={cn(
+          "w-full py-4 sm:py-6",
+          isMobile ? "px-2" : "px-3 sm:px-4 md:px-6 lg:px-8"
+        )}>
           <motion.div 
-            className="space-y-4 sm:space-y-6"
+            className={cn(
+              "space-y-4 sm:space-y-6",
+              isMobile && "space-y-3"
+            )}
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -755,9 +809,9 @@ const Profile: React.FC = () => {
                   <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-black/10" />
                 </div>
                 
-                <CardContent className="p-4 sm:p-6 lg:p-8 relative z-10">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 sm:mb-6">
-                    <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-0">
+                <CardContent className={cn("relative z-10", isMobile ? "p-3" : "p-4 sm:p-6 lg:p-8")}>
+                  <div className={cn("flex flex-col sm:flex-row sm:items-start sm:justify-between", isMobile ? "mb-3" : "mb-4 sm:mb-6")}>
+                    <div className={cn("flex items-center mb-4 sm:mb-0", isMobile ? "space-x-2" : "space-x-3 sm:space-x-4")}>
                       <div className="relative group">
                         <div 
                           className="relative z-10 cursor-pointer"
@@ -818,27 +872,38 @@ const Profile: React.FC = () => {
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-white to-yellow-200 bg-clip-text text-transparent">
+                        <h2 className={cn(
+                          "font-bold bg-gradient-to-r from-white to-yellow-200 bg-clip-text text-transparent",
+                          isMobile ? "text-base" : "text-lg sm:text-xl lg:text-2xl"
+                        )}>
                           {userProgress.name}
                         </h2>
                         <div className="flex items-center space-x-1 mt-1">
-                          <p className="text-white/90 text-sm sm:text-base font-medium">{t('climateHero')}</p>
+                          <p className={cn(
+                            "text-white/90 font-medium",
+                            isMobile ? "text-xs" : "text-sm sm:text-base"
+                          )}>
+                            {t('climateHero')}
+                          </p>
                           <motion.div
                             animate={{ rotate: [0, 10, -10, 0] }}
                             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                           >
-                            <Flame className="h-4 w-4 text-orange-300" />
+                            <Flame className={cn("text-orange-300", isMobile ? "h-3 w-3" : "h-4 w-4")} />
                           </motion.div>
                         </div>
                         
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-xs sm:text-sm text-white/80 space-y-1 sm:space-y-0">
+                        <div className={cn(
+                          "flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-white/80 space-y-1 sm:space-y-0",
+                          isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                        )}>
                           <div className="flex items-center space-x-1">
-                            <MapPin className="h-3 w-3" />
+                            <MapPin className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />
                             <span>{t('chilonzorDistrict')}</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <School className="h-3 w-3" />
-                            <span>School #45</span>
+                            <School className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />
+                            <span>{t('school45', { ns: 'profile' })}</span>
                           </div>
                         </div>
                       </div>
@@ -848,49 +913,77 @@ const Profile: React.FC = () => {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-300">
-                        <Settings className="h-4 w-4" />
-                      </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className={cn(
+                  "text-white hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-300",
+                  isMobile ? "h-8 w-8 p-0 min-h-[32px] min-w-[32px]" : ""
+                )}
+                onClick={() => setIsSettingsOpen(true)}
+                style={{ touchAction: 'manipulation' }}
+              >
+                <Settings className={cn(isMobile ? "h-3.5 w-3.5" : "h-4 w-4")} />
+              </Button>
                     </motion.div>
                   </div>
 
                   {/* Enhanced Stats Grid */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                  <div className={cn(
+                    "grid gap-2 mb-3 sm:mb-4 sm:mb-6",
+                    isMobile ? "grid-cols-2 gap-2" : "grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+                  )}>
                     {/* EcoCoins Card - Enhanced */}
                     <motion.div 
-                      className="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-white/20 shadow-lg"
-                      whileHover={{ scale: 1.02, y: -2 }}
+                      className={cn(
+                        "bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-md rounded-xl border border-white/20 shadow-lg",
+                        isMobile ? "p-2" : "p-3 sm:p-4"
+                      )}
+                      whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}
                       transition={{ type: "spring", stiffness: 400, damping: 10 }}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <div className="relative">
-                            <motion.div 
-                              className="absolute inset-0 bg-yellow-400 rounded-full blur-sm opacity-50"
-                              animate={{ scale: [1, 1.1, 1] }}
-                              transition={{ duration: 2, repeat: Infinity }}
-                            />
-                            <span className="text-lg relative z-10">🪙</span>
-                          </div>
-                          <div>
-                            <span className="text-xs sm:text-sm font-semibold block">{t('ecoCoins')}</span>
-                            <div className="flex items-center space-x-1 text-xs text-white/70">
-                              <Sparkles className="h-2 w-2" />
-                              <span className="text-xs">{t('active')}</span>
+                      <div className={cn("flex items-center justify-between", isMobile ? "mb-1.5" : "mb-2")}>
+                        <div className={cn("flex items-center", isMobile ? "space-x-1.5" : "space-x-2")}>
+                          <img 
+                            src="/images/eco coins.png" 
+                            alt="Eco Coins" 
+                            className={cn(
+                              "object-contain",
+                              isMobile ? "h-5 w-5" : "h-6 w-6 sm:h-8 sm:w-8"
+                            )}
+                            loading="lazy"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <span className={cn(
+                              "font-semibold block truncate",
+                              isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                            )}>
+                              {t('ecoCoins')}
+                            </span>
+                            <div className={cn(
+                              "flex items-center text-white/70",
+                              isMobile ? "space-x-0.5 text-[9px]" : "space-x-1 text-xs"
+                            )}>
+                              <Sparkles className={cn(isMobile ? "h-1.5 w-1.5" : "h-2 w-2")} />
+                              <span className={cn(isMobile ? "text-[9px]" : "text-xs")}>{t('active')}</span>
                             </div>
                           </div>
                         </div>
                         <motion.div
-                          whileHover={{ scale: 1.1 }}
+                          whileHover={isMobile ? {} : { scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                         >
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-white/80 hover:bg-white/20 h-6 w-6 p-0 rounded-full transition-all duration-300"
+                            className={cn(
+                              "text-white/80 hover:bg-white/20 rounded-full transition-all duration-300 p-0",
+                              isMobile ? "h-5 w-5" : "h-6 w-6"
+                            )}
                             onClick={() => setCoinsVisible(!coinsVisible)}
+                            style={{ touchAction: 'manipulation' }}
                           >
-                            {coinsVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                            {coinsVisible ? <Eye className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} /> : <EyeOff className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />}
                           </Button>
                         </motion.div>
                       </div>
@@ -901,13 +994,19 @@ const Profile: React.FC = () => {
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.8 }}
                           transition={{ duration: 0.3 }}
-                          className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-yellow-200 to-yellow-400 bg-clip-text text-transparent"
+                          className={cn(
+                            "font-bold bg-gradient-to-r from-yellow-200 to-yellow-400 bg-clip-text text-transparent",
+                            isMobile ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
+                          )}
                         >
                           {coinsVisible ? userProgress.ecoCoins : '***'}
                         </motion.div>
                       </AnimatePresence>
                       <motion.div 
-                        className="mt-1 h-1 bg-white/20 rounded-full overflow-hidden"
+                        className={cn(
+                          "bg-white/20 rounded-full overflow-hidden",
+                          isMobile ? "mt-0.5 h-0.5" : "mt-1 h-1"
+                        )}
                         initial={{ width: 0 }}
                         animate={{ width: "100%" }}
                         transition={{ duration: 1, delay: 0.5 }}
@@ -923,78 +1022,144 @@ const Profile: React.FC = () => {
 
                     {/* EcoPoints Card */}
                     <motion.div 
-                      className="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-white/20 shadow-lg"
-                      whileHover={{ scale: 1.02, y: -2 }}
+                      className={cn(
+                        "bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-md rounded-xl border border-white/20 shadow-lg",
+                        isMobile ? "p-2" : "p-3 sm:p-4"
+                      )}
+                      whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}
                     >
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-blue-400 rounded-full blur-sm opacity-50" />
-                          <Star className="h-4 w-4 sm:h-5 sm:w-5 text-blue-200 relative z-10" />
-                        </div>
-                        <div>
-                          <span className="text-xs sm:text-sm font-semibold block">{t('ecoPoints')}</span>
-                          <div className="flex items-center space-x-1 text-xs text-white/70">
-                            <TrendingUp className="h-2 w-2" />
-                            <span className="text-xs">Growing</span>
+                      <div className={cn("flex items-center", isMobile ? "space-x-1.5 mb-1.5" : "space-x-2 mb-2")}>
+                        <img 
+                          src="/images/eco-points.png" 
+                          alt="Eco Points" 
+                          className={cn(
+                            "object-contain",
+                            isMobile ? "h-5 w-5" : "h-6 w-6 sm:h-8 sm:w-8"
+                          )}
+                          loading="lazy"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className={cn(
+                            "font-semibold block truncate",
+                            isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                          )}>
+                            {t('ecoPoints')}
+                          </span>
+                          <div className={cn(
+                            "flex items-center text-white/70",
+                            isMobile ? "space-x-0.5 text-[9px]" : "space-x-1 text-xs"
+                          )}>
+                            <TrendingUp className={cn(isMobile ? "h-1.5 w-1.5" : "h-2 w-2")} />
+                            <span className={cn(isMobile ? "text-[9px]" : "text-xs")}>{t('growing', { ns: 'profile' })}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-200 to-cyan-300 bg-clip-text text-transparent">
+                      <div className={cn(
+                        "font-bold bg-gradient-to-r from-blue-200 to-cyan-300 bg-clip-text text-transparent",
+                        isMobile ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
+                      )}>
                         {userProgress.ecoPoints.toLocaleString()}
                       </div>
-                      <div className="mt-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                      <div className={cn(
+                        "bg-white/20 rounded-full overflow-hidden",
+                        isMobile ? "mt-0.5 h-0.5" : "mt-1 h-1"
+                      )}>
                         <div className="h-full bg-gradient-to-r from-blue-400 to-cyan-400 w-full" />
                       </div>
                     </motion.div>
 
                     {/* Waste Collected Card */}
                     <motion.div
-                      className="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-white/20 shadow-lg col-span-2 lg:col-span-1"
-                      whileHover={{ scale: 1.02, y: -2 }}
+                      className={cn(
+                        "bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-md rounded-xl border border-white/20 shadow-lg",
+                        isMobile ? "p-2 col-span-1" : "p-3 sm:p-4 col-span-2 lg:col-span-1"
+                      )}
+                      whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}
                     >
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-green-400 rounded-full blur-sm opacity-50" />
-                          <Target className="h-4 w-4 sm:h-5 sm:w-5 text-green-300 relative z-10" />
-                        </div>
-                        <div>
-                          <span className="text-xs sm:text-sm font-semibold block">{t('wasteCollected')}</span>
-                          <div className="flex items-center space-x-1 text-xs text-white/70">
-                            <Leaf className="h-2 w-2" />
-                            <span className="text-xs">Impact</span>
+                      <div className={cn("flex items-center", isMobile ? "space-x-1.5 mb-1.5" : "space-x-2 mb-2")}>
+                        <img 
+                          src="/images/Waste Collected.png" 
+                          alt="Waste Collected" 
+                          className={cn(
+                            "object-contain",
+                            isMobile ? "h-5 w-5" : "h-6 w-6 sm:h-8 sm:w-8"
+                          )}
+                          loading="lazy"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className={cn(
+                            "font-semibold block truncate",
+                            isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                          )}>
+                            {t('wasteCollected')}
+                          </span>
+                          <div className={cn(
+                            "flex items-center text-white/70",
+                            isMobile ? "space-x-0.5 text-[9px]" : "space-x-1 text-xs"
+                          )}>
+                            <Leaf className={cn(isMobile ? "h-1.5 w-1.5" : "h-2 w-2")} />
+                            <span className={cn(isMobile ? "text-[9px]" : "text-xs")}>{t('impact', { ns: 'profile' })}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-green-200 to-emerald-300 bg-clip-text text-transparent">
+                      <div className={cn(
+                        "font-bold bg-gradient-to-r from-green-200 to-emerald-300 bg-clip-text text-transparent",
+                        isMobile ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
+                      )}>
                         {wasteFormatted.value}{wasteFormatted.unit}
                       </div>
-                      <div className="mt-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                      <div className={cn(
+                        "bg-white/20 rounded-full overflow-hidden",
+                        isMobile ? "mt-0.5 h-0.5" : "mt-1 h-1"
+                      )}>
                         <div className="h-full bg-gradient-to-r from-green-400 to-emerald-400 w-5/6" />
                       </div>
                     </motion.div>
 
                     {/* Badges Card */}
                     <motion.div
-                      className="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-white/20 shadow-lg lg:col-span-1"
-                      whileHover={{ scale: 1.02, y: -2 }}
+                      className={cn(
+                        "bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-md rounded-xl border border-white/20 shadow-lg",
+                        isMobile ? "p-2 col-span-1" : "p-3 sm:p-4 lg:col-span-1"
+                      )}
+                      whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}
                     >
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-purple-400 rounded-full blur-sm opacity-50" />
-                          <Medal className="h-4 w-4 sm:h-5 sm:w-5 text-purple-300 relative z-10" />
-                        </div>
-                        <div>
-                          <span className="text-xs sm:text-sm font-semibold block">{t('badges')}</span>
-                          <div className="flex items-center space-x-1 text-xs text-white/70">
-                            <Award className="h-2 w-2" />
-                            <span className="text-xs">Earned</span>
+                      <div className={cn("flex items-center", isMobile ? "space-x-1.5 mb-1.5" : "space-x-2 mb-2")}>
+                        <img 
+                          src="/images/badges.png" 
+                          alt="Badges" 
+                          className={cn(
+                            "object-contain",
+                            isMobile ? "h-5 w-5" : "h-6 w-6 sm:h-8 sm:w-8"
+                          )}
+                          loading="lazy"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className={cn(
+                            "font-semibold block truncate",
+                            isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                          )}>
+                            {t('badges')}
+                          </span>
+                          <div className={cn(
+                            "flex items-center text-white/70",
+                            isMobile ? "space-x-0.5 text-[9px]" : "space-x-1 text-xs"
+                          )}>
+                            <Award className={cn(isMobile ? "h-1.5 w-1.5" : "h-2 w-2")} />
+                            <span className={cn(isMobile ? "text-[9px]" : "text-xs")}>{t('earned', { ns: 'profile' })}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-200 to-pink-300 bg-clip-text text-transparent">
+                      <div className={cn(
+                        "font-bold bg-gradient-to-r from-purple-200 to-pink-300 bg-clip-text text-transparent",
+                        isMobile ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
+                      )}>
                         {userProgress.badgesEarned}
                       </div>
-                      <div className="mt-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                      <div className={cn(
+                        "bg-white/20 rounded-full overflow-hidden",
+                        isMobile ? "mt-0.5 h-0.5" : "mt-1 h-1"
+                      )}>
                         <div className="h-full bg-gradient-to-r from-purple-400 to-pink-400 w-3/5" />
                       </div>
                     </motion.div>
@@ -1002,56 +1167,88 @@ const Profile: React.FC = () => {
 
                   {/* Enhanced Level Progress with Improved Text Readability */}
                   <motion.div 
-                    className="bg-gradient-to-r from-emerald-500/90 to-green-500/90 backdrop-blur-md rounded-xl p-4 sm:p-6 text-white border border-white/20 shadow-lg"
-                    whileHover={{ scale: 1.01 }}
+                    className={cn(
+                      "bg-gradient-to-r from-emerald-500/90 to-green-500/90 backdrop-blur-md rounded-xl text-white border border-white/20 shadow-lg",
+                      isMobile ? "p-3" : "p-4 sm:p-6"
+                    )}
+                    whileHover={isMobile ? {} : { scale: 1.01 }}
                     layout
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-                      <div className="flex items-center mb-3 sm:mb-0">
+                    <div className={cn(
+                      "flex flex-col sm:flex-row sm:items-center sm:justify-between",
+                      isMobile ? "mb-3" : "mb-4"
+                    )}>
+                      <div className={cn("flex items-center", isMobile ? "mb-2" : "mb-3 sm:mb-0")}>
                         <motion.div 
-                          className="bg-gradient-to-br from-white/20 to-white/10 rounded-full p-3 mr-3 backdrop-blur-sm border border-white/20"
-                          whileHover={{ rotate: 360 }}
+                          className={cn("flex items-center justify-center", isMobile ? "mr-2" : "mr-3")}
+                          whileHover={isMobile ? {} : { rotate: 360 }}
                           transition={{ duration: 0.6 }}
                         >
-                          <Trophy className="h-5 w-5 sm:h-6 sm:w-6" />
+                          <img 
+                            src="/images/level.png" 
+                            alt="Level" 
+                            className={cn(
+                              "object-contain",
+                              isMobile ? "h-6 w-6" : "h-8 w-8 sm:h-10 sm:w-10"
+                            )}
+                            loading="lazy"
+                          />
                         </motion.div>
-                        <div>
-                          <p className="text-sm sm:text-base opacity-90 font-medium">
+                        <div className="min-w-0 flex-1">
+                          <p className={cn(
+                            "opacity-90 font-medium",
+                            isMobile ? "text-xs" : "text-sm sm:text-base"
+                          )}>
                             {t('levelFifteen')} {userProgress.level}
                           </p>
-                          <p className="font-bold text-base sm:text-lg bg-gradient-to-r from-white to-yellow-200 bg-clip-text text-transparent">
+                          <p className={cn(
+                            "font-bold bg-gradient-to-r from-white to-yellow-200 bg-clip-text text-transparent",
+                            isMobile ? "text-sm" : "text-base sm:text-lg"
+                          )}>
                             {t('sustainabilityExpert')}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className="bg-gradient-to-r from-white/20 to-white/10 text-white border-white/30 text-sm px-4 py-2 backdrop-blur-sm shadow-lg">
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          {userProgress.ecoPoints.toLocaleString()} pts
+                      <div className={cn("flex items-center", isMobile ? "space-x-1.5" : "space-x-2")}>
+                        <Badge className={cn(
+                          "bg-gradient-to-r from-white/20 to-white/10 text-white border-white/30 backdrop-blur-sm shadow-lg",
+                          isMobile ? "text-[10px] px-2 py-1" : "text-sm px-4 py-2"
+                        )}>
+                          <Sparkles className={cn(isMobile ? "h-2 w-2 mr-0.5" : "h-3 w-3 mr-1")} />
+                          {userProgress.ecoPoints.toLocaleString()} {t('pts', { ns: 'profile' })}
                         </Badge>
                         <motion.button
                           onClick={() => setLevelExpanded(!levelExpanded)}
-                          className="p-2 rounded-full hover:bg-white/20 transition-colors touch-feedback btn-touch"
-                          whileHover={{ scale: 1.1 }}
+                          className={cn(
+                            "rounded-full hover:bg-white/20 transition-colors touch-feedback btn-touch",
+                            isMobile ? "p-1.5 min-h-[32px] min-w-[32px]" : "p-2"
+                          )}
+                          whileHover={isMobile ? {} : { scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          style={{ willChange: 'transform' }}
+                          style={{ willChange: 'transform', touchAction: 'manipulation' }}
                         >
-                          {levelExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          {levelExpanded ? <ChevronUp className={cn(isMobile ? "h-3 w-3" : "h-4 w-4")} /> : <ChevronDown className={cn(isMobile ? "h-3 w-3" : "h-4 w-4")} />}
                         </motion.button>
                       </div>
                     </div>
                     
                     <motion.div 
-                      className="space-y-3"
+                      className={cn(isMobile ? "space-y-2" : "space-y-3")}
                       layout
                     >
-                      <div className="flex justify-between text-sm opacity-90 font-medium">
-                        <span>{t('progressToLevel')} {userProgress.level + 1}</span>
-                        <span>{Math.round(levelProgress)}%</span>
+                      <div className={cn(
+                        "flex justify-between opacity-90 font-medium",
+                        isMobile ? "text-[10px]" : "text-sm"
+                      )}>
+                        <span className="truncate mr-1">{t('progressToLevel')} {userProgress.level + 1}</span>
+                        <span className="flex-shrink-0">{Math.round(levelProgress)}%</span>
                       </div>
                       
                       <div className="relative">
-                        <div className="h-3 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
+                        <div className={cn(
+                          "bg-white/20 rounded-full overflow-hidden backdrop-blur-sm",
+                          isMobile ? "h-2" : "h-3"
+                        )}>
                           <motion.div
                             className="h-full bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-full"
                             variants={progressVariants}
@@ -1061,18 +1258,30 @@ const Profile: React.FC = () => {
                           />
                         </div>
                         
-                        <div className="absolute -top-1 left-0 w-1.5 h-1.5 bg-white rounded-full" />
+                        <div className={cn(
+                          "absolute bg-white rounded-full",
+                          isMobile ? "-top-0.5 left-0 w-1 h-1" : "-top-1 left-0 w-1.5 h-1.5"
+                        )} />
                         <motion.div
-                          className="absolute -top-1 bg-yellow-400 rounded-full w-1.5 h-1.5"
+                          className={cn(
+                            "absolute bg-yellow-400 rounded-full",
+                            isMobile ? "-top-0.5 w-1 h-1" : "-top-1 w-1.5 h-1.5"
+                          )}
                           initial={{ left: 0 }}
                           animate={{ left: `${levelProgress}%` }}
                           transition={{ duration: 1.5, ease: "easeOut" }}
                         />
-                        <div className="absolute -top-1 right-0 w-1.5 h-1.5 bg-white/50 rounded-full" />
+                        <div className={cn(
+                          "absolute bg-white/50 rounded-full",
+                          isMobile ? "-top-0.5 right-0 w-1 h-1" : "-top-1 right-0 w-1.5 h-1.5"
+                        )} />
                       </div>
                       
                       <motion.p 
-                        className="text-xs sm:text-sm opacity-80 font-medium"
+                        className={cn(
+                          "opacity-80 font-medium",
+                          isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                        )}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 1 }}
@@ -1088,7 +1297,10 @@ const Profile: React.FC = () => {
                             initial="hidden"
                             animate="visible"
                             exit="exit"
-                            className="mt-4 p-4 bg-white/20 rounded-lg border border-white/30 shadow-inner"
+                            className={cn(
+                              "bg-white/20 rounded-lg border border-white/30 shadow-inner",
+                              isMobile ? "mt-2 p-2.5" : "mt-4 p-4"
+                            )}
                             style={{ 
                               willChange: 'transform, opacity',
                               backfaceVisibility: 'hidden',
@@ -1096,30 +1308,48 @@ const Profile: React.FC = () => {
                             }}
                           >
                             <motion.h4 
-                              className="text-sm font-bold mb-3 flex items-center text-white"
+                              className={cn(
+                                "font-bold flex items-center text-white",
+                                isMobile ? "text-xs mb-2" : "text-sm mb-3"
+                              )}
                               variants={benefitItemVariants}
                             >
-                              <Info className="h-4 w-4 mr-2" />
+                              <Info className={cn(isMobile ? "h-3 w-3 mr-1.5" : "h-4 w-4 mr-2")} />
                               {t('levelBenefits')}
                             </motion.h4>
                             <motion.ul 
-                              className="text-sm space-y-2 text-white/95 font-medium"
+                              className={cn(
+                                "space-y-2 text-white/95 font-medium",
+                                isMobile ? "text-[10px] space-y-1.5" : "text-sm space-y-2"
+                              )}
                               variants={levelBenefitsVariants}
                             >
                               <motion.li variants={benefitItemVariants} className="flex items-center">
-                                <span className="w-2 h-2 bg-yellow-300 rounded-full mr-3 flex-shrink-0"></span>
+                                <span className={cn(
+                                  "bg-yellow-300 rounded-full flex-shrink-0",
+                                  isMobile ? "w-1.5 h-1.5 mr-2" : "w-2 h-2 mr-3"
+                                )}></span>
                                 {t('accessExclusiveOffers')}
                               </motion.li>
                               <motion.li variants={benefitItemVariants} className="flex items-center">
-                                <span className="w-2 h-2 bg-yellow-300 rounded-full mr-3 flex-shrink-0"></span>
+                                <span className={cn(
+                                  "bg-yellow-300 rounded-full flex-shrink-0",
+                                  isMobile ? "w-1.5 h-1.5 mr-2" : "w-2 h-2 mr-3"
+                                )}></span>
                                 {t('priorityEventRegistration')}
                               </motion.li>
                               <motion.li variants={benefitItemVariants} className="flex items-center">
-                                <span className="w-2 h-2 bg-yellow-300 rounded-full mr-3 flex-shrink-0"></span>
+                                <span className={cn(
+                                  "bg-yellow-300 rounded-full flex-shrink-0",
+                                  isMobile ? "w-1.5 h-1.5 mr-2" : "w-2 h-2 mr-3"
+                                )}></span>
                                 {t('monthlyBonusEcoCoins')}
                               </motion.li>
                               <motion.li variants={benefitItemVariants} className="flex items-center">
-                                <span className="w-2 h-2 bg-yellow-300 rounded-full mr-3 flex-shrink-0"></span>
+                                <span className={cn(
+                                  "bg-yellow-300 rounded-full flex-shrink-0",
+                                  isMobile ? "w-1.5 h-1.5 mr-2" : "w-2 h-2 mr-3"
+                                )}></span>
                                 {t('specialRecognitionBadges')}
                               </motion.li>
                             </motion.ul>
@@ -1134,45 +1364,105 @@ const Profile: React.FC = () => {
 
             {/* Stats Cards */}
             <motion.div variants={itemVariants}>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                <motion.div whileHover={{ scale: 1.02, y: -2 }}>
-                  <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 text-green-600 hover:shadow-lg transition-all duration-300">
-                    <CardContent className="p-3 sm:p-4 text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <Target className="h-5 w-5 sm:h-6 sm:w-6" />
-                        <span className="text-lg sm:text-xl md:text-2xl font-bold ml-1">
+              <div className={cn(
+                "grid gap-2",
+                isMobile ? "grid-cols-3 gap-2" : "grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"
+              )}>
+                <motion.div whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}>
+                  <Card className={cn(
+                    "bg-gradient-to-br from-green-50 to-green-100 border-green-200 text-green-600 transition-all duration-300",
+                    isMobile ? "" : "hover:shadow-lg"
+                  )}>
+                    <CardContent className={cn("text-center", isMobile ? "p-2" : "p-3 sm:p-4")}>
+                      <div className={cn("flex items-center justify-center", isMobile ? "mb-1" : "mb-2")}>
+                        <img 
+                          src="/images/Waste Collected.png" 
+                          alt="Waste Collected" 
+                          className={cn(
+                            "object-contain",
+                            isMobile ? "h-5 w-5" : "h-7 w-7 sm:h-8 sm:w-8"
+                          )}
+                          loading="lazy"
+                        />
+                        <span className={cn(
+                          "font-bold ml-1",
+                          isMobile ? "text-sm" : "text-lg sm:text-xl md:text-2xl"
+                        )}>
                           {wasteFormatted.value}{wasteFormatted.unit}
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm font-medium">{t('myWasteCollected')}</p>
+                      <p className={cn(
+                        "font-medium",
+                        isMobile ? "text-[9px]" : "text-xs sm:text-sm"
+                      )}>
+                        {t('myWasteCollected')}
+                      </p>
                     </CardContent>
                   </Card>
                 </motion.div>
                 
-                <motion.div whileHover={{ scale: 1.02, y: -2 }}>
-                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 text-blue-600 hover:shadow-lg transition-all duration-300">
-                    <CardContent className="p-3 sm:p-4 text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <Medal className="h-5 w-5 sm:h-6 sm:w-6" />
-                        <span className="text-lg sm:text-xl md:text-2xl font-bold ml-1">
+                <motion.div whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}>
+                  <Card className={cn(
+                    "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 text-blue-600 transition-all duration-300",
+                    isMobile ? "" : "hover:shadow-lg"
+                  )}>
+                    <CardContent className={cn("text-center", isMobile ? "p-2" : "p-3 sm:p-4")}>
+                      <div className={cn("flex items-center justify-center", isMobile ? "mb-1" : "mb-2")}>
+                        <img 
+                          src="/images/badges.png" 
+                          alt="Badges" 
+                          className={cn(
+                            "object-contain",
+                            isMobile ? "h-5 w-5" : "h-7 w-7 sm:h-8 sm:w-8"
+                          )}
+                          loading="lazy"
+                        />
+                        <span className={cn(
+                          "font-bold ml-1",
+                          isMobile ? "text-sm" : "text-lg sm:text-xl md:text-2xl"
+                        )}>
                           {userProgress.badgesEarned}
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm font-medium">{t('badgesEarned')}</p>
+                      <p className={cn(
+                        "font-medium",
+                        isMobile ? "text-[9px]" : "text-xs sm:text-sm"
+                      )}>
+                        {t('badgesEarned')}
+                      </p>
                     </CardContent>
                   </Card>
                 </motion.div>
                 
-                <motion.div whileHover={{ scale: 1.02, y: -2 }}>
-                  <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 text-purple-600 hover:shadow-lg transition-all duration-300">
-                    <CardContent className="p-3 sm:p-4 text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <Zap className="h-5 w-5 sm:h-6 sm:w-6" />
-                        <span className="text-lg sm:text-xl md:text-2xl font-bold ml-1">
+                <motion.div whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}>
+                  <Card className={cn(
+                    "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 text-purple-600 transition-all duration-300",
+                    isMobile ? "" : "hover:shadow-lg"
+                  )}>
+                    <CardContent className={cn("text-center", isMobile ? "p-2" : "p-3 sm:p-4")}>
+                      <div className={cn("flex items-center justify-center", isMobile ? "mb-1" : "mb-2")}>
+                        <img 
+                          src="/images/level.png" 
+                          alt="Level" 
+                          className={cn(
+                            "object-contain",
+                            isMobile ? "h-5 w-5" : "h-7 w-7 sm:h-8 sm:w-8"
+                          )}
+                          loading="lazy"
+                        />
+                        <span className={cn(
+                          "font-bold ml-1",
+                          isMobile ? "text-sm" : "text-lg sm:text-xl md:text-2xl"
+                        )}>
                           {userProgress.level}
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm font-medium">{t('currentLevel')}</p>
+                      <p className={cn(
+                        "font-medium",
+                        isMobile ? "text-[9px]" : "text-xs sm:text-sm"
+                      )}>
+                        {t('currentLevel')}
+                      </p>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -1182,22 +1472,53 @@ const Profile: React.FC = () => {
             {/* Tabs */}
             <motion.div variants={itemVariants}>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-4 h-12 sm:h-14 bg-white/80 backdrop-blur-sm shadow-lg mb-4 sm:mb-6 border border-white/20">
-                  <TabsTrigger value="wallet" className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium transition-all duration-300">
-                    <Wallet className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t('wallet')}</span>
+                <TabsList className={cn(
+                  "grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm shadow-lg border border-white/20",
+                  isMobile ? "h-11 mb-3" : "h-12 sm:h-14 mb-4 sm:mb-6"
+                )}>
+                  <TabsTrigger 
+                    value="wallet" 
+                    className={cn(
+                      "flex items-center justify-center font-medium transition-all duration-300",
+                      isMobile ? "space-x-0.5 text-[10px] min-h-[44px]" : "space-x-1 sm:space-x-2 text-xs sm:text-sm"
+                    )}
+                    style={{ touchAction: 'manipulation' }}
+                  >
+                    <Wallet className={cn(isMobile ? "h-3.5 w-3.5" : "h-4 w-4")} />
+                    {!isMobile && <span className="hidden sm:inline">{t('wallet')}</span>}
                   </TabsTrigger>
-                  <TabsTrigger value="offers" className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium transition-all duration-300">
-                    <Tag className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t('offers')}</span>
+                  <TabsTrigger 
+                    value="offers" 
+                    className={cn(
+                      "flex items-center justify-center font-medium transition-all duration-300",
+                      isMobile ? "space-x-0.5 text-[10px] min-h-[44px]" : "space-x-1 sm:space-x-2 text-xs sm:text-sm"
+                    )}
+                    style={{ touchAction: 'manipulation' }}
+                  >
+                    <Tag className={cn(isMobile ? "h-3.5 w-3.5" : "h-4 w-4")} />
+                    {!isMobile && <span className="hidden sm:inline">{t('offers')}</span>}
                   </TabsTrigger>
-                  <TabsTrigger value="badges" className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium transition-all duration-300">
-                    <Award className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t('badges')}</span>
+                  <TabsTrigger 
+                    value="badges" 
+                    className={cn(
+                      "flex items-center justify-center font-medium transition-all duration-300",
+                      isMobile ? "space-x-0.5 text-[10px] min-h-[44px]" : "space-x-1 sm:space-x-2 text-xs sm:text-sm"
+                    )}
+                    style={{ touchAction: 'manipulation' }}
+                  >
+                    <Award className={cn(isMobile ? "h-3.5 w-3.5" : "h-4 w-4")} />
+                    {!isMobile && <span className="hidden sm:inline">{t('badges')}</span>}
                   </TabsTrigger>
-                  <TabsTrigger value="analytics" className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium transition-all duration-300">
-                    <BarChart3 className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t('analytics')}</span>
+                  <TabsTrigger 
+                    value="analytics" 
+                    className={cn(
+                      "flex items-center justify-center font-medium transition-all duration-300",
+                      isMobile ? "space-x-0.5 text-[10px] min-h-[44px]" : "space-x-1 sm:space-x-2 text-xs sm:text-sm"
+                    )}
+                    style={{ touchAction: 'manipulation' }}
+                  >
+                    <BarChart3 className={cn(isMobile ? "h-3.5 w-3.5" : "h-4 w-4")} />
+                    {!isMobile && <span className="hidden sm:inline">{t('analytics')}</span>}
                   </TabsTrigger>
                 </TabsList>
 
@@ -1462,6 +1783,224 @@ const Profile: React.FC = () => {
                           ))}
                         </CardContent>
                       </Card>
+
+                      {/* Leaderboard */}
+                      <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="flex items-center justify-between text-base sm:text-lg">
+                            <div className="flex items-center">
+                              <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
+                              {t('leaderboard', { ns: 'profile' })}
+                            </div>
+                            {leaderboardData[0]?.isCurrentUser && (
+                              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 animate-pulse">
+                                <Crown className="h-3 w-3 mr-1" />
+                                {t('topPerformer', { ns: 'profile' })}
+                              </Badge>
+                            )}
+                          </CardTitle>
+                          <p className={cn("text-gray-600 mt-1", isMobile ? "text-xs" : "text-sm")}>
+                            {t('leaderboardDescription', { ns: 'profile' })}
+                          </p>
+                        </CardHeader>
+                        <CardContent>
+                          {/* Congratulations Banner for #1 */}
+                          {leaderboardData[0]?.isCurrentUser && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className={cn(
+                                "mb-4 p-3 rounded-lg bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500",
+                                "text-white font-semibold text-center shadow-lg",
+                                isMobile ? "text-xs" : "text-sm"
+                              )}
+                            >
+                              <div className="flex items-center justify-center gap-2">
+                                <Crown className={cn("text-yellow-200", isMobile ? "h-4 w-4" : "h-5 w-5")} />
+                                <span>{t('congratulations', { ns: 'profile' })}</span>
+                                <Crown className={cn("text-yellow-200", isMobile ? "h-4 w-4" : "h-5 w-5")} />
+                              </div>
+                            </motion.div>
+                          )}
+
+                          {/* Leaderboard Table - Desktop View */}
+                          <div className="hidden sm:block overflow-x-auto">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b border-gray-200">
+                                  <th className={cn("text-left py-3 px-4 font-semibold text-gray-700", isMobile ? "text-xs" : "text-sm")}>
+                                    {t('rank', { ns: 'profile' })}
+                                  </th>
+                                  <th className={cn("text-left py-3 px-4 font-semibold text-gray-700", isMobile ? "text-xs" : "text-sm")}>
+                                    {t('player', { ns: 'profile' })}
+                                  </th>
+                                  <th className={cn("text-right py-3 px-4 font-semibold text-gray-700", isMobile ? "text-xs" : "text-sm")}>
+                                    {t('points', { ns: 'profile' })}
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {leaderboardData.map((player, index) => (
+                                  <motion.tr
+                                    key={player.rank}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                    className={cn(
+                                      "border-b border-gray-100 transition-colors",
+                                      player.isCurrentUser 
+                                        ? "bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100" 
+                                        : "hover:bg-gray-50"
+                                    )}
+                                  >
+                                    <td className={cn("py-3 px-4", isMobile ? "text-xs" : "text-sm")}>
+                                      <div className="flex items-center gap-2">
+                                        {player.rank === 1 && (
+                                          <Crown className={cn("text-yellow-500", isMobile ? "h-3 w-3" : "h-4 w-4")} />
+                                        )}
+                                        {player.rank === 2 && (
+                                          <Medal className={cn("text-gray-400", isMobile ? "h-3 w-3" : "h-4 w-4")} />
+                                        )}
+                                        {player.rank === 3 && (
+                                          <Medal className={cn("text-orange-400", isMobile ? "h-3 w-3" : "h-4 w-4")} />
+                                        )}
+                                        <span className={cn(
+                                          "font-bold",
+                                          player.rank <= 3 ? "text-lg" : "text-base",
+                                          player.isCurrentUser ? "text-orange-600" : "text-gray-700"
+                                        )}>
+                                          #{player.rank}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td className={cn("py-3 px-4", isMobile ? "text-xs" : "text-sm")}>
+                                      <div className="flex items-center gap-3">
+                                        <div className="relative">
+                                          <Avatar className={cn(
+                                            player.isCurrentUser 
+                                              ? "ring-2 ring-yellow-400 ring-offset-2" 
+                                              : "",
+                                            isMobile ? "h-8 w-8" : "h-10 w-10"
+                                          )}>
+                                            <AvatarFallback className={cn(
+                                              "text-lg",
+                                              player.isCurrentUser 
+                                                ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-white" 
+                                                : "bg-gray-200"
+                                            )}>
+                                              {player.avatar}
+                                            </AvatarFallback>
+                                          </Avatar>
+                                          {player.isCurrentUser && (
+                                            <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                                              <CheckCircle className="h-2.5 w-2.5 text-white" />
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className={cn(
+                                            "font-semibold truncate",
+                                            player.isCurrentUser ? "text-orange-600" : "text-gray-900",
+                                            isMobile ? "text-xs" : "text-sm"
+                                          )}>
+                                            {player.name}
+                                            {player.isCurrentUser && (
+                                              <Badge className="ml-2 bg-orange-100 text-orange-700 border-orange-300 text-[10px] px-1.5 py-0">
+                                                {t('you', { ns: 'profile' })}
+                                              </Badge>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className={cn("py-3 px-4 text-right", isMobile ? "text-xs" : "text-sm")}>
+                                      <div className={cn(
+                                        "font-bold",
+                                        player.isCurrentUser ? "text-orange-600" : "text-gray-700",
+                                        isMobile ? "text-sm" : "text-base"
+                                      )}>
+                                        {player.points.toLocaleString()}
+                                      </div>
+                                    </td>
+                                  </motion.tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* Leaderboard Cards - Mobile View */}
+                          <div className="sm:hidden space-y-2">
+                            {leaderboardData.map((player, index) => (
+                              <motion.div
+                                key={player.rank}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                className={cn(
+                                  "p-3 rounded-lg border transition-all",
+                                  player.isCurrentUser
+                                    ? "bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300 shadow-md"
+                                    : "bg-white border-gray-200"
+                                )}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                                      {player.rank === 1 && (
+                                        <Crown className="h-4 w-4 text-yellow-500" />
+                                      )}
+                                      {player.rank === 2 && (
+                                        <Medal className="h-4 w-4 text-gray-400" />
+                                      )}
+                                      {player.rank === 3 && (
+                                        <Medal className="h-4 w-4 text-orange-400" />
+                                      )}
+                                      <span className={cn(
+                                        "font-bold text-xs",
+                                        player.isCurrentUser ? "text-orange-600" : "text-gray-700"
+                                      )}>
+                                        #{player.rank}
+                                      </span>
+                                    </div>
+                                    <Avatar className={cn(
+                                      "h-8 w-8 flex-shrink-0",
+                                      player.isCurrentUser ? "ring-2 ring-yellow-400" : ""
+                                    )}>
+                                      <AvatarFallback className={cn(
+                                        "text-sm",
+                                        player.isCurrentUser 
+                                          ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-white" 
+                                          : "bg-gray-200"
+                                      )}>
+                                        {player.avatar}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0 ml-2">
+                                      <div className={cn(
+                                        "font-semibold truncate text-xs",
+                                        player.isCurrentUser ? "text-orange-600" : "text-gray-900"
+                                      )}>
+                                        {player.name}
+                                        {player.isCurrentUser && (
+                                          <Badge className="ml-1 bg-orange-100 text-orange-700 border-orange-300 text-[9px] px-1 py-0">
+                                            {t('you', { ns: 'profile' })}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className={cn(
+                                    "font-bold text-sm flex-shrink-0 ml-2",
+                                    player.isCurrentUser ? "text-orange-600" : "text-gray-700"
+                                  )}>
+                                    {player.points.toLocaleString()}
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
                     </motion.div>
                   </TabsContent>
                 </AnimatePresence>
@@ -1470,6 +2009,118 @@ const Profile: React.FC = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Settings Modal */}
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              {t('settings', { ns: 'profile' })}
+            </DialogTitle>
+            <DialogDescription>
+              {t('settingsDescription', { ns: 'profile' })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {/* Notifications */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="notifications" className="text-base font-medium">
+                  {t('notifications', { ns: 'profile' })}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t('notificationsDescription', { ns: 'profile' })}
+                </p>
+              </div>
+              <Switch
+                id="notifications"
+                checked={notificationsEnabled}
+                onCheckedChange={(checked) => {
+                  setNotificationsEnabled(checked);
+                  toast.success(t('settingsSaved', { ns: 'profile' }));
+                }}
+              />
+            </div>
+
+            {/* Email Updates */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="email-updates" className="text-base font-medium">
+                  {t('emailUpdates', { ns: 'profile' })}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t('emailUpdatesDescription', { ns: 'profile' })}
+                </p>
+              </div>
+              <Switch
+                id="email-updates"
+                checked={emailUpdates}
+                onCheckedChange={(checked) => {
+                  setEmailUpdates(checked);
+                  toast.success(t('settingsSaved', { ns: 'profile' }));
+                }}
+              />
+            </div>
+
+            {/* Privacy Settings */}
+            <div className="pt-4 border-t">
+              <h3 className="text-sm font-semibold mb-3">
+                {t('privacy', { ns: 'profile' })}
+              </h3>
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    toast.info(t('privacyPolicyComingSoon', { ns: 'profile' }));
+                  }}
+                >
+                  {t('viewPrivacyPolicy', { ns: 'profile' })}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    toast.info(t('termsComingSoon', { ns: 'profile' }));
+                  }}
+                >
+                  {t('viewTerms', { ns: 'profile' })}
+                </Button>
+              </div>
+            </div>
+
+            {/* Account Actions */}
+            <div className="pt-4 border-t">
+              <h3 className="text-sm font-semibold mb-3">
+                {t('account', { ns: 'profile' })}
+              </h3>
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    toast.info(t('exportDataComingSoon', { ns: 'profile' }));
+                  }}
+                >
+                  {t('exportData', { ns: 'profile' })}
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    if (window.confirm(t('deleteAccountConfirm', { ns: 'profile' }))) {
+                      toast.error(t('deleteAccountComingSoon', { ns: 'profile' }));
+                    }
+                  }}
+                >
+                  {t('deleteAccount', { ns: 'profile' })}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Enhanced Avatar System Modal - FIXED PROPS */}
       <EnhancedAvatarSystem

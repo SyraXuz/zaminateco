@@ -77,18 +77,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   
-  <!-- Spline 3D Viewer - Preconnect for faster loading -->
-  <link rel="preconnect" href="https://my.spline.design" crossorigin>
-  <link rel="dns-prefetch" href="https://my.spline.design">
-  <link rel="preconnect" href="https://unpkg.com" crossorigin>
-  <link rel="dns-prefetch" href="https://unpkg.com">
-  
-  <!-- Spline 3D Viewer - Deferred loading for better performance -->
-  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.0.62/build/spline-viewer.js" defer></script>
+  <!-- Spline 3D Viewer - Preconnect for faster loading (only in production) -->
+  <!-- Note: Spline script is loaded dynamically in development to avoid blocking -->
   
   <!-- Security -->
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <!-- Note: X-Frame-Options should be set via HTTP headers, not meta tags -->
   <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
 </head>
 

@@ -11,48 +11,61 @@ import { getIconForProductOrCategory } from '../lib/iconMatcher';
 import '../styles/mobile-responsive.css';
 
 // Sample story data with translation keys
+// IMPORTANT: iconPath is set explicitly to ensure icons remain consistent across languages
 const stories = [
   {
     id: 1,
     emoji: '🎉',
     image: '/images/community_16119903.png',
+    iconPath: '/images/community_16119903.png', // Explicit icon path - same for all languages
     badgeType: 'update',
     titleKey: 'stories.pilotProgram.title',
     descriptionKey: 'stories.pilotProgram.description',
     authorKey: 'stories.pilotProgram.author',
     dateKey: 'stories.pilotProgram.date',
-    readTimeKey: 'stories.pilotProgram.readTime'
+    readTimeKey: 'stories.pilotProgram.readTime',
+    // English title for icon matching (fallback)
+    englishTitle: 'ZAMINAT.eco Launches Pilot Program in Tashkent'
   },
   {
     id: 2,
     emoji: '🏫',
     image: '/images/school.png',
+    iconPath: '/images/Future of Plastic.png', // Explicit icon path - same for all languages
     badgeType: 'successStory',
     titleKey: 'stories.futureRecycling.title',
     descriptionKey: 'stories.futureRecycling.description',
     authorKey: 'stories.futureRecycling.author',
     dateKey: 'stories.futureRecycling.date',
-    readTimeKey: 'stories.futureRecycling.readTime'
+    readTimeKey: 'stories.futureRecycling.readTime',
+    // English title for icon matching (fallback)
+    englishTitle: 'The Future of Plastic and Rubber Recycling in Uzbekistan'
   },
   {
     id: 3,
     emoji: '🎤',
     image: '/images/community_16119903.png',
+    iconPath: '/images/Malika.png', // Explicit icon path - same for all languages
     badgeType: 'education',
     titleKey: 'stories.educationalPrograms.title',
     descriptionKey: 'stories.educationalPrograms.description',
     authorKey: 'stories.educationalPrograms.author',
     dateKey: 'stories.educationalPrograms.date',
-    readTimeKey: 'stories.educationalPrograms.readTime'
+    readTimeKey: 'stories.educationalPrograms.readTime',
+    // English title for icon matching (fallback)
+    englishTitle: 'Educational Programs: Teaching the Next Generation'
   }
 ];
 
 // Community stories data
+// IMPORTANT: avatarImage is set explicitly to ensure avatars remain consistent across languages
 const communityStories = [
   {
     id: 1,
     avatar: '👨‍🎓',
+    avatarImage: '/images/Bobur.png', // Explicit avatar path - same for all languages
     nameKey: 'stories.mahallTransformation.author',
+    englishName: 'Bobur Rahimov', // English name for matching (fallback)
     level: 8,
     titleKey: 'stories.mahallTransformation.title',
     descriptionKey: 'stories.mahallTransformation.description',
@@ -69,7 +82,9 @@ const communityStories = [
   {
     id: 2,
     avatar: '👩‍🏫',
+    avatarImage: '/images/Malika.png', // Explicit avatar path - same for all languages
     nameKey: 'stories.teachingKids.author',
+    englishName: 'Malika Tursunova', // English name for matching (fallback)
     level: 15,
     titleKey: 'stories.teachingKids.title',
     descriptionKey: 'stories.teachingKids.description',
@@ -87,35 +102,21 @@ export default function EcoStories() {
   const { t } = useTranslation(['stories', 'translation']);
   const [activeFilter, setActiveFilter] = useState('all');
   
-  // Get stories with dynamically matched icons
+  // Get stories with icons - use explicit iconPath to ensure consistency across languages
   const storiesWithIcons = useMemo(() => {
     return stories.map(story => {
-      const title = t(story.titleKey, { ns: 'stories' });
-      const description = t(story.descriptionKey, { ns: 'stories' });
+      // Use explicit iconPath if set, otherwise try matching with English title
+      let iconPath = story.iconPath;
       
-      // Try to match icon based on title first, then description
-      // Use a different fallback to detect if matching worked
-      let iconPath = getIconForProductOrCategory(title, null);
-      
-      // If no match found, try description
+      // If no explicit iconPath, try matching with English title (language-independent)
       if (!iconPath || !iconPath.startsWith('/images/')) {
-        iconPath = getIconForProductOrCategory(description, null);
+        const englishTitle = story.englishTitle || '';
+        iconPath = getIconForProductOrCategory(englishTitle, story.image);
       }
       
-      // Special handling for "Future of Plastic" story
-      const titleLower = title.toLowerCase();
-      if (titleLower.includes('future') && titleLower.includes('plastic')) {
-        iconPath = '/images/Future of Plastic.png';
-      }
-      
-      // If still no match, use original image as fallback
+      // Final fallback to story.image
       if (!iconPath || !iconPath.startsWith('/images/')) {
         iconPath = story.image;
-      }
-      
-      // Ensure we have a valid path
-      if (!iconPath || !iconPath.startsWith('/images/')) {
-        iconPath = story.image; // Use original as final fallback
       }
       
       return {
@@ -123,26 +124,23 @@ export default function EcoStories() {
         iconPath
       };
     });
-  }, [t]);
+  }, []); // Remove 't' dependency - icons should not change with language
   
-  // Get community stories with dynamically matched avatars
+  // Get community stories with avatars - use explicit avatarImage to ensure consistency across languages
   const communityStoriesWithIcons = useMemo(() => {
     return communityStories.map(story => {
-      const authorName = t(story.nameKey, { ns: 'stories' });
+      // Use explicit avatarImage if set, otherwise try matching with English name
+      let avatarImage = story.avatarImage;
       
-      // Match avatar based on author name
-      let avatarImage = getIconForProductOrCategory(authorName, story.avatar);
+      // If no explicit avatarImage, try matching with English name (language-independent)
+      if (!avatarImage || !avatarImage.startsWith('/images/')) {
+        const englishName = story.englishName || '';
+        avatarImage = getIconForProductOrCategory(englishName, story.avatar);
+      }
       
-      // If not matched, use default avatar images
-      if (avatarImage === story.avatar || !avatarImage.startsWith('/images/')) {
-        // Map author names to avatar images
-        if (authorName.toLowerCase().includes('bobur')) {
-          avatarImage = '/images/Bobur.png';
-        } else if (authorName.toLowerCase().includes('malika')) {
-          avatarImage = '/images/Malika.png';
-        } else {
-          avatarImage = story.avatar; // Keep emoji as fallback
-        }
+      // Final fallback to emoji
+      if (!avatarImage || !avatarImage.startsWith('/images/')) {
+        avatarImage = story.avatar;
       }
       
       return {
@@ -150,7 +148,7 @@ export default function EcoStories() {
         avatarImage
       };
     });
-  }, [t]);
+  }, []); // Remove 't' dependency - avatars should not change with language
 
   const filters = [
     { key: 'all', labelKey: 'filters.allContent' },
@@ -296,9 +294,9 @@ export default function EcoStories() {
                           }}
                         />
                       ) : (
-                        <AvatarFallback className="bg-green-100 text-green-700 text-sm sm:text-base">
-                          {story.avatar}
-                        </AvatarFallback>
+                      <AvatarFallback className="bg-green-100 text-green-700 text-sm sm:text-base">
+                        {story.avatar}
+                      </AvatarFallback>
                       )}
                     </Avatar>
                     <div className="flex-1">

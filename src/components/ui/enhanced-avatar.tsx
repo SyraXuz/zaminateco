@@ -115,7 +115,7 @@ export const EnhancedAvatar: React.FC<EnhancedAvatarProps> = ({
         {image ? (
           <img src={image} alt="" className="relative z-10 w-full h-full object-contain rounded-full" loading="lazy" />
         ) : emoji ? (
-          <span className="relative z-10 select-none">{emoji}</span>
+        <span className="relative z-10 select-none">{emoji}</span>
         ) : null}
         
         {/* Crown for special users */}

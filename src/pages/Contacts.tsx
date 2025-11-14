@@ -164,6 +164,7 @@ const ContactCard = ({ contact }: { contact: { icon: typeof Mail, title: string,
 const SocialCard = ({ social }: { social: { icon: typeof Send, platform: string, handle: string, description: string, link: string, color: string, followers: string } }) => {
   const Icon = social.icon;
   const isMobile = useIsMobile();
+  const { t } = useTranslation('common');
   
   // Define proper button colors
   const getButtonColor = (color: string) => {
@@ -245,7 +246,7 @@ const SocialCard = ({ social }: { social: { icon: typeof Send, platform: string,
             style={{ touchAction: 'manipulation' }}
           >
             <ExternalLink className={cn(isMobile ? "h-2.5 w-2.5 mr-1" : "h-3 w-3 mr-1")} />
-            Follow
+            {t('follow')}
           </Button>
         </CardContent>
       </Card>
@@ -400,15 +401,14 @@ export default function Contacts() {
                 "font-bold bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight",
                 isMobile ? "text-xl" : "text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
               )}>
-                Get In Touch
+                {t('getInTouch')}
               </h1>
               
               <p className={cn(
                 "text-gray-600 max-w-2xl mx-auto leading-relaxed",
                 isMobile ? "text-xs px-2" : "text-sm sm:text-base md:text-lg px-2"
               )}>
-                Have questions about our sustainability mission? Want to partner with us? 
-                We'd love to hear from you.
+                {t('getInTouchDescription')}
               </p>
 
               {/* Mobile-optimized stats */}
@@ -468,7 +468,7 @@ export default function Contacts() {
                       )}>
                         <MessageSquare className={cn("text-white", isMobile ? "h-3 w-3" : "h-4 w-4 sm:h-5 sm:w-5")} />
                       </div>
-                      Send us a Message
+                      {t('sendUsAMessage')}
                     </CardTitle>
                   </CardHeader>
                   
@@ -491,13 +491,13 @@ export default function Contacts() {
                             "font-bold text-green-600 mb-2",
                             isMobile ? "text-base" : "text-xl"
                           )}>
-                            Message Sent!
+                            {t('messageSent')}
                           </h3>
                           <p className={cn(
                             "text-gray-600",
                             isMobile ? "text-xs" : ""
                           )}>
-                            We'll get back to you within 24 hours!
+                            {t('messageSentDescription')}
                           </p>
                         </motion.div>
                       ) : (
@@ -511,7 +511,7 @@ export default function Contacts() {
                                 "block font-medium text-gray-700 mb-2",
                                 isMobile ? "text-xs" : "text-sm"
                               )}>
-                                Full Name *
+                                {t('fullName')} *
                               </label>
                               <Input
                                 name="name"
@@ -530,14 +530,14 @@ export default function Contacts() {
                                 "block font-medium text-gray-700 mb-2",
                                 isMobile ? "text-xs" : "text-sm"
                               )}>
-                                Email Address *
+                                {t('emailAddress')} *
                               </label>
                               <Input
                                 type="email"
                                 name="email"
                                 value={formData.email}
                                 onChange={handleInputChange}
-                                placeholder="your.email@example.com"
+                                placeholder={t('emailPlaceholder')}
                                 required
                                 className={cn(
                                   "border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 rounded-lg transition-all duration-300",
@@ -552,7 +552,7 @@ export default function Contacts() {
                               "block font-medium text-gray-700 mb-2",
                               isMobile ? "text-xs" : "text-sm"
                             )}>
-                              Subject *
+                              {t('subject')} *
                             </label>
                             <Input
                               name="subject"
@@ -572,13 +572,13 @@ export default function Contacts() {
                               "block font-medium text-gray-700 mb-2",
                               isMobile ? "text-xs" : "text-sm"
                             )}>
-                              Message *
+                              {t('message')} *
                             </label>
                             <Textarea
                               name="message"
                               value={formData.message}
                               onChange={handleInputChange}
-                              placeholder="Tell us more about your inquiry..."
+                              placeholder={t('messagePlaceholder')}
                               rows={isMobile ? 3 : 4}
                               required
                               className={cn(
@@ -607,12 +607,12 @@ export default function Contacts() {
                                 >
                                   <Sparkles className={cn(isMobile ? "h-3 w-3" : "h-4 w-4 sm:h-5 sm:w-5")} />
                                 </motion.div>
-                                Sending...
+                                {t('sending')}
                               </>
                             ) : (
                               <>
                                 <Send className={cn("mr-2", isMobile ? "h-3 w-3" : "h-4 w-4 sm:h-5 sm:w-5")} />
-                                Send Message
+                                {t('sendMessage')}
                               </>
                             )}
                           </Button>
@@ -629,7 +629,7 @@ export default function Contacts() {
                   "font-bold text-gray-900 text-center",
                   isMobile ? "text-base mb-3" : "text-xl sm:text-2xl mb-4"
                 )}>
-                  Contact Information
+                  {t('contactInformation')}
                 </h2>
                 
                 <div className={cn(
@@ -649,13 +649,13 @@ export default function Contacts() {
                     "font-bold text-gray-900",
                     isMobile ? "text-base mb-1" : "text-xl sm:text-2xl mb-2"
                   )}>
-                    Follow Our Journey
+                    {t('followOurJourney')}
                   </h2>
                   <p className={cn(
                     "text-gray-600",
                     isMobile ? "text-xs" : "text-sm sm:text-base"
                   )}>
-                    Stay connected with our sustainability efforts
+                    {t('followOurJourneyDescription')}
                   </p>
                 </div>
                 
@@ -684,14 +684,13 @@ export default function Contacts() {
                       "font-bold",
                       isMobile ? "text-base mb-2" : "text-xl sm:text-2xl md:text-3xl mb-3"
                     )}>
-                      Need Immediate Assistance?
+                      {t('needImmediateAssistance')}
                     </h2>
                     <p className={cn(
                       "text-orange-100 leading-relaxed",
                       isMobile ? "text-xs mb-4" : "mb-6 text-sm sm:text-base"
                     )}>
-                      For urgent environmental issues or partnership opportunities, 
-                      contact our CEO directly.
+                      {t('needImmediateAssistanceDescription')}
                     </p>
                     
                     <div className={cn(
@@ -708,7 +707,7 @@ export default function Contacts() {
                         style={{ touchAction: 'manipulation' }}
                       >
                         <Phone className={cn("mr-2", isMobile ? "h-3 w-3" : "h-4 w-4")} />
-                        Call Now
+                        {t('callNow')}
                       </Button>
                       <Button
                         size={isMobile ? "default" : "sm"}
@@ -720,7 +719,7 @@ export default function Contacts() {
                         style={{ touchAction: 'manipulation' }}
                       >
                         <Mail className={cn("mr-2", isMobile ? "h-3 w-3" : "h-4 w-4")} />
-                        Email CEO
+                        {t('emailCEO')}
                       </Button>
                     </div>
                   </CardContent>

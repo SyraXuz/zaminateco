@@ -1,4 +1,4 @@
-import { Trophy, Star } from 'lucide-react';
+import { Trophy, Star, Zap } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { calculateLevel, getLevelTitle, calculateProgress, getPointsForNextLevel } from '@/lib/gameSystem';
@@ -18,8 +18,13 @@ export default function GameLevel({ ecoPoints, showDetails = false }: GameLevelP
     <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-4 text-white">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center">
-          <div className="bg-white/20 rounded-full p-2 mr-3">
-            <Trophy className="h-5 w-5" />
+          <div className="bg-white/20 rounded-full p-2 mr-3 flex items-center justify-center">
+            <img 
+              src="/images/level.png" 
+              alt="Level" 
+              className="h-5 w-5 object-contain"
+              loading="lazy"
+            />
           </div>
           <div>
             <p className="text-sm opacity-90">Level {level}</p>

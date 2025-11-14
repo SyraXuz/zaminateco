@@ -1,11 +1,10 @@
-import { MapPin, Vote, Calendar, ShoppingBag, BookOpen, User, Home, Users, Handshake, Mail } from 'lucide-react';
+import { Vote, Calendar, ShoppingBag, BookOpen, User, Home, Users, Handshake, Mail } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const navigationItems = [
   { path: '/', icon: Home, labelKey: 'home' as const },
-  { path: '/map', icon: MapPin, labelKey: 'ecoMap' as const },
   { path: '/vote', icon: Vote, labelKey: 'ecoVote' as const },
   { path: '/actions', icon: Calendar, labelKey: 'ecoActions' as const },
   { path: '/shop', icon: ShoppingBag, labelKey: 'shop' as const },
@@ -23,21 +22,61 @@ export default function Navigation() {
   const location = useLocation();
   const { t, i18n } = useTranslation('common'); // Specify 'common' namespace
 
-  // Helper function to get translation with proper fallback
-  const getTranslation = (key: string): string => {
+  // Helper function to get translation with proper fallback and mobile optimization
+  const getTranslation = (key: string, isMobileNav: boolean = false): string => {
+    // For mobile navigation, use short versions for longer labels
+    if (isMobileNav) {
+      const shortKeyMap: Record<string, string> = {
+        'ecoActions': 'ecoActionsShort',
+        'home': 'homeShort',
+        'ecoVote': 'ecoVoteShort',
+        'shop': 'shopShort',
+        'stories': 'storiesShort',
+        'profile': 'profileShort'
+      };
+      
+      if (shortKeyMap[key]) {
+        const shortKey = shortKeyMap[key];
+        const shortTranslation = t(shortKey, { ns: 'common' });
+        if (shortTranslation && shortTranslation !== shortKey) {
+          return shortTranslation;
+        }
+      }
+    }
+    
     // Explicitly get translation from 'common' namespace
     const translation = t(key, { ns: 'common' });
     
     // If translation is missing or returns the key, use explicit fallbacks
     if (!translation || translation === key) {
       const fallbacks: Record<string, Record<string, string>> = {
-        en: { ecoActions: 'EcoActions' },
-        ru: { ecoActions: 'ЭкоДействия' },
-        uz: { ecoActions: 'EkoHarakatlar' }
+        en: { 
+          ecoActions: 'EcoActions', 
+          ecoActionsShort: 'Actions',
+          home: 'Home',
+          homeShort: 'Home'
+        },
+        ru: { 
+          ecoActions: 'ЭкоДействия', 
+          ecoActionsShort: 'Действия',
+          home: 'Главная',
+          homeShort: 'Главная'
+        },
+        uz: { 
+          ecoActions: 'EkoHarakatlar', 
+          ecoActionsShort: 'Harakatlar',
+          home: 'Bosh sahifa',
+          homeShort: 'Bosh'
+        }
       };
       const currentLang = i18n.language || 'en';
       const langKey = currentLang.split('-')[0]; // Get base language (en, ru, uz)
-      return fallbacks[langKey as keyof typeof fallbacks]?.[key] || key;
+      const shortKeyMap: Record<string, string> = {
+        'ecoActions': 'ecoActionsShort',
+        'home': 'homeShort'
+      };
+      const fallbackKey = isMobileNav && shortKeyMap[key] ? shortKeyMap[key] : key;
+      return fallbacks[langKey as keyof typeof fallbacks]?.[fallbackKey] || key;
     }
     
     return translation;
@@ -47,7 +86,7 @@ export default function Navigation() {
     <>
       {/* Main Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-1 py-1 z-50 shadow-lg mobile-nav">
-        <div className="flex justify-around items-center max-w-screen-xl mx-auto">
+        <div className="flex justify-around items-center max-w-screen-xl mx-auto gap-0.5">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -57,15 +96,16 @@ export default function Navigation() {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex flex-col items-center justify-center p-1.5 rounded-lg transition-colors min-w-0 flex-1 max-w-[80px] smooth-transition hover-effect touch-feedback",
+                  "flex flex-col items-center justify-center p-1 rounded-lg transition-colors min-w-0 flex-1 max-w-[90px] smooth-transition hover-effect touch-feedback",
+                  "relative",
                   isActive
                     ? "text-green-600 bg-green-50"
                     : "text-gray-600 hover:text-green-600 hover:bg-green-50"
                 )}
               >
                 <Icon className="h-4 w-4 mb-0.5 flex-shrink-0" />
-                <span className="text-[10px] font-medium text-center leading-tight break-words hyphens-auto max-w-full">
-                  {getTranslation(item.labelKey)}
+                <span className="text-[9px] sm:text-[10px] font-medium text-center leading-tight break-words hyphens-auto px-0.5" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                  {getTranslation(item.labelKey, true)}
                 </span>
               </Link>
             );

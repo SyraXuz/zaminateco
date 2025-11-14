@@ -7,8 +7,8 @@
 export const emojiToImageMap: Record<string, string> = {
   // Collection Points
   '🗂️': '/images/compost_13285420.png', // Mixed waste
-  '♻️': '/images/ECOBUSSTOP.png', // Plastic/Recycling
-  '🛞': '/images/ECOBUSSTOP.png', // Tires
+  '♻️': '/images/Plastic Recycling.png', // Plastic/Recycling
+  '🛞': '/images/Plastic Recycling.png', // Tires
   
   // Events
   '🎓': '/images/book_649180.png', // Education

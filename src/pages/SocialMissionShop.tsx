@@ -8,14 +8,19 @@ import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '../hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { getIconForProductOrCategory } from '../lib/iconMatcher';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { useCart } from '../contexts/CartContext';
 
 // Sample product data with translation keys
+// IMPORTANT: englishName is used for icon matching to ensure consistency across languages
 const productData = [
   {
     id: 1,
     emoji: '🏗️',
     image: '/images/art-tiles.png',
     nameKey: 'products.epdmFreeTiles.name',
+    englishName: 'EPDM-free Tiles', // Original English name for icon matching
     descriptionKey: 'products.epdmFreeTiles.description',
     infoKey: 'products.epdmFreeTiles.info',
     categoryKey: 'products.epdmFreeTiles.category',
@@ -27,6 +32,7 @@ const productData = [
     emoji: '🛝',
     image: '/images/Eco Bench.png',
     nameKey: 'products.epdmRubberEcotiles.name',
+    englishName: 'EPDM Rubber Ecotiles', // Original English name for icon matching
     descriptionKey: 'products.epdmRubberEcotiles.description',
     infoKey: 'products.epdmRubberEcotiles.info',
     categoryKey: 'products.epdmRubberEcotiles.category',
@@ -38,6 +44,7 @@ const productData = [
     emoji: '🧱',
     image: '/images/EcoBrick.png',
     nameKey: 'products.ecoBrick.name',
+    englishName: 'EcoBrick', // Original English name for icon matching
     descriptionKey: 'products.ecoBrick.description',
     categoryKey: 'products.ecoBrick.category',
     price: '99 000 UZS',
@@ -48,6 +55,7 @@ const productData = [
     emoji: '🗑️',
     image: '/images/Waste Bin.png',
     nameKey: 'products.wasteBin.name',
+    englishName: 'Waste Bin', // Original English name for icon matching
     descriptionKey: 'products.wasteBin.description',
     categoryKey: 'products.wasteBin.category',
     price: '79 000 UZS',
@@ -58,6 +66,7 @@ const productData = [
     emoji: '🪴',
     image: '/images/Garden Planter.png',
     nameKey: 'products.gardenPlanter.name',
+    englishName: 'Garden Planter', // Original English name for icon matching
     descriptionKey: 'products.gardenPlanter.description',
     categoryKey: 'products.gardenPlanter.category',
     price: '149 000 UZS',
@@ -68,6 +77,7 @@ const productData = [
     emoji: '🪑',
     image: '/images/Eco Bench.png',
     nameKey: 'products.ecoBench.name',
+    englishName: 'Eco Bench', // Original English name for icon matching
     descriptionKey: 'products.ecoBench.description',
     categoryKey: 'products.ecoBench.category',
     price: '790 000 UZS',
@@ -78,6 +88,7 @@ const productData = [
     emoji: '🚲',
     image: '/images/ECOBIKE RACK.png',
     nameKey: 'products.ecobikeRack.name',
+    englishName: 'ECOBIKE RACK', // Original English name for icon matching
     descriptionKey: 'products.ecobikeRack.description',
     categoryKey: 'products.ecobikeRack.category',
     price: '490 000 UZS',
@@ -88,6 +99,7 @@ const productData = [
     emoji: '🚌',
     image: '/images/ECOBUSSTOP.png',
     nameKey: 'products.ecobusStop.name',
+    englishName: 'ECOBUSSTOP', // Original English name for icon matching
     descriptionKey: 'products.ecobusStop.description',
     categoryKey: 'products.ecobusStop.category',
     price: '8 590 000 UZS',
@@ -98,6 +110,7 @@ const productData = [
     emoji: '🎨',
     image: '/images/art-tiles.png',
     nameKey: 'products.playgroundBlock.name',
+    englishName: 'Playground Block (Art Tiles)', // Original English name for icon matching
     descriptionKey: 'products.playgroundBlock.description',
     categoryKey: 'products.playgroundBlock.category',
     price: '49 000 UZS',
@@ -108,6 +121,7 @@ const productData = [
     emoji: '🏙️',
     image: '/images/green-city_5994274.png',
     nameKey: 'products.ecostreetFurniture.name',
+    englishName: 'Ecostreet Furniture', // Original English name for icon matching
     descriptionKey: 'products.ecostreetFurniture.description',
     categoryKey: 'products.ecostreetFurniture.category',
     isCallForPrice: true
@@ -121,33 +135,38 @@ const productData = [
 // - Furniture.png
 // - Infrastructure.png
 // - playground.png
+// IMPORTANT: englishName and iconImage are used for consistent icons across languages
 const categoryData = [
   {
     emoji: '🏗️',
     image: '/images/art-tiles.png',
-    iconImage: '/images/construction.png', // Construction icon
+    iconImage: '/images/construction.png', // Construction icon - explicit path
     nameKey: 'categories.construction.name',
+    englishName: 'Construction', // Original English name for icon matching
     descriptionKey: 'categories.construction.description'
   },
   {
     emoji: '🛝',
     image: '/images/Eco Bench.png',
-    iconImage: '/images/recreation.png', // Recreation icon
+    iconImage: '/images/recreation.png', // Recreation icon - explicit path
     nameKey: 'categories.recreation.name',
+    englishName: 'Recreation', // Original English name for icon matching
     descriptionKey: 'categories.recreation.description'
   },
   {
     emoji: '🪑',
     image: '/images/Eco Bench.png',
-    iconImage: '/images/Furniture.png', // Furniture icon
+    iconImage: '/images/Furniture.png', // Furniture icon - explicit path
     nameKey: 'categories.furniture.name',
+    englishName: 'Furniture', // Original English name for icon matching
     descriptionKey: 'categories.furniture.description'
   },
   {
     emoji: '🏙️',
     image: '/images/green-city_5994274.png',
-    iconImage: '/images/Infrastructure.png', // Infrastructure icon
+    iconImage: '/images/Infrastructure.png', // Infrastructure icon - explicit path
     nameKey: 'categories.infrastructure.name',
+    englishName: 'Infrastructure', // Original English name for icon matching
     descriptionKey: 'categories.infrastructure.description'
   }
 ];
@@ -155,13 +174,18 @@ const categoryData = [
 export default function SocialMissionShop() {
   const { t } = useTranslation(['shop', 'translation']);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const { addToCart, cartCount } = useCart();
   
-  // Get product icons dynamically based on translated names
+  // Get product icons - use English names for consistency across languages
   const productsWithIcons = useMemo(() => {
     return productData.map(product => {
       const productName = t(product.nameKey, { ns: 'shop' });
       const categoryName = t(product.categoryKey, { ns: 'shop' });
-      const iconPath = getIconForProductOrCategory(productName, product.image);
+      
+      // Use original English name for icon matching (language-independent)
+      const englishName = (product as any).englishName || productName;
+      const iconPath = getIconForProductOrCategory(englishName, product.image);
       
       return {
         ...product,
@@ -172,11 +196,23 @@ export default function SocialMissionShop() {
     });
   }, [t]);
   
-  // Get category icons dynamically based on translated names
+  // Get category icons - use explicit iconImage paths for consistency across languages
   const categoriesWithIcons = useMemo(() => {
     return categoryData.map(category => {
       const categoryName = t(category.nameKey, { ns: 'shop' });
-      const iconPath = getIconForProductOrCategory(categoryName, category.iconImage || category.image);
+      
+      // Use explicit iconImage if set, otherwise try matching with English name
+      let iconPath = category.iconImage;
+      
+      if (!iconPath || !iconPath.startsWith('/images/')) {
+        const englishName = (category as any).englishName || categoryName;
+        iconPath = getIconForProductOrCategory(englishName, category.iconImage || category.image);
+      }
+      
+      // Final fallback
+      if (!iconPath || !iconPath.startsWith('/images/')) {
+        iconPath = category.iconImage || category.image;
+      }
       
       return {
         ...category,
@@ -230,7 +266,7 @@ export default function SocialMissionShop() {
           </Card>
 
           {/* Eco Products Section */}
-          <section>
+          <section id="eco-products">
             <h3 className={cn(
               "font-semibold flex items-center",
               isMobile ? "text-sm mb-2" : "text-lg sm:text-xl mb-3 sm:mb-4"
@@ -341,6 +377,17 @@ export default function SocialMissionShop() {
                             : 'bg-green-600 hover:bg-green-700 text-primary-foreground'
                         )}
                         variant={product.isCallForPrice ? "outline" : "default"}
+                        onClick={() => {
+                          if (product.isCallForPrice) {
+                            // Open contact form or email
+                            window.open(`mailto:sukhrobjonrikhsiboev@gmail.com?subject=${encodeURIComponent(t('buttons.contactUs', { ns: 'shop' }))} - ${product.productName}&body=${encodeURIComponent(t('inquiryAboutProduct', { defaultValue: 'I am interested in this product:', ns: 'shop' }))} ${product.productName}`, '_blank');
+                            toast.info(t('openingEmail', { defaultValue: 'Opening email client...', ns: 'shop' }));
+                          } else {
+                            // Add to cart using context
+                            addToCart(product);
+                            toast.success(t('addedToCart', { defaultValue: 'Added to cart!', ns: 'shop' }));
+                          }
+                        }}
                       >
                         {product.isCallForPrice ? (
                           <>
@@ -481,16 +528,38 @@ export default function SocialMissionShop() {
                 "flex justify-center",
                 isMobile ? "flex-col gap-1.5" : "flex-col sm:flex-row gap-2 sm:gap-3"
               )}>
-                <Button className={cn(
-                  "bg-green-600 hover:bg-green-700",
-                  isMobile ? "h-8 text-xs py-1.5 px-3" : "text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6"
-                )}>
+                <Button 
+                  className={cn(
+                    "bg-green-600 hover:bg-green-700",
+                    isMobile ? "h-8 text-xs py-1.5 px-3" : "text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6"
+                  )}
+                  onClick={() => {
+                    // Scroll to products section
+                    const productsSection = document.getElementById('eco-products');
+                    if (productsSection) {
+                      productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                      // If section doesn't exist, just scroll to top of products
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                >
                   <ShoppingBag className={cn(isMobile ? "h-2.5 w-2.5 mr-1" : "h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2")} />
                   {t('buttons.startShopping', { ns: 'shop' })}
                 </Button>
-                <Button variant="outline" className={cn(
-                  isMobile ? "h-8 text-xs py-1.5 px-3" : "text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6"
-                )}>
+                <Button 
+                  variant="outline" 
+                  className={cn(
+                    isMobile ? "h-8 text-xs py-1.5 px-3" : "text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6"
+                  )}
+                  onClick={() => {
+                    // Open contact page or email for bulk orders
+                    navigate('/contacts');
+                    // Alternatively, open email:
+                    // window.open('mailto:sukhrobjonrikhsiboev@gmail.com?subject=' + encodeURIComponent(t('buttons.contactForBulkOrders', { ns: 'shop' })), '_blank');
+                    toast.info(t('redirectingToContact', { defaultValue: 'Redirecting to contact page...', ns: 'shop' }));
+                  }}
+                >
                   <Phone className={cn(isMobile ? "h-2.5 w-2.5 mr-1" : "h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2")} />
                   {t('buttons.contactForBulkOrders', { ns: 'shop' })}
                 </Button>

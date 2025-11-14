@@ -35,6 +35,39 @@
     padding: 8px 0;
   }
 
+  /* Perfect centering for navigation items */
+  .mobile-nav > div {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    gap: 0.125rem;
+  }
+
+  .mobile-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-width: 0;
+    flex: 1 1 0;
+    max-width: 90px;
+    padding: 4px 2px;
+  }
+
+  .mobile-nav a > span {
+    display: block;
+    width: 100%;
+    text-align: center;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.1;
+    max-height: 2.2em;
+    overflow: hidden;
+  }
+
   /* Swipe gesture support */
   .swipeable {
     touch-action: pan-x pan-y;

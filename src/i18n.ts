@@ -15,9 +15,9 @@ import enActions from './locales/en/actions-translations.json';
 import ruActions from './locales/ru/actions-translations.json';
 import uzActions from './locales/uz/actions-translations.json';
 
-import enProfile from './locales/en/profile-translations.json';
-import ruProfile from './locales/ru/profile-translations.json';
-import uzProfile from './locales/uz/profile-translations.json';
+import enProfile from './locales/en/profile.json';
+import ruProfile from './locales/ru/profile.json';
+import uzProfile from './locales/uz/profile.json';
 
 import enCommon from './locales/en/common.json';
 import ruCommon from './locales/ru/common.json';

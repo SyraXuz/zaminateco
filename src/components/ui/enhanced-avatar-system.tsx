@@ -283,12 +283,12 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                 "flex items-center justify-between",
                 isMobile ? "mb-1" : "mb-3"
               )}>
-                <h2 className={cn(
+                  <h2 className={cn(
                   "font-bold text-gray-900 truncate flex-1 min-w-0",
                   isMobile ? "text-sm" : "text-xl sm:text-2xl"
-                )}>
+                  )}>
                   🎭 {isMobile ? "Avatars" : "Avatar & Achievement System"}
-                </h2>
+                  </h2>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -393,7 +393,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
             <div 
               className={cn(
                 "overflow-y-auto flex-1",
-                isMobile 
+              isMobile 
                   ? "p-2" 
                   : "p-3 sm:p-6"
               )}
@@ -434,7 +434,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                   <div 
                     className={cn(
                       "grid",
-                      isMobile 
+                    isMobile 
                         ? "grid-cols-2 gap-3" 
                         : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-6"
                     )}

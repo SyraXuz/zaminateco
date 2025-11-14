@@ -152,8 +152,8 @@ export default function Index() {
               {/* Robot Section - Properly Sized to Show Full Spline Scene Text */}
               <div className="relative w-full mb-4 rounded-xl overflow-hidden bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center" style={{ height: '44.55vh', minHeight: '324px', maxHeight: '389px', width: '100%' }}>
                 <SplineRobot />
-              </div>
-
+            </div>
+            
               {/* Text Content - Combined Interactive Section */}
               <div className="px-3 sm:px-4">
                 {/* Combined Interactive Card with Enhanced Design */}
@@ -266,7 +266,7 @@ export default function Index() {
                   >
                     {t('learnAboutProject')}
                   </Button>
-                  <Link to="/map" className="flex-1">
+                  <Link to="/actions" className="flex-1">
                     <Button 
                       variant="outline"
                       className="w-full border-2 border-green-600 bg-white/90 backdrop-blur-sm text-green-700 hover:bg-green-50 font-semibold text-xs py-2 px-3 shadow-md transition-all h-auto min-h-[40px]"
@@ -296,8 +296,8 @@ export default function Index() {
                   className="max-w-3xl mx-auto px-4 mb-4 sm:mb-6"
                 >
                   <p className="text-base sm:text-xl md:text-2xl opacity-90 leading-relaxed hero-subtitle-mobile text-gray-700 font-medium">
-                    {t('heroSubtitle')}
-                  </p>
+                {t('heroSubtitle')}
+              </p>
                 </motion.div>
                 
                 {/* Description Card - Positioned below subtitle with creative background */}
@@ -403,10 +403,10 @@ export default function Index() {
                     {/* Main description text */}
                     <div className="relative z-10">
                       <p className="text-sm sm:text-base md:text-lg leading-relaxed hero-description-mobile text-gray-800 font-medium">
-                        {t('heroDescription')}
-                      </p>
-                    </div>
-                    
+                  {t('heroDescription')}
+                </p>
+              </div>
+              
                     {/* Shine effect overlay */}
                     <motion.div
                       animate={{ 
@@ -432,24 +432,24 @@ export default function Index() {
                   className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md mx-auto px-4"
                   style={{ pointerEvents: 'auto' }}
                 >
-                  <Button 
-                    onClick={scrollToAbout}
+                <Button 
+                  onClick={scrollToAbout}
                     size="lg"
                     className="bg-green-600 text-white hover:bg-green-700 font-semibold text-sm sm:text-base py-3 sm:py-4 px-6 sm:px-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                     style={{ pointerEvents: 'auto' }}
-                  >
-                    {t('learnAboutProject')}
-                  </Button>
-                  <Link to="/map" style={{ pointerEvents: 'auto' }}>
-                    <Button 
+                >
+                  {t('learnAboutProject')}
+                </Button>
+                  <Link to="/actions" style={{ pointerEvents: 'auto' }}>
+                  <Button 
                       size="lg"
-                      variant="outline"
+                    variant="outline"
                       className="border-2 border-green-600 bg-white/90 backdrop-blur-sm text-green-700 hover:bg-green-50 w-full sm:w-auto font-semibold text-sm sm:text-base py-3 sm:py-4 px-6 sm:px-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                       style={{ pointerEvents: 'auto' }}
-                    >
-                      {t('findCollectionPoints')}
-                    </Button>
-                  </Link>
+                  >
+                    {t('findCollectionPoints')}
+                  </Button>
+                </Link>
                 </motion.div>
               </div>
             </div>
@@ -752,7 +752,7 @@ export default function Index() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-2 sm:gap-3 card-content-mobile gap-mobile">
-                <Link to="/map">
+                <Link to="/actions">
                   <Button className="min-h-[3rem] sm:min-h-[5rem] h-auto w-full flex-col bg-green-600 hover:bg-green-700 eco-card-hover p-2 sm:p-3 action-button-mobile">
                     <img src="/images/location_5174778.png" alt="" className="w-6 h-6 sm:w-8 sm:h-8 mb-1 sm:mb-2 object-contain" aria-hidden="true" loading="lazy" />
                     <span className="text-xs font-medium text-center text-white leading-tight break-words hyphens-auto px-1 action-text-mobile">
@@ -927,82 +927,82 @@ export default function Index() {
                     </div>
                   ) : (
                     /* Desktop: Grid Layout */
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      {/* Partners Link */}
-                      <motion.div
-                        whileHover={{ scale: 1.02, y: -2 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <Link to="/partners">
-                          <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-green-200 bg-gradient-to-br from-green-50 to-white">
-                            <CardContent className="p-4 text-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Partners Link */}
+                    <motion.div
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Link to="/partners">
+                        <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-green-200 bg-gradient-to-br from-green-50 to-white">
+                          <CardContent className="p-4 text-center">
                               <img src="/images/partners_7967044.png" alt="" className="w-12 h-12 mx-auto mb-3 object-contain" loading="lazy" />
-                              <h4 className="font-semibold text-green-800 mb-2">{t('ourPartnersLink')}</h4>
-                              <p className="text-xs text-gray-600 mb-3">
-                                {t('discoverExclusiveDiscounts')}
-                              </p>
-                              <Button 
-                                size="sm" 
-                                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
-                              >
-                                <ExternalLink className="h-4 w-4 mr-2" />
-                                {t('viewPartners')}
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      </motion.div>
+                            <h4 className="font-semibold text-green-800 mb-2">{t('ourPartnersLink')}</h4>
+                            <p className="text-xs text-gray-600 mb-3">
+                              {t('discoverExclusiveDiscounts')}
+                            </p>
+                            <Button 
+                              size="sm" 
+                              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                            >
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              {t('viewPartners')}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </motion.div>
 
-                      {/* Team Link */}
-                      <motion.div
-                        whileHover={{ scale: 1.02, y: -2 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <Link to="/team">
-                          <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-blue-200 bg-gradient-to-br from-blue-50 to-white">
-                            <CardContent className="p-4 text-center">
+                    {/* Team Link */}
+                    <motion.div
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Link to="/team">
+                        <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+                          <CardContent className="p-4 text-center">
                               <img src="/images/meet-the-team_15916616.png" alt="" className="w-12 h-12 mx-auto mb-3 object-contain" loading="lazy" />
-                              <h4 className="font-semibold text-blue-800 mb-2">{t('meetOurTeam')}</h4>
-                              <p className="text-xs text-gray-600 mb-3">
-                                {t('passionatePeopleBehind')}
-                              </p>
-                              <Button 
-                                size="sm" 
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                              >
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                {t('meetTeam')}
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      </motion.div>
+                            <h4 className="font-semibold text-blue-800 mb-2">{t('meetOurTeam')}</h4>
+                            <p className="text-xs text-gray-600 mb-3">
+                              {t('passionatePeopleBehind')}
+                            </p>
+                            <Button 
+                              size="sm" 
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                            >
+                              <UserCheck className="h-4 w-4 mr-2" />
+                              {t('meetTeam')}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </motion.div>
 
-                      {/* Contact Link */}
-                      <motion.div
-                        whileHover={{ scale: 1.02, y: -2 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <Link to="/contacts">
-                          <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-purple-200 bg-gradient-to-br from-purple-50 to-white">
-                            <CardContent className="p-4 text-center">
+                    {/* Contact Link */}
+                    <motion.div
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Link to="/contacts">
+                        <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 hover:border-purple-200 bg-gradient-to-br from-purple-50 to-white">
+                          <CardContent className="p-4 text-center">
                               <img src="/images/contact-us.png" alt="" className="w-12 h-12 mx-auto mb-3 object-contain" loading="lazy" />
-                              <h4 className="font-semibold text-purple-800 mb-2">{t('contactUsButton')}</h4>
-                              <p className="text-xs text-gray-600 mb-3">
-                                {t('getInTouchPartnerships')}
-                              </p>
-                              <Button 
-                                size="sm" 
-                                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold"
-                              >
-                                <Mail className="h-4 w-4 mr-2" />
-                                {t('contactUsButton')}
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      </motion.div>
-                    </div>
+                            <h4 className="font-semibold text-purple-800 mb-2">{t('contactUsButton')}</h4>
+                            <p className="text-xs text-gray-600 mb-3">
+                              {t('getInTouchPartnerships')}
+                            </p>
+                            <Button 
+                              size="sm" 
+                              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+                            >
+                              <Mail className="h-4 w-4 mr-2" />
+                              {t('contactUsButton')}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </motion.div>
+                  </div>
                   )}
                 </motion.div>
               </CardContent>

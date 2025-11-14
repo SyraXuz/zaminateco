@@ -19,7 +19,13 @@ import {
   Info,
   Zap,
   Shield,
-  BookOpen
+  BookOpen,
+  Navigation,
+  Recycle,
+  Sparkles,
+  ExternalLink,
+  ArrowRight,
+  Activity
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -31,29 +37,10 @@ import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '../hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { getIconForProductOrCategory } from '@/lib/iconMatcher';
-
-// Types
-interface EcoEvent {
-  id: number;
-  titleKey: string;
-  descriptionKey: string;
-  category: 'cleanup' | 'planting' | 'education' | 'recycling' | 'awareness';
-  locationKey: string;
-  date: string;
-  time: string;
-  duration: string;
-  organizerKey: string;
-  participants: number;
-  maxParticipants: number;
-  ecoPoints: number;
-  difficulty: 'easy' | 'medium' | 'hard';
-  requirementsKey: string;
-  whatToBringKey: string;
-  benefitsKey: string;
-  impactKey: string;
-  image: string;
-  isJoined: boolean;
-}
+import { EventCard, type EcoEvent } from '@/components/EventCard';
+import InteractiveMap from '@/components/InteractiveMap';
+import { getCollectionPoints } from '@/lib/collectionData';
+import { toast } from 'sonner';
 
 // Animation variants
 const containerVariants = {
@@ -77,34 +64,90 @@ const itemVariants = {
   }
 };
 
-const cardVariants = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.5
-    }
+// Collection point coordinates in Tashkent, Uzbekistan (verified locations)
+const COLLECTION_POINTS = [
+  {
+    id: 1,
+    name: 'Tashkent Central Park',
+    lat: 41.313519,
+    lng: 69.298288,
+    type: 'mixed',
+    address: 'Navoi Avenue, Tashkent Central Park, Tashkent 100000, Uzbekistan',
+    hours: '8:00 AM - 8:00 PM',
+    capacity: 'High',
+    icon: 'park'
   },
-  hover: {
-    y: -8,
-    scale: 1.02,
-    transition: {
-      duration: 0.3
-    }
+  {
+    id: 2,
+    name: 'Chilonzor Mahalla',
+    lat: 41.2683,
+    lng: 69.2031,
+    type: 'plastic',
+    address: 'Chilonzor District, Bunyodkor Avenue, Tashkent, Uzbekistan',
+    hours: '9:00 AM - 7:00 PM',
+    capacity: 'Medium',
+    icon: 'recycle'
+  },
+  {
+    id: 3,
+    name: 'Yunusobod District',
+    lat: 41.372357,
+    lng: 69.310537,
+    type: 'tires',
+    address: 'Yunusobod District, Amir Temur Avenue, Tashkent, Uzbekistan',
+    hours: '8:00 AM - 9:00 PM',
+    capacity: 'High',
+    icon: 'tires'
   }
-};
+];
 
-const floatingVariants = {
-  animate: {
-    y: [-10, 10, -10],
-    transition: {
-      duration: 4,
-      repeat: Infinity,
-      ease: "easeInOut"
-    }
+// Action location points for events
+const ACTION_LOCATIONS = [
+  {
+    id: 101,
+    name: 'Chirchiq River',
+    lat: 41.246514,
+    lng: 69.347525,
+    type: 'cleanup',
+    address: 'Chirchiq River, Tashkent',
+    eventType: 'River Cleanup',
+    icon: 'river',
+    description: 'River cleanup campaign location'
+  },
+  {
+    id: 102,
+    name: 'School #45',
+    lat: 41.313413,
+    lng: 69.232257,
+    type: 'education',
+    address: 'School #45, Chilonzor District',
+    eventType: 'Education Workshop',
+    icon: 'school',
+    description: 'Environmental education workshop'
+  },
+  {
+    id: 103,
+    name: 'Plastic Recycling Drive',
+    lat: 41.336792,
+    lng: 69.284764,
+    type: 'recycling',
+    address: 'Badamzar Street, Tashkent',
+    eventType: 'Recycling Drive',
+    icon: 'recycle',
+    description: 'Plastic recycling collection point'
+  },
+  {
+    id: 104,
+    name: 'Environmental Awareness Walk',
+    lat: 41.338377,
+    lng: 69.223598,
+    type: 'awareness',
+    address: 'Olmazor District, Tashkent',
+    eventType: 'Awareness Walk',
+    icon: 'walk',
+    description: 'Community awareness walk route'
   }
-};
+];
 
 // Helper function to get current and future dates
 const getCurrentDates = () => {
@@ -134,321 +177,6 @@ const getCurrentDates = () => {
   };
 };
 
-// Event card component
-const EventCard = ({ event }: { event: EcoEvent }) => {
-  const { t } = useTranslation(['actions', 'translation']);
-  const isMobile = useIsMobile();
-  const [isJoined, setIsJoined] = useState(event.isJoined);
-  const [participants, setParticipants] = useState(event.participants);
-  const [showDetails, setShowDetails] = useState(false);
-
-  const handleJoinEvent = () => {
-    setIsJoined(!isJoined);
-    setParticipants(prev => isJoined ? prev - 1 : prev + 1);
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'cleanup': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'planting': return 'bg-green-100 text-green-800 border-green-200';
-      case 'education': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'recycling': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'awareness': return 'bg-pink-100 text-pink-800 border-pink-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'bg-green-100 text-green-800 border-green-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'hard': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'cleanup': return <Globe className="h-4 w-4" />;
-      case 'planting': return <Leaf className="h-4 w-4" />;
-      case 'education': return <BookOpen className="h-4 w-4" />;
-      case 'recycling': return <Target className="h-4 w-4" />;
-      case 'awareness': return <Heart className="h-4 w-4" />;
-      default: return <Star className="h-4 w-4" />;
-    }
-  };
-
-  return (
-    <motion.div
-      variants={cardVariants}
-      whileHover="hover"
-      className="h-full"
-    >
-      <Card className="h-full bg-gradient-to-br from-white via-green-50/30 to-blue-50/30 border-2 border-gray-100 hover:border-green-300 hover:shadow-2xl transition-all duration-500 group overflow-hidden relative">
-        {/* Floating background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            variants={floatingVariants}
-            animate="animate"
-            className="absolute top-4 right-4 w-8 h-8 bg-green-200 rounded-full opacity-20"
-          />
-          <motion.div
-            variants={floatingVariants}
-            animate="animate"
-            transition={{ delay: 1 }}
-            className="absolute bottom-8 left-4 w-6 h-6 bg-blue-200 rounded-full opacity-20"
-          />
-        </div>
-
-        <CardHeader className={cn("relative z-10", isMobile ? "pb-2 p-3" : "pb-4 p-6")}>
-          {/* Background decoration */}
-          <div className={cn(
-            "absolute top-0 right-0 bg-gradient-to-br from-green-100 to-blue-100 rounded-full opacity-30 group-hover:opacity-50 transition-opacity",
-            isMobile ? "w-16 h-16 -translate-y-8 translate-x-8" : "w-24 h-24 -translate-y-12 translate-x-12"
-          )} />
-          
-          <div className="relative z-10">
-            {/* Header with category and difficulty */}
-            <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
-              <div className={cn("flex", isMobile ? "gap-1 flex-wrap" : "gap-2 flex-wrap")}>
-                <Badge className={cn(
-                  `${getCategoryColor(event.category)} border flex items-center`,
-                  isMobile ? "gap-0.5 text-[10px] px-1.5 py-0.5" : "gap-1 text-xs px-2 py-1"
-                )}>
-                  <span className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")}>
-                    {getCategoryIcon(event.category)}
-                  </span>
-                  <span className="capitalize">{t(`eventCategories.${event.category}`, { ns: 'actions' })}</span>
-                </Badge>
-                <Badge className={cn(
-                  `${getDifficultyColor(event.difficulty)} border`,
-                  isMobile ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-1"
-                )}>
-                  <Shield className={cn(isMobile ? "h-2.5 w-2.5 mr-0.5" : "h-3 w-3 mr-1")} />
-                  <span className="capitalize">{t(`difficultyLevels.${event.difficulty}`, { ns: 'actions' })}</span>
-                </Badge>
-              </div>
-              <motion.div 
-                className="flex items-center justify-center flex-shrink-0"
-                whileHover={{ scale: isMobile ? 1 : 1.2, rotate: isMobile ? 0 : 10 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <img 
-                  src={event.iconPath || event.image} 
-                  alt={t(event.titleKey, { ns: 'actions' })} 
-                  className={cn(
-                    "object-contain flex-shrink-0",
-                    isMobile ? "w-12 h-12" : "w-14 h-14 sm:w-16 sm:h-16"
-                  )}
-                  style={{ 
-                    minWidth: isMobile ? '48px' : '56px', 
-                    minHeight: isMobile ? '48px' : '56px',
-                    maxWidth: 'none',
-                    maxHeight: 'none'
-                  }}
-                  loading="lazy"
-                  onError={(e) => {
-                    // Fallback to original image if iconPath fails
-                    const target = e.target as HTMLImageElement;
-                    if (event.image && target.src !== event.image) {
-                      target.src = event.image;
-                    }
-                  }}
-                />
-              </motion.div>
-            </div>
-
-            {/* Title and description */}
-            <CardTitle className={cn(
-              "font-bold text-gray-900 group-hover:text-green-700 transition-colors mb-2 line-clamp-2",
-              isMobile ? "text-sm" : "text-lg"
-            )}>
-              {t(event.titleKey, { ns: 'actions' })}
-            </CardTitle>
-            <p className={cn(
-              "text-gray-600 leading-relaxed line-clamp-3 mb-3",
-              isMobile ? "text-xs" : "text-sm"
-            )}>
-              {t(event.descriptionKey, { ns: 'actions' })}
-            </p>
-
-            {/* Event details */}
-            <div className={cn("space-y-2 text-gray-600", isMobile ? "space-y-1.5" : "space-y-2")}>
-              <motion.div 
-                className={cn(
-                  "flex items-center bg-white/50 rounded-lg",
-                  isMobile ? "p-1.5 text-xs" : "p-2 text-xs"
-                )}
-                whileHover={{ scale: isMobile ? 1 : 1.02 }}
-              >
-                <Calendar className={cn("text-green-600", isMobile ? "h-2.5 w-2.5 mr-1.5" : "h-3 w-3 mr-2")} />
-                <span className="font-medium truncate">{event.date} at {event.time}</span>
-              </motion.div>
-              <motion.div 
-                className={cn(
-                  "flex items-center bg-white/50 rounded-lg",
-                  isMobile ? "p-1.5 text-xs" : "p-2 text-xs"
-                )}
-                whileHover={{ scale: isMobile ? 1 : 1.02 }}
-              >
-                <MapPin className={cn("text-blue-600", isMobile ? "h-2.5 w-2.5 mr-1.5" : "h-3 w-3 mr-2")} />
-                <span className="line-clamp-1 font-medium">{t(event.locationKey, { ns: 'actions' })}</span>
-              </motion.div>
-              <div className={cn("grid grid-cols-2", isMobile ? "gap-1.5" : "gap-2")}>
-                <motion.div 
-                  className={cn(
-                    "flex items-center bg-white/50 rounded-lg",
-                    isMobile ? "p-1.5 text-xs" : "p-2 text-xs"
-                  )}
-                  whileHover={{ scale: isMobile ? 1 : 1.02 }}
-                >
-                  <Clock className={cn("text-purple-600", isMobile ? "h-2.5 w-2.5 mr-1.5" : "h-3 w-3 mr-2")} />
-                  <span className="font-medium truncate">{event.duration}</span>
-                </motion.div>
-                <motion.div 
-                  className={cn(
-                    "flex items-center bg-white/50 rounded-lg",
-                    isMobile ? "p-1.5 text-xs" : "p-2 text-xs"
-                  )}
-                  whileHover={{ scale: isMobile ? 1 : 1.02 }}
-                >
-                  <Users className={cn("text-orange-600", isMobile ? "h-2.5 w-2.5 mr-1.5" : "h-3 w-3 mr-2")} />
-                  <span className="font-medium truncate">{participants}/{event.maxParticipants}</span>
-                </motion.div>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className={cn("relative z-10", isMobile ? "space-y-2 p-3" : "space-y-4 p-6")}>
-          {/* Eco Points and Organizer */}
-          <div className={cn("grid grid-cols-2", isMobile ? "gap-2" : "gap-4")}>
-            <motion.div 
-              className={cn(
-                "text-center bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200",
-                isMobile ? "p-2" : "p-3"
-              )}
-              whileHover={{ scale: isMobile ? 1 : 1.05 }}
-            >
-              <div className="flex items-center justify-center mb-1">
-                <Zap className={cn("text-green-600", isMobile ? "h-3 w-3 mr-1" : "h-4 w-4 mr-1")} />
-                <div className={cn("font-bold text-green-600", isMobile ? "text-sm" : "text-lg")}>{event.ecoPoints}</div>
-              </div>
-              <div className={cn("text-gray-600 font-medium", isMobile ? "text-[10px]" : "text-xs")}>{t('ecoPoints', { ns: 'actions' })}</div>
-            </motion.div>
-            <motion.div 
-              className={cn(
-                "text-center bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200",
-                isMobile ? "p-2" : "p-3"
-              )}
-              whileHover={{ scale: isMobile ? 1 : 1.05 }}
-            >
-              <div className={cn("font-semibold text-blue-600 line-clamp-2 mb-1", isMobile ? "text-[10px]" : "text-xs")}>{t(event.organizerKey, { ns: 'actions' })}</div>
-              <div className={cn("text-gray-600 font-medium", isMobile ? "text-[10px]" : "text-xs")}>{t('organizer', { ns: 'actions' })}</div>
-            </motion.div>
-          </div>
-
-          {/* Impact statement */}
-          <motion.div 
-            className={cn(
-              "bg-gradient-to-r from-green-50 via-blue-50 to-purple-50 rounded-lg border border-green-200",
-              isMobile ? "p-2" : "p-3"
-            )}
-            whileHover={{ scale: isMobile ? 1 : 1.02 }}
-          >
-            <div className={cn("flex items-center", isMobile ? "mb-1" : "mb-2")}>
-              <TrendingUp className={cn("text-green-600", isMobile ? "h-3 w-3 mr-1.5" : "h-4 w-4 mr-2")} />
-              <span className={cn("font-semibold text-gray-700", isMobile ? "text-[10px]" : "text-xs")}>{t('impact', { ns: 'actions' })}</span>
-            </div>
-            <p className={cn("text-gray-600 line-clamp-2 leading-relaxed", isMobile ? "text-[10px]" : "text-xs")}>{t(event.impactKey, { ns: 'actions' })}</p>
-          </motion.div>
-
-          {/* Expandable details */}
-          <motion.div
-            initial={false}
-            animate={{ height: showDetails ? 'auto' : 0 }}
-            className="overflow-hidden"
-          >
-            <div className={cn(isMobile ? "space-y-2 pt-1" : "space-y-3 pt-2")}>
-              {/* Requirements */}
-              <div className={cn(
-                "bg-gray-50 rounded-lg border border-gray-200",
-                isMobile ? "p-2" : "p-3"
-              )}>
-                <div className={cn("flex items-center", isMobile ? "mb-0.5" : "mb-1")}>
-                  <CheckCircle className={cn("text-gray-600", isMobile ? "h-2.5 w-2.5 mr-1" : "h-3 w-3 mr-1")} />
-                  <span className={cn("font-semibold text-gray-700", isMobile ? "text-[10px]" : "text-xs")}>{t('requirements', { ns: 'actions' })}</span>
-                </div>
-                <p className={cn("text-gray-600 leading-relaxed", isMobile ? "text-[10px]" : "text-xs")}>{t(event.requirementsKey, { ns: 'actions' })}</p>
-              </div>
-
-              {/* What to bring */}
-              <div className={cn(
-                "bg-orange-50 rounded-lg border border-orange-200",
-                isMobile ? "p-2" : "p-3"
-              )}>
-                <div className={cn("flex items-center", isMobile ? "mb-0.5" : "mb-1")}>
-                  <Info className={cn("text-orange-600", isMobile ? "h-2.5 w-2.5 mr-1" : "h-3 w-3 mr-1")} />
-                  <span className={cn("font-semibold text-gray-700", isMobile ? "text-[10px]" : "text-xs")}>{t('whatToBring', { ns: 'actions' })}</span>
-                </div>
-                <p className={cn("text-gray-600 leading-relaxed", isMobile ? "text-[10px]" : "text-xs")}>{t(event.whatToBringKey, { ns: 'actions' })}</p>
-              </div>
-
-              {/* Benefits */}
-              <div className={cn(
-                "bg-purple-50 rounded-lg border border-purple-200",
-                isMobile ? "p-2" : "p-3"
-              )}>
-                <div className={cn("flex items-center", isMobile ? "mb-0.5" : "mb-1")}>
-                  <Heart className={cn("text-purple-600", isMobile ? "h-2.5 w-2.5 mr-1" : "h-3 w-3 mr-1")} />
-                  <span className={cn("font-semibold text-gray-700", isMobile ? "text-[10px]" : "text-xs")}>{t('benefits', { ns: 'actions' })}</span>
-                </div>
-                <p className={cn("text-gray-600 leading-relaxed", isMobile ? "text-[10px]" : "text-xs")}>{t(event.benefitsKey, { ns: 'actions' })}</p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Show details toggle */}
-          <motion.button
-            onClick={() => setShowDetails(!showDetails)}
-            className={cn(
-              "w-full flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors",
-              isMobile ? "py-1.5 text-[10px]" : "py-2 text-xs"
-            )}
-            whileHover={{ scale: isMobile ? 1 : 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <span className={cn(isMobile ? "mr-0.5" : "mr-1")}>{showDetails ? t('showLess', { ns: 'common' }) : t('showDetails', { ns: 'common' })}</span>
-            <motion.div
-              animate={{ rotate: showDetails ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ChevronDown className={cn(isMobile ? "h-3 w-3" : "h-4 w-4")} />
-            </motion.div>
-          </motion.button>
-
-          {/* Join button */}
-          <motion.div whileHover={{ scale: isMobile ? 1 : 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button
-              onClick={handleJoinEvent}
-              className={cn(
-                "w-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300",
-                isMobile ? "h-9 text-xs py-2" : "h-auto text-sm py-3",
-                isJoined 
-                  ? 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white' 
-                  : 'bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 hover:from-green-600 hover:via-blue-600 hover:to-purple-600 text-white'
-              )}
-            >
-              <Award className={cn(isMobile ? "h-3 w-3 mr-1.5" : "h-4 w-4 mr-2")} />
-              {isJoined ? t('eventJoined', { ns: 'actions' }) : t('joinEvent', { ns: 'actions' })}
-            </Button>
-          </motion.div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-};
-
 // Key Features Component
 const KeyFeaturesSection = () => {
   const { t } = useTranslation(['actions', 'translation']);
@@ -456,53 +184,74 @@ const KeyFeaturesSection = () => {
   
   const features = useMemo(() => {
     const baseFeatures = [
-      {
+    {
         image: '/images/community_16119903.png',
-        title: t('communityImpact', { ns: 'actions' }),
-        description: t('communityImpactDesc', { ns: 'actions' }),
-        color: "from-blue-500 to-cyan-500"
-      },
-      {
+      title: t('communityImpact', { ns: 'actions' }),
+      englishTitle: 'Community Impact',
+      description: t('communityImpactDesc', { ns: 'actions' }),
+      color: "from-blue-500 to-cyan-500",
+      iconPath: '/images/community_16119903.png'
+    },
+    {
         image: '/images/sustainable-future_2293652.png',
-        title: t('sustainableFuture', { ns: 'actions' }),
-        description: t('sustainableFutureDesc', { ns: 'actions' }),
-        color: "from-green-500 to-emerald-500"
-      },
-      {
-        image: '/images/eco_points_7986841.png',
-        title: t('earnEcoPoints', { ns: 'actions' }),
-        description: t('earnEcoPointsDesc', { ns: 'actions' }),
-        color: "from-purple-500 to-pink-500"
-      },
-      {
+      title: t('sustainableFuture', { ns: 'actions' }),
+      englishTitle: 'Sustainable Future',
+      description: t('sustainableFutureDesc', { ns: 'actions' }),
+      color: "from-green-500 to-emerald-500",
+      iconPath: '/images/sustainable-future_2293652.png'
+    },
+    {
+        image: '/images/eco-points.png',
+      title: t('earnEcoPoints', { ns: 'actions' }),
+      englishTitle: 'Earn EcoPoints',
+      description: t('earnEcoPointsDesc', { ns: 'actions' }),
+      color: "from-purple-500 to-pink-500",
+      iconPath: '/images/eco-points.png'
+    },
+    {
         image: '/images/Meet Like-minded People.png',
-        title: t('meetLikeMindedPeople', { ns: 'actions' }),
-        description: t('meetLikeMindedPeopleDesc', { ns: 'actions' }),
-        color: "from-orange-500 to-red-500"
-      }
-    ];
+      title: t('meetLikeMindedPeople', { ns: 'actions' }),
+      englishTitle: 'Meet Like-minded People',
+      description: t('meetLikeMindedPeopleDesc', { ns: 'actions' }),
+      color: "from-orange-500 to-red-500",
+      iconPath: '/images/Meet Like-minded People.png'
+    }
+  ];
     
-    // Add dynamically matched icons
     return baseFeatures.map(feature => {
-      const iconPath = getIconForProductOrCategory(feature.title, feature.image);
+      let iconPath = (feature as any).iconPath;
+      
+      if (!iconPath || !iconPath.startsWith('/images/')) {
+        const englishTitle = (feature as any).englishTitle || feature.title;
+        iconPath = getIconForProductOrCategory(englishTitle, feature.image);
+      }
+      
       return {
         ...feature,
-        iconPath: iconPath.startsWith('/images/') ? iconPath : feature.image
+        iconPath: iconPath && iconPath.startsWith('/images/') ? iconPath : feature.image
       };
     });
   }, [t]);
 
   return (
     <motion.div variants={itemVariants} className={cn(isMobile ? "mb-6" : "mb-12")}>
-      <Card className="bg-gradient-to-br from-white to-green-50/50 border-2 border-green-100 overflow-hidden">
-        <CardContent className={cn(isMobile ? "p-3 sm:p-4" : "p-8")}>
+      <Card className="bg-gradient-to-br from-white via-green-50/30 to-blue-50/30 border-2 border-green-100/50 overflow-hidden shadow-xl">
+        <CardContent className={cn(isMobile ? "p-4" : "p-8")}>
           <div className={cn("text-center", isMobile ? "mb-4" : "mb-8")}>
-            <h2 className={cn(
-              "font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent",
-              isMobile ? "text-base mb-2" : "text-2xl md:text-3xl mb-4"
-            )}>
-              {t('whyJoinOurEcoActions', { ns: 'actions' })}
-            </h2>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <motion.div
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              >
+                <Sparkles className={cn("text-yellow-500", isMobile ? "h-5 w-5" : "h-6 w-6")} />
+              </motion.div>
+              <h2 className={cn(
+                "font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent",
+                isMobile ? "text-lg" : "text-2xl md:text-3xl"
+              )}>
+                {t('whyJoinOurEcoActions', { ns: 'actions' })}
+              </h2>
+            </div>
             <p className={cn(
               "text-gray-600 max-w-2xl mx-auto leading-relaxed",
               isMobile ? "text-xs" : "text-sm sm:text-base"
@@ -514,7 +263,7 @@ const KeyFeaturesSection = () => {
           <div className={cn(
             "grid",
             isMobile 
-              ? "grid-cols-2 gap-2" 
+              ? "grid-cols-2 gap-3" 
               : "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
           )}>
             {features.map((feature, index) => (
@@ -523,48 +272,49 @@ const KeyFeaturesSection = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                whileHover={{ y: isMobile ? 0 : -5, scale: isMobile ? 1 : 1.02 }}
+                whileHover={{ y: isMobile ? 0 : -8, scale: isMobile ? 1 : 1.03 }}
                 className={cn(
-                  "text-center bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300",
-                  isMobile ? "p-2" : "p-6"
+                  "text-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 hover:shadow-xl transition-all duration-300 group",
+                  isMobile ? "p-3" : "p-6"
                 )}
               >
                 <div className={cn(
-                  "flex items-center justify-center mb-2",
+                  "flex items-center justify-center mb-3",
                   isMobile ? "mb-2" : "mb-4"
                 )}>
-                  <img 
-                    src={feature.iconPath || feature.image} 
-                    alt={feature.title} 
-                    className={cn(
-                      "object-contain flex-shrink-0",
-                      isMobile ? "h-12 w-12" : "h-16 w-16 sm:h-20 sm:w-20"
-                    )}
-                    style={{ 
-                      minWidth: isMobile ? '48px' : '64px', 
-                      minHeight: isMobile ? '48px' : '64px',
-                      maxWidth: 'none',
-                      maxHeight: 'none'
-                    }}
-                    loading="lazy"
-                    onError={(e) => {
-                      // Fallback to original image if iconPath fails
-                      const target = e.target as HTMLImageElement;
-                      if (feature.image && target.src !== feature.image) {
-                        target.src = feature.image;
-                      }
-                    }}
-                  />
+                  <div className="relative group-hover:scale-110 transition-transform duration-300">
+                    <img 
+                      src={feature.iconPath || feature.image} 
+                      alt={feature.title} 
+                      className={cn(
+                        "object-contain flex-shrink-0",
+                        isMobile ? "h-12 w-12" : "h-16 w-16 sm:h-20 sm:w-20"
+                      )}
+                      style={{ 
+                        minWidth: isMobile ? '48px' : '64px', 
+                        minHeight: isMobile ? '48px' : '64px',
+                        maxWidth: 'none',
+                        maxHeight: 'none'
+                      }}
+                      loading="lazy"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        if (feature.image && target.src !== feature.image) {
+                          target.src = feature.image;
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
                 <h3 className={cn(
-                  "font-semibold text-gray-900",
-                  isMobile ? "text-xs mb-1" : "text-sm mb-2"
+                  "font-bold text-gray-900 mb-2",
+                  isMobile ? "text-xs mb-1" : "text-base mb-2"
                 )}>
                   {feature.title}
                 </h3>
                 <p className={cn(
                   "text-gray-600 leading-relaxed",
-                  isMobile ? "text-[10px] line-clamp-2" : "text-sm"
+                  isMobile ? "text-[10px] line-clamp-3" : "text-sm"
                 )}>
                   {feature.description}
                 </p>
@@ -584,8 +334,20 @@ export default function EcoActions() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [showMapFilters, setShowMapFilters] = useState(false);
+  const [mapFilterType, setMapFilterType] = useState<'all' | 'plastic' | 'tires' | 'mixed'>('all');
 
   const dates = getCurrentDates();
+
+  // Map of event IDs to their original English titles (for consistent icon matching)
+  const eventEnglishTitles: Record<number, string> = {
+    1: 'School Workshop on Plastic Recycling',
+    2: 'Tree Planting Day',
+    3: 'River Cleanup Event',
+    4: 'Plastic Recycling Drive',
+    5: 'Environmental Awareness Walk',
+    6: 'Waste Audit Workshop'
+  };
 
   // Sample events data with translation keys
   const sampleEvents: EcoEvent[] = [
@@ -670,7 +432,7 @@ export default function EcoActions() {
       whatToBringKey: "events.plasticRecycling.whatToBring",
       benefitsKey: "events.plasticRecycling.benefits",
       impactKey: "events.plasticRecycling.impact",
-      image: '/images/ECOBUSSTOP.png',
+      image: '/images/Plastic Recycling.png',
       isJoined: false
     },
     {
@@ -712,21 +474,21 @@ export default function EcoActions() {
       whatToBringKey: "events.wasteAudit.whatToBring",
       benefitsKey: "events.wasteAudit.benefits",
       impactKey: "events.wasteAudit.impact",
-      image: '/images/eco_points_7986841.png',
+      image: '/images/eco-points.png',
       isJoined: true
     }
   ];
 
-  // Get events with dynamically matched icons
+  // Get events with icons - use English titles for consistency across languages
   const eventsWithIcons = useMemo(() => {
     return sampleEvents.map(event => {
       const title = t(event.titleKey, { ns: 'actions' });
       const description = t(event.descriptionKey, { ns: 'actions' });
       
-      // Try to match icon based on title first, then category, then description
-      let iconPath = getIconForProductOrCategory(title, event.image);
+      const englishTitle = eventEnglishTitles[event.id] || title;
       
-      // If title matching didn't work, try category
+      let iconPath = getIconForProductOrCategory(englishTitle, event.image);
+      
       if (iconPath === event.image) {
         const categoryMatched = getIconForProductOrCategory(event.category, event.image);
         if (categoryMatched !== event.image && categoryMatched.startsWith('/images/')) {
@@ -734,7 +496,6 @@ export default function EcoActions() {
         }
       }
       
-      // If still not found, try description keywords
       if (iconPath === event.image) {
         const descMatched = getIconForProductOrCategory(description, event.image);
         if (descMatched !== event.image && descMatched.startsWith('/images/')) {
@@ -742,9 +503,8 @@ export default function EcoActions() {
         }
       }
       
-      // Ensure we have a valid path
       if (!iconPath || !iconPath.startsWith('/images/')) {
-        iconPath = event.image; // Use original as final fallback
+        iconPath = event.image;
       }
       
       return {
@@ -774,7 +534,6 @@ export default function EcoActions() {
       return matchesSearch && matchesCategory && matchesLocation && matchesTab;
     });
 
-    // Sort by date
     filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     return filtered;
@@ -783,276 +542,790 @@ export default function EcoActions() {
   // Get unique locations
   const locations = [...new Set(eventsWithIcons.map(e => t(e.locationKey, { ns: 'actions' }).split(',')[0].trim()))];
 
+  // Collection Points Integration
+  const rawCollectionPoints = getCollectionPoints(t);
+  
+  const englishNames: Record<number, string> = {
+    1: 'Tashkent Central Park',
+    2: 'Chilonzor Mahalla',
+    3: 'Yunusobod District'
+  };
+  
+  const collectionPoints = useMemo(() => {
+    return rawCollectionPoints.map(point => {
+      const englishName = englishNames[point.id] || point.name;
+      let iconPath = getIconForProductOrCategory(englishName, point.image);
+      
+      if (iconPath === point.image) {
+        const typeMatched = getIconForProductOrCategory(point.type, point.image);
+        if (typeMatched !== point.image && typeMatched.startsWith('/images/')) {
+          iconPath = typeMatched;
+        }
+      }
+      
+      if (!iconPath || !iconPath.startsWith('/images/')) {
+        iconPath = point.type === 'plastic' 
+          ? '/images/compost_13285420.png' 
+          : point.type === 'tires' 
+          ? '/images/ECOBUSSTOP.png' 
+          : '/images/park.png';
+      }
+      
+      const coordinates = COLLECTION_POINTS.find(cp => cp.id === point.id);
+      
+      return {
+        ...point,
+        iconPath,
+        coordinates
+      };
+    });
+  }, [rawCollectionPoints]);
+
+  const filteredCollectionPoints = useMemo(() => {
+    if (mapFilterType === 'all') return collectionPoints;
+    return collectionPoints.filter(point => point.type === mapFilterType);
+  }, [collectionPoints, mapFilterType]);
+
+  const totalCollected = useMemo(() => {
+    return collectionPoints.reduce((sum, point) => {
+      const collected = parseFloat(point.collected?.replace(/[^0-9.]/g, '') || '0');
+      return sum + collected;
+    }, 0);
+  }, [collectionPoints]);
+
+  const handleNavigateToPoint = (pointId: number) => {
+    const point = COLLECTION_POINTS.find(p => p.id === pointId);
+    if (point) {
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${point.lat.toString()},${point.lng.toString()}`;
+      window.open(url, '_blank');
+      toast.success(t('openingNavigation', { ns: 'translation' }));
+    }
+  };
+
+
   return (
     <Layout title={t('actions', { ns: 'translation' })}>
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-white">
-        <div className={cn("w-full", isMobile ? "px-2 py-4" : "px-4 md:px-6 lg:px-8 py-8")}>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
+        <div className={cn("w-full", isMobile ? "px-2 py-4" : "px-4 md:px-6 lg:px-8 py-6")}>
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className={cn(isMobile ? "space-y-4" : "space-y-8")}
+            className={cn(isMobile ? "space-y-4" : "space-y-6")}
           >
-            {/* Header */}
-            <motion.div variants={itemVariants} className={cn("text-center", isMobile ? "space-y-2" : "space-y-4")}>
-              <h1 className={cn(
-                "font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent",
-                isMobile ? "text-xl" : "text-3xl md:text-4xl lg:text-5xl"
-              )}>
-                {t('volunteerEvents', { ns: 'translation' })}
-              </h1>
-              <p className={cn(
-                "text-gray-600 max-w-3xl mx-auto leading-relaxed",
-                isMobile ? "text-xs px-2" : "text-lg"
-              )}>
-                {t('eventsDescription', { ns: 'translation' })}
-              </p>
-              
-              {/* Stats */}
-              <div className={cn(
-                "grid grid-cols-2 md:grid-cols-4 max-w-2xl mx-auto",
-                isMobile ? "gap-2 mt-4" : "gap-4 mt-8"
-              )}>
-                <motion.div 
-                  className={cn(
-                    "text-center bg-white rounded-lg shadow-sm border border-green-100",
-                    isMobile ? "p-2" : "p-4"
-                  )}
-                  whileHover={{ scale: isMobile ? 1 : 1.05, y: isMobile ? 0 : -2 }}
-                >
-                  <div className={cn("font-bold text-green-600", isMobile ? "text-base" : "text-2xl")}>{sampleEvents.length}</div>
-                  <div className={cn("text-gray-600", isMobile ? "text-[10px]" : "text-sm")}>{t('upcoming', { ns: 'translation' })}</div>
-                </motion.div>
-                <motion.div 
-                  className={cn(
-                    "text-center bg-white rounded-lg shadow-sm border border-blue-100",
-                    isMobile ? "p-2" : "p-4"
-                  )}
-                  whileHover={{ scale: isMobile ? 1 : 1.05, y: isMobile ? 0 : -2 }}
-                >
-                  <div className={cn("font-bold text-blue-600", isMobile ? "text-base" : "text-2xl")}>
-                    {sampleEvents.reduce((sum, e) => sum + e.participants, 0)}
-                  </div>
-                  <div className={cn("text-gray-600", isMobile ? "text-[10px]" : "text-sm")}>{t('joined', { ns: 'translation' })}</div>
-                </motion.div>
-                <motion.div 
-                  className={cn(
-                    "text-center bg-white rounded-lg shadow-sm border border-purple-100",
-                    isMobile ? "p-2" : "p-4"
-                  )}
-                  whileHover={{ scale: isMobile ? 1 : 1.05, y: isMobile ? 0 : -2 }}
-                >
-                  <div className={cn("font-bold text-purple-600", isMobile ? "text-base" : "text-2xl")}>
-                    {sampleEvents.reduce((sum, e) => sum + e.ecoPoints, 0)}
-                  </div>
-                  <div className={cn("text-gray-600", isMobile ? "text-[10px]" : "text-sm")}>{t('ecoPoints', { ns: 'translation' })}</div>
-                </motion.div>
-                <motion.div 
-                  className={cn(
-                    "text-center bg-white rounded-lg shadow-sm border border-orange-100",
-                    isMobile ? "p-2" : "p-4"
-                  )}
-                  whileHover={{ scale: isMobile ? 1 : 1.05, y: isMobile ? 0 : -2 }}
-                >
-                  <div className={cn("font-bold text-orange-600", isMobile ? "text-base" : "text-2xl")}>
-                    {sampleEvents.filter(e => e.isJoined).length}
-                  </div>
-                  <div className={cn("text-gray-600", isMobile ? "text-[10px]" : "text-sm")}>{t('myEvents', { ns: 'actions' })}</div>
-                </motion.div>
+            {/* Hero Section - Unified */}
+            <motion.div 
+              variants={itemVariants}
+              className={cn(
+                "relative overflow-hidden rounded-2xl",
+                "bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500",
+                "shadow-2xl border border-green-400/20",
+                isMobile ? "p-4 mb-4" : "p-8 mb-6"
+              )}
+            >
+              {/* Decorative Elements */}
+              <div className="absolute top-0 right-0 opacity-20">
+                <Activity className={cn("text-white", isMobile ? "h-24 w-24" : "h-32 w-32")} />
+              </div>
+              <div className="absolute bottom-0 left-0 opacity-10">
+                <MapPin className={cn("text-white", isMobile ? "h-20 w-20" : "h-28 w-28")} />
+              </div>
+
+              <div className="relative z-10">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Sparkles className={cn("text-yellow-300", isMobile ? "h-5 w-5" : "h-6 w-6")} />
+                  </motion.div>
+                  <h1 className={cn(
+                    "font-bold text-white",
+                    isMobile ? "text-2xl" : "text-4xl md:text-5xl"
+                  )}>
+                    {t('volunteerEvents', { ns: 'translation' })}
+                  </h1>
+                </div>
+                <p className={cn(
+                  "text-white/95 text-center max-w-3xl mx-auto leading-relaxed mb-6",
+                  isMobile ? "text-xs" : "text-base md:text-lg"
+                )}>
+                  {t('eventsDescription', { ns: 'translation' })}
+                </p>
+                
+                {/* Unified Stats */}
+                <div className={cn(
+                  "grid max-w-4xl mx-auto",
+                  isMobile ? "grid-cols-2 gap-2" : "grid-cols-4 gap-3"
+                )}>
+                  <motion.div 
+                    className={cn(
+                      "bg-white/20 backdrop-blur-md rounded-lg border border-white/30",
+                      isMobile ? "p-2.5" : "p-4"
+                    )}
+                    whileHover={isMobile ? {} : { scale: 1.05, y: -2 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <div className="text-center">
+                      <div className={cn(
+                        "font-bold text-white leading-tight",
+                        isMobile ? "text-base mb-0.5" : "text-3xl mb-1"
+                      )}>
+                        {sampleEvents.length}
+                      </div>
+                      <div className={cn(
+                        "text-white/90 leading-tight",
+                        isMobile ? "text-[11px]" : "text-sm"
+                      )}>
+                        {t('upcoming', { ns: 'translation' })}
+                      </div>
+                    </div>
+                  </motion.div>
+                  <motion.div 
+                    className={cn(
+                      "bg-white/20 backdrop-blur-md rounded-lg border border-white/30",
+                      isMobile ? "p-2.5" : "p-4"
+                    )}
+                    whileHover={isMobile ? {} : { scale: 1.05, y: -2 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <div className="text-center">
+                      <div className={cn(
+                        "font-bold text-white leading-tight",
+                        isMobile ? "text-base mb-0.5" : "text-3xl mb-1"
+                      )}>
+                        {sampleEvents.reduce((sum, e) => sum + e.participants, 0)}
+                      </div>
+                      <div className={cn(
+                        "text-white/90 leading-tight",
+                        isMobile ? "text-[11px]" : "text-sm"
+                      )}>
+                        {t('joined', { ns: 'translation' })}
+                      </div>
+                    </div>
+                  </motion.div>
+                  <motion.div 
+                    className={cn(
+                      "bg-white/20 backdrop-blur-md rounded-lg border border-white/30",
+                      isMobile ? "p-2.5" : "p-4"
+                    )}
+                    whileHover={isMobile ? {} : { scale: 1.05, y: -2 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <div className="text-center">
+                      <div className={cn(
+                        "font-bold text-white leading-tight",
+                        isMobile ? "text-base mb-0.5" : "text-3xl mb-1"
+                      )}>
+                        {filteredCollectionPoints.length}
+                      </div>
+                      <div className={cn(
+                        "text-white/90 leading-tight",
+                        isMobile ? "text-[11px]" : "text-sm"
+                      )}>
+                        {t('activePoints', { ns: 'translation' })}
+                      </div>
+                    </div>
+                  </motion.div>
+                  <motion.div 
+                    className={cn(
+                      "bg-white/20 backdrop-blur-md rounded-lg border border-white/30",
+                      isMobile ? "p-2.5" : "p-4"
+                    )}
+                    whileHover={isMobile ? {} : { scale: 1.05, y: -2 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <div className="text-center">
+                      <div className={cn(
+                        "font-bold text-white leading-tight",
+                        isMobile ? "text-base mb-0.5" : "text-3xl mb-1"
+                      )}>
+                        {totalCollected.toLocaleString()}
+                      </div>
+                      <div className={cn(
+                        "text-white/90 leading-tight",
+                        isMobile ? "text-[11px]" : "text-sm"
+                      )}>
+                        {t('kg', { ns: 'translation' })} {t('collected', { ns: 'translation' })}
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
               </div>
             </motion.div>
 
             {/* Key Features Section */}
             <KeyFeaturesSection />
 
-            {/* Tabs */}
+            {/* Action Locations & Collection Points Section */}
+            <motion.div variants={itemVariants} className={cn(isMobile ? "mb-6" : "mb-8")}>
+              {/* Section Header */}
+              <div className={cn("text-center mb-6", isMobile && "mb-4")}>
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-green-500 to-blue-500">
+                    <MapPin className={cn("text-white", isMobile ? "h-4 w-4" : "h-5 w-5")} />
+                  </div>
+                  <h2 className={cn(
+                    "font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent",
+                    isMobile ? "text-lg" : "text-2xl md:text-3xl"
+                  )}>
+                    {t('actionLocations', { ns: 'translation' })}
+                  </h2>
+                </div>
+                <p className={cn(
+                  "text-gray-600 max-w-2xl mx-auto leading-relaxed",
+                  isMobile ? "text-xs px-2" : "text-sm"
+                )}>
+                  {t('actionLocationsDesc', { ns: 'translation' })}
+                </p>
+              </div>
+
+              {/* Map Filter Controls */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="mb-4"
+              >
+                <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+                  <CardContent className={cn("p-4", isMobile && "p-3")}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button 
+                        variant={showMapFilters ? "default" : "outline"}
+                        size="sm" 
+                        onClick={() => setShowMapFilters(!showMapFilters)}
+                        className={cn(
+                          "flex items-center gap-1.5",
+                          isMobile ? "text-xs h-8 px-2" : "text-sm h-9 px-3"
+                        )}
+                      >
+                        <Filter className={cn(isMobile ? "h-3 w-3" : "h-4 w-4")} />
+                        {t('filter', { ns: 'translation' })}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(
+                              (position) => {
+                                const { latitude, longitude } = position.coords;
+                                const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+                                window.open(url, '_blank');
+                                toast.success(t('locationFound', { ns: 'translation' }));
+                              },
+                              () => {
+                                toast.error(t('locationError', { ns: 'translation' }));
+                              }
+                            );
+                          } else {
+                            toast.error(t('locationNotSupported', { ns: 'translation' }));
+                          }
+                        }}
+                        className={cn(
+                          "flex items-center gap-1.5",
+                          isMobile ? "text-xs h-8 px-2" : "text-sm h-9 px-3"
+                        )}
+                      >
+                        <Navigation className={cn(isMobile ? "h-3 w-3" : "h-4 w-4")} />
+                        {t('myLocation', { ns: 'translation' })}
+                      </Button>
+                      
+                      <AnimatePresence>
+                        {showMapFilters && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="w-full overflow-hidden"
+                          >
+                            <div className={cn(
+                              "flex flex-wrap gap-2 pt-3 mt-3 border-t border-gray-200",
+                              isMobile ? "pt-2" : "pt-3"
+                            )}>
+                              {(['all', 'plastic', 'tires', 'mixed'] as const).map((type) => (
+                                <motion.div
+                                  key={type}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Button
+                                    variant={mapFilterType === type ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => {
+                                      setMapFilterType(type);
+                                      setShowMapFilters(false);
+                                    }}
+                                    className={cn(
+                                      mapFilterType === type && "shadow-md",
+                                      "active:scale-95",
+                                      isMobile ? "text-xs h-9 px-3 min-w-[44px]" : "text-sm h-8 px-3"
+                                    )}
+                                    style={{ touchAction: 'manipulation' }}
+                                  >
+                                    {type === 'all' ? t('all', { ns: 'translation' }) : t(type, { ns: 'translation' })}
+                                  </Button>
+                                </motion.div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Interactive Map */}
+              {/* Map and Collection Points Side by Side */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className={cn(
+                  "mb-6",
+                  isMobile ? "space-y-4" : "grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6"
+                )}
+              >
+                {/* Map Section - Left Side */}
+                <div className={cn(isMobile ? "w-full" : "lg:col-span-1")}>
+                  <Card className="border-0 shadow-2xl overflow-hidden bg-white h-full flex flex-col" style={{ minHeight: isMobile ? '400px' : '600px' }}>
+                    <CardHeader className={cn(
+                      "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white flex-shrink-0",
+                      isMobile ? "p-4" : "p-6"
+                    )}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <MapPin className={cn("text-white", isMobile ? "h-4 w-4" : "h-5 w-5")} />
+                          </div>
+                          <CardTitle className={cn(
+                            "text-white font-bold",
+                            isMobile ? "text-base" : "text-xl"
+                          )}>
+                            {t('collectionPointsAndActions', { ns: 'translation' })}
+                          </CardTitle>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm font-medium">
+                            {filteredCollectionPoints.length} {t('points', { ns: 'translation' })}
+                          </Badge>
+                          <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm font-medium">
+                            {ACTION_LOCATIONS.length} {t('actions', { ns: 'translation' })}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0 flex-1 flex flex-col" style={{ minHeight: 0 }}>
+                      <div className="flex-1 w-full" style={{ minHeight: isMobile ? '350px' : '500px', height: isMobile ? '350px' : '100%' }}>
+                        <InteractiveMap
+                          points={filteredCollectionPoints.map(point => {
+                            const coord = COLLECTION_POINTS.find(cp => cp.id === point.id);
+                            return {
+                              id: point.id,
+                              name: point.name,
+                              lat: coord?.lat || 41.2995,
+                              lng: coord?.lng || 69.2401,
+                              type: point.type as 'plastic' | 'tires' | 'mixed',
+                              address: coord?.address || point.name,
+                              hours: coord?.hours || '8:00 AM - 8:00 PM',
+                              capacity: coord?.capacity || 'Medium',
+                              collected: point.collected,
+                              distance: point.distance,
+                              iconPath: point.iconPath
+                            };
+                          })}
+                          actionLocations={ACTION_LOCATIONS.map(location => ({
+                            id: location.id,
+                            name: location.name,
+                            lat: location.lat,
+                            lng: location.lng,
+                            type: location.type as 'cleanup' | 'education' | 'recycling' | 'awareness',
+                            address: location.address,
+                            eventType: location.eventType,
+                            description: location.description,
+                            isActionLocation: true
+                          }))}
+                          center={{ lat: 41.2995, lng: 69.2401 }}
+                          zoom={11}
+                          height={isMobile ? '300px' : '100%'}
+                          isMobile={isMobile}
+                          onPointClick={(point) => {
+                            // Popup will handle all information display
+                          }}
+                          onNavigate={(point) => {
+                            if (point.id < 100) {
+                              handleNavigateToPoint(point.id);
+                            } else {
+                              const url = `https://www.google.com/maps/dir/?api=1&destination=${point.lat},${point.lng}`;
+                              window.open(url, '_blank');
+                              toast.success(t('openingNavigation', { ns: 'translation' }));
+                            }
+                          }}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Collection Points List - Right Side */}
+                <div className={cn(isMobile ? "w-full" : "lg:col-span-1")}>
+                  <Card className="border-0 shadow-lg bg-white h-full flex flex-col">
+                    <CardHeader className={cn(
+                      "border-b border-gray-100 flex-shrink-0",
+                      isMobile ? "p-3" : "p-5"
+                    )}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className={cn("p-2 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex-shrink-0", isMobile && "p-1.5")}>
+                            <Users className={cn("text-white", isMobile ? "h-3.5 w-3.5" : "h-5 w-5")} />
+                          </div>
+                          <CardTitle className={cn(
+                            "font-bold text-gray-900 truncate",
+                            isMobile ? "text-sm" : "text-lg"
+                          )}>
+                            {t('nearbyCollectionPoints', { ns: 'translation' })}
+                          </CardTitle>
+                        </div>
+                        <Badge variant="outline" className={cn("font-medium flex-shrink-0 ml-2", isMobile && "text-xs px-2 py-0.5")}>
+                          {filteredCollectionPoints.length}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className={cn(
+                      "space-y-2.5 overflow-y-auto flex-1",
+                      isMobile ? "p-2.5" : "p-5",
+                      isMobile ? "max-h-[400px]" : "max-h-[500px]"
+                    )} style={{ WebkitOverflowScrolling: 'touch' }}>
+                      {filteredCollectionPoints.map((point, index) => {
+                        const coordinates = COLLECTION_POINTS.find(cp => cp.id === point.id);
+                        
+                        return (
+                          <motion.div
+                            key={point.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            whileHover={{ scale: 1.01, y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div 
+                              className={cn(
+                                "relative rounded-xl border-2 transition-all duration-300 overflow-hidden",
+                                "bg-white border-gray-200 hover:border-green-300 hover:shadow-md",
+                                "active:scale-[0.98]",
+                                isMobile ? "p-2.5" : "p-4"
+                              )}
+                              style={{ touchAction: 'manipulation' }}
+                            >
+
+                              <div className={cn("flex items-center gap-2.5", isMobile && "gap-2")}>
+                                <div className={cn(
+                                  "rounded-xl flex items-center justify-center flex-shrink-0 shadow-md",
+                                  point.type === 'plastic' ? 'bg-gradient-to-br from-green-400 to-emerald-500' :
+                                  point.type === 'tires' ? 'bg-gradient-to-br from-blue-400 to-cyan-500' :
+                                  'bg-gradient-to-br from-purple-400 to-pink-500',
+                                  isMobile ? "w-11 h-11 p-1.5" : "w-14 h-14 p-2.5"
+                                )}>
+                                  <img 
+                                    src={point.iconPath || point.image}
+                                    alt={point.name}
+                                    className="w-full h-full object-contain"
+                                    loading="lazy"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      const fallback = point.type === 'plastic' 
+                                        ? '/images/compost_13285420.png' 
+                                        : point.type === 'tires' 
+                                        ? '/images/ECOBUSSTOP.png' 
+                                        : '/images/park.png';
+                                      if (target.src !== fallback) {
+                                        target.src = fallback;
+                                      }
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <h3 className={cn(
+                                    "font-bold text-gray-900 mb-1",
+                                    isMobile ? "text-xs leading-tight" : "text-base"
+                                  )}>
+                                    {point.name}
+                                  </h3>
+                                  <div className="flex items-start gap-1 text-gray-600 mb-1.5">
+                                    <MapPin className={cn("flex-shrink-0 mt-0.5", isMobile ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                                    <span className={cn("line-clamp-1", isMobile ? "text-[10px] leading-tight" : "text-sm")}>
+                                      {coordinates?.address || point.name}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <Badge className={cn(
+                                      "bg-green-100 text-green-800 border-green-200",
+                                      isMobile ? "text-[9px] px-1 py-0.5" : "text-xs"
+                                    )}>
+                                      {t('active', { ns: 'translation' })}
+                                    </Badge>
+                                    <Badge variant="outline" className={cn(
+                                      "capitalize",
+                                      isMobile ? "text-[9px] px-1 py-0.5" : "text-xs"
+                                    )}>
+                                      {point.type === 'plastic' ? t('plastic', { ns: 'translation' }) : 
+                                       point.type === 'tires' ? t('tires', { ns: 'translation' }) : 
+                                       t('mixed', { ns: 'translation' })}
+                                    </Badge>
+                                    {point.collected && (
+                                      <Badge variant="outline" className={cn(
+                                        isMobile ? "text-[9px] px-1 py-0.5" : "text-xs"
+                                      )}>
+                                        {point.collected} {t('kg', { ns: 'translation' })}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <Button 
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleNavigateToPoint(point.id);
+                                  }}
+                                  className={cn(
+                                    "flex-shrink-0 hover:bg-green-50 hover:border-green-300 active:scale-95",
+                                    isMobile ? "text-[10px] h-9 px-2.5 min-w-[44px]" : "text-sm h-9 px-3"
+                                  )}
+                                  style={{ touchAction: 'manipulation' }}
+                                >
+                                  <Navigation className={cn(isMobile ? "h-3 w-3" : "h-3.5 w-3.5")} />
+                                  {!isMobile && <span className="ml-1">{t('navigate', { ns: 'translation' })}</span>}
+                                </Button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </CardContent>
+                  </Card>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Events Section */}
             <motion.div variants={itemVariants}>
-              <div className={cn("flex justify-center", isMobile ? "mb-3" : "mb-6")}>
+              {/* Section Header */}
+              <div className={cn("text-center mb-6", isMobile && "mb-4")}>
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500">
+                    <Calendar className={cn("text-white", isMobile ? "h-4 w-4" : "h-5 w-5")} />
+                  </div>
+                  <h2 className={cn(
+                    "font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent",
+                    isMobile ? "text-lg" : "text-2xl md:text-3xl"
+                  )}>
+                    {t('upcomingEvents', { ns: 'actions' })}
+                  </h2>
+                </div>
+                <p className={cn(
+                  "text-gray-600 max-w-2xl mx-auto",
+                  isMobile ? "text-xs px-2" : "text-sm"
+                )}>
+                  {t('joinCommunityEvents', { ns: 'translation' })}
+                </p>
+              </div>
+
+              {/* Tabs */}
+              <div className={cn("flex justify-center mb-6", isMobile && "mb-4")}>
                 <div className={cn(
-                  "flex bg-white rounded-lg shadow-sm border border-green-100",
-                  isMobile ? "p-0.5" : "p-1"
+                  "flex bg-white rounded-xl shadow-md border border-green-100",
+                  isMobile ? "p-1" : "p-1.5"
                 )}>
                   <motion.button
                     onClick={() => setActiveTab('upcoming')}
                     className={cn(
-                      "rounded-md font-medium transition-colors",
-                      isMobile ? "px-2 py-1.5 text-[10px]" : "px-6 py-2 text-sm",
+                      "rounded-lg font-semibold transition-colors",
+                      isMobile ? "px-3 py-2.5 text-xs min-h-[44px]" : "px-6 py-2 text-sm",
                       activeTab === 'upcoming'
-                        ? 'bg-green-500 text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md'
                         : 'text-gray-600 hover:text-gray-900'
                     )}
                     whileHover={{ scale: isMobile ? 1 : 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{ touchAction: 'manipulation' }}
                   >
                     {t('upcomingEvents', { ns: 'actions' })}
                   </motion.button>
                   <motion.button
                     onClick={() => setActiveTab('joined')}
                     className={cn(
-                      "rounded-md font-medium transition-colors",
-                      isMobile ? "px-2 py-1.5 text-[10px]" : "px-6 py-2 text-sm",
+                      "rounded-lg font-semibold transition-colors",
+                      isMobile ? "px-3 py-2.5 text-xs min-h-[44px]" : "px-6 py-2 text-sm",
                       activeTab === 'joined'
-                        ? 'bg-green-500 text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md'
                         : 'text-gray-600 hover:text-gray-900'
                     )}
                     whileHover={{ scale: isMobile ? 1 : 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{ touchAction: 'manipulation' }}
                   >
                     {t('myEvents', { ns: 'actions' })}
                   </motion.button>
                   <motion.button
                     onClick={() => setActiveTab('all')}
                     className={cn(
-                      "rounded-md font-medium transition-colors",
-                      isMobile ? "px-2 py-1.5 text-[10px]" : "px-6 py-2 text-sm",
+                      "rounded-lg font-semibold transition-colors",
+                      isMobile ? "px-3 py-2.5 text-xs min-h-[44px]" : "px-6 py-2 text-sm",
                       activeTab === 'all'
-                        ? 'bg-green-500 text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md'
                         : 'text-gray-600 hover:text-gray-900'
                     )}
                     whileHover={{ scale: isMobile ? 1 : 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{ touchAction: 'manipulation' }}
                   >
                     {t('allEvents', { ns: 'actions' })}
                   </motion.button>
                 </div>
               </div>
-            </motion.div>
 
-            {/* Filters */}
-            <motion.div variants={itemVariants}>
-              <Card className={cn(
-                "bg-white/80 backdrop-blur-sm border-2 border-green-100",
-                isMobile ? "p-3" : "p-6"
-              )}>
-                <div className={cn(isMobile ? "space-y-2" : "space-y-4")}>
-                  {/* Search */}
-                  <div className="relative">
-                    <Search className={cn(
-                      "absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400",
-                      isMobile ? "h-3 w-3" : "h-4 w-4"
-                    )} />
-                    <Input
-                      placeholder={t('searchEvents', { ns: 'actions' })}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className={cn(
-                        "border-green-200 focus:border-green-400 bg-white",
-                        isMobile ? "pl-8 h-9 text-xs" : "pl-10"
-                      )}
-                    />
-                  </div>
-
-                  {/* Filter controls */}
-                  <div className={cn(
-                    "grid",
-                    isMobile ? "grid-cols-1 gap-2" : "grid-cols-1 md:grid-cols-3 gap-4"
-                  )}>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="border-green-200 bg-white">
-                        <SelectValue placeholder={t('filterByCategory', { ns: 'actions' })} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        <SelectItem value="cleanup">{t('eventCategories.cleanup', { ns: 'actions' })}</SelectItem>
-                        <SelectItem value="planting">{t('eventCategories.planting', { ns: 'actions' })}</SelectItem>
-                        <SelectItem value="education">{t('eventCategories.education', { ns: 'actions' })}</SelectItem>
-                        <SelectItem value="recycling">{t('eventCategories.recycling', { ns: 'actions' })}</SelectItem>
-                        <SelectItem value="awareness">{t('eventCategories.awareness', { ns: 'actions' })}</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                      <SelectTrigger className="border-green-200 bg-white">
-                        <SelectValue placeholder={t('filterByLocation', { ns: 'actions' })} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Locations</SelectItem>
-                        {locations.map(location => (
-                          <SelectItem key={location} value={location}>
-                            {location}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <motion.div whileHover={{ scale: isMobile ? 1 : 1.02 }} whileTap={{ scale: 0.98 }}>
-                      <Button 
-                        onClick={() => {
-                          setSearchTerm('');
-                          setSelectedCategory('all');
-                          setSelectedLocation('all');
-                        }}
-                        variant="outline"
+              {/* Filters */}
+              <motion.div variants={itemVariants} className="mb-6">
+                <Card className={cn(
+                  "bg-white/90 backdrop-blur-sm border-2 border-green-100 shadow-lg",
+                  isMobile ? "p-4" : "p-6"
+                )}>
+                  <div className={cn(isMobile ? "space-y-3" : "space-y-4")}>
+                    {/* Search */}
+                    <div className="relative">
+                      <Search className={cn(
+                        "absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400",
+                        isMobile ? "h-4 w-4" : "h-5 w-5"
+                      )} />
+                      <Input
+                        placeholder={t('searchEvents', { ns: 'actions' })}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                         className={cn(
-                          "w-full border-green-200 hover:bg-green-50 bg-white",
-                          isMobile ? "h-9 text-xs" : "h-auto text-sm"
+                          "border-green-200 focus:border-green-400 bg-white",
+                          isMobile ? "pl-10 h-11 text-sm min-h-[44px]" : "pl-12 h-11"
                         )}
-                      >
-                        <Filter className={cn(isMobile ? "h-3 w-3 mr-1.5" : "h-4 w-4 mr-2")} />
-                        Clear Filters
-                      </Button>
-                    </motion.div>
+                        style={{ touchAction: 'manipulation' }}
+                      />
+                    </div>
+
+                    {/* Filter controls */}
+                    <div className={cn(
+                      "grid",
+                      isMobile ? "grid-cols-1 gap-2" : "grid-cols-1 md:grid-cols-3 gap-4"
+                    )}>
+                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger className="border-green-200 bg-white">
+                          <SelectValue placeholder={t('filterByCategory', { ns: 'actions' })} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t('allCategories', { ns: 'translation' })}</SelectItem>
+                          <SelectItem value="cleanup">{t('eventCategories.cleanup', { ns: 'actions' })}</SelectItem>
+                          <SelectItem value="planting">{t('eventCategories.planting', { ns: 'actions' })}</SelectItem>
+                          <SelectItem value="education">{t('eventCategories.education', { ns: 'actions' })}</SelectItem>
+                          <SelectItem value="recycling">{t('eventCategories.recycling', { ns: 'actions' })}</SelectItem>
+                          <SelectItem value="awareness">{t('eventCategories.awareness', { ns: 'actions' })}</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                        <SelectTrigger className="border-green-200 bg-white">
+                          <SelectValue placeholder={t('filterByLocation', { ns: 'actions' })} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t('allLocations', { ns: 'translation' })}</SelectItem>
+                          {locations.map(location => (
+                            <SelectItem key={location} value={location}>
+                              {location}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <motion.div whileHover={{ scale: isMobile ? 1 : 1.02 }} whileTap={{ scale: 0.98 }}>
+                        <Button 
+                          onClick={() => {
+                            setSearchTerm('');
+                            setSelectedCategory('all');
+                            setSelectedLocation('all');
+                          }}
+                          variant="outline"
+                          className={cn(
+                            "w-full border-green-200 hover:bg-green-50 bg-white",
+                            isMobile ? "h-10 text-xs" : "h-11 text-sm"
+                          )}
+                        >
+                          <Filter className={cn(isMobile ? "h-3 w-3 mr-1.5" : "h-4 w-4 mr-2")} />
+                          {t('clearFilters', { ns: 'translation' })}
+                        </Button>
+                      </motion.div>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            </motion.div>
-
-            {/* Results count */}
-            <motion.div variants={itemVariants} className="text-center">
-              <p className={cn("text-gray-600", isMobile ? "text-xs" : "text-sm")}>
-                Showing <span className="font-semibold text-green-600">{filteredEvents.length}</span> of <span className="font-semibold">{sampleEvents.length}</span> events
-              </p>
-            </motion.div>
-
-            {/* Events grid */}
-            <motion.div variants={itemVariants}>
-              <AnimatePresence>
-                <div className={cn(
-                  "grid grid-cols-1",
-                  isMobile ? "gap-3" : "md:grid-cols-2 lg:grid-cols-3 gap-6"
-                )}>
-                  {filteredEvents.map((event) => (
-                    <EventCard key={event.id} event={event} />
-                  ))}
-                </div>
-              </AnimatePresence>
-            </motion.div>
-
-            {/* No results */}
-            {filteredEvents.length === 0 && (
-              <motion.div 
-                variants={itemVariants}
-                className={cn("text-center", isMobile ? "py-6" : "py-12")}
-              >
-                <div className={cn(isMobile ? "text-4xl mb-2" : "text-6xl mb-4")}>🔍</div>
-                <h3 className={cn(
-                  "font-semibold text-gray-700",
-                  isMobile ? "text-sm mb-1" : "text-xl mb-2"
-                )}>
-                  {t('noEventsFound', { ns: 'actions' })}
-                </h3>
-                <p className={cn(
-                  "text-gray-500",
-                  isMobile ? "text-xs mb-3" : "text-sm mb-4"
-                )}>
-                  {t('noEventsFoundDescription', { ns: 'actions' })}
-                </p>
-                <Button
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSelectedCategory('all');
-                    setSelectedLocation('all');
-                    setActiveTab('all');
-                  }}
-                  className={cn(
-                    "bg-green-500 hover:bg-green-600 text-white",
-                    isMobile ? "h-9 text-xs" : "h-auto text-sm"
-                  )}
-                >
-                  Reset All Filters
-                </Button>
+                </Card>
               </motion.div>
-            )}
+
+              {/* Results count */}
+              <motion.div variants={itemVariants} className="text-center mb-4">
+                <p className={cn("text-gray-600", isMobile ? "text-xs" : "text-sm")}>
+                  {t('showingResults', { ns: 'translation' })} <span className="font-semibold text-green-600">{filteredEvents.length}</span> {t('of', { ns: 'translation' })} <span className="font-semibold">{sampleEvents.length}</span> {t('events', { ns: 'translation' })}
+                </p>
+              </motion.div>
+
+              {/* Events grid */}
+              <motion.div variants={itemVariants}>
+                <AnimatePresence>
+                  <div className={cn(
+                    "grid grid-cols-1",
+                    isMobile ? "gap-4" : "md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  )}>
+                    {filteredEvents.map((event) => (
+                      <EventCard key={event.id} event={event} />
+                    ))}
+                  </div>
+                </AnimatePresence>
+              </motion.div>
+
+              {/* No results */}
+              {filteredEvents.length === 0 && (
+                <motion.div 
+                  variants={itemVariants}
+                  className={cn("text-center", isMobile ? "py-8" : "py-12")}
+                >
+                  <div className={cn(isMobile ? "text-5xl mb-3" : "text-6xl mb-4")}>🔍</div>
+                  <h3 className={cn(
+                    "font-semibold text-gray-700",
+                    isMobile ? "text-base mb-2" : "text-xl mb-3"
+                  )}>
+                    {t('noEventsFound', { ns: 'actions' })}
+                  </h3>
+                  <p className={cn(
+                    "text-gray-500 mb-4",
+                    isMobile ? "text-xs" : "text-sm"
+                  )}>
+                    {t('noEventsFoundDescription', { ns: 'actions' })}
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedCategory('all');
+                      setSelectedLocation('all');
+                      setActiveTab('all');
+                    }}
+                    className={cn(
+                      "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white",
+                      isMobile ? "h-10 text-xs" : "h-11 text-sm"
+                    )}
+                  >
+                    {t('resetAllFilters', { ns: 'translation' })}
+                  </Button>
+                </motion.div>
+              )}
+            </motion.div>
           </motion.div>
         </div>
       </div>

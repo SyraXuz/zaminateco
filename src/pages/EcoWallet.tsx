@@ -1,10 +1,11 @@
-import { Wallet, Coins, Gift, Star, TrendingUp, ShoppingBag } from 'lucide-react';
+import { Wallet, Coins, Gift, Star, TrendingUp, ShoppingBag, CircleDollarSign, Sparkles } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { currentUser, rewards, partners } from '@/lib/mockData';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
 export default function EcoWallet() {
   const { t } = useTranslation();
@@ -24,7 +25,12 @@ export default function EcoWallet() {
           <CardContent className="p-6">
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center space-x-2">
-                <Coins className="h-8 w-8" />
+                <img 
+                  src="/images/eco coins.png" 
+                  alt="Eco Coins" 
+                  className="h-8 w-8 object-contain"
+                  loading="lazy"
+                />
                 <div>
                   <div className="text-3xl font-bold">{currentUser.ecoCoins}</div>
                   <div className="text-sm opacity-90">{t('ecoCoins')}</div>
@@ -42,7 +48,12 @@ export default function EcoWallet() {
           <CardContent className="p-4">
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center space-x-2">
-                <Star className="h-6 w-6 text-yellow-500" />
+                <img 
+                  src="/images/eco-points.png" 
+                  alt="Eco Points" 
+                  className="h-6 w-6 object-contain"
+                  loading="lazy"
+                />
                 <div>
                   <div className="text-2xl font-bold text-gray-900">{currentUser.ecoPoints}</div>
                   <div className="text-sm text-gray-600">{t('ecoPoints')}</div>
@@ -78,6 +89,14 @@ export default function EcoWallet() {
                       size="sm" 
                       className="w-full"
                       disabled={currentUser.ecoCoins < reward.cost}
+                      onClick={() => {
+                        if (currentUser.ecoCoins >= reward.cost) {
+                          toast.success(t('rewardRedeemed', { defaultValue: 'Reward redeemed successfully!' }));
+                          // In a real app, this would update the user's coins and add the reward
+                        } else {
+                          toast.error(t('notEnoughCoins', { defaultValue: 'Not enough eco coins' }));
+                        }
+                      }}
                     >
                       {currentUser.ecoCoins >= reward.cost ? t('redeem') : t('notEnoughCoins')}
                     </Button>
@@ -105,7 +124,14 @@ export default function EcoWallet() {
                       {partner.discount} {t('off')}
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" className="w-full">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => {
+                      window.location.href = '/partners';
+                    }}
+                  >
                     {t('viewOffers')}
                   </Button>
                 </CardContent>

@@ -340,7 +340,7 @@ export const AvatarSelector: React.FC<AvatarSelectorProps> = ({
 
   const handleStartTask = (avatar: Avatar) => {
     // In a real app, this would start the task tracking
-    console.log('Starting task for avatar:', avatar.name);
+    // Starting task for avatar selection
     setShowTaskModal(null);
     // Show success message or navigate to task page
   };

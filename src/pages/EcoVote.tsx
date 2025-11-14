@@ -34,6 +34,8 @@ import { votingProjects } from '../lib/mockData';
 import { useTranslation } from '../hooks/useTranslation';
 import { getIconForProductOrCategory } from '../lib/iconMatcher';
 import { useMemo } from 'react';
+import { toast } from 'sonner';
+import DonationDialog from '../components/DonationDialog';
 
 // Types for completed projects
 interface TimelineItem {
@@ -143,6 +145,8 @@ function EcoVote() {
   const [activeTab, setActiveTab] = useState('active');
   const [selectedProject, setSelectedProject] = useState(null);
   const [isPlaying, setIsPlaying] = useState({});
+  const [donationDialogOpen, setDonationDialogOpen] = useState(false);
+  const [selectedProjectForDonation, setSelectedProjectForDonation] = useState<VotingProject | null>(null);
 
   const formatCurrency = (amount: number) => {
     return `${(amount / 1000000).toFixed(1)}M ${t('currency')}`;
@@ -211,12 +215,24 @@ function EcoVote() {
         return project.category;
     }
   };
-  
+
   // Get projects with dynamically matched icons
   const projectsWithIcons = useMemo(() => {
     return votingProjects.map(project => {
       const projectTitle = getTranslatedTitle(project);
       const projectCategory = project.category;
+      
+      // Special handling for New Playground for School #45 project (ID: '1') - use the PNG directly
+      if (project.id === '1') {
+        return {
+          ...project,
+          iconPath: '/images/New Playground for School.png',
+          image: '/images/New Playground for School.png', // Override the emoji
+          translatedTitle: projectTitle,
+          translatedDescription: getTranslatedDescription(project),
+          translatedLocation: getTranslatedLocation(project)
+        };
+      }
       
       // Try to match icon based on title first, then category, then original title
       let iconPath = getIconForProductOrCategory(projectTitle, project.image);
@@ -232,7 +248,7 @@ function EcoVote() {
       }
       
       return {
-        ...project,
+    ...project,
         iconPath,
         translatedTitle: projectTitle,
         translatedDescription: getTranslatedDescription(project),
@@ -242,13 +258,20 @@ function EcoVote() {
   }, [t]);
 
   // Translate voting projects with icons
-  const translatedProjects = projectsWithIcons.map(project => ({
-    ...project,
-    title: project.translatedTitle,
-    description: project.translatedDescription,
-    location: project.translatedLocation,
-    category: getTranslatedCategory(project as VotingProject)
-  }));
+  const translatedProjects = projectsWithIcons.map(project => {
+    // Debug: Log iconPath for project ID 1
+    if (project.id === '1') {
+      // Icon path set for playground project
+    }
+    return {
+      ...project,
+      iconPath: project.iconPath, // Explicitly preserve iconPath
+      title: project.translatedTitle,
+      description: project.translatedDescription,
+      location: project.translatedLocation,
+      category: getTranslatedCategory(project as VotingProject)
+    };
+  });
 
   const activeProjects = translatedProjects.filter(p => p.status === 'active');
   
@@ -257,7 +280,7 @@ function EcoVote() {
       id: 'completed-1',
       title: t('ecoPlaygroundAtSchool12'),
       description: t('ecoPlaygroundDescription'),
-      image: '/images/community_16119903.png',
+      image: '/images/New Playground for School.png',
       location: t('shaykhantaurDistrict'),
       completedDate: new Date('2025-08-15'),
       materialsUsed: 1800,
@@ -267,7 +290,7 @@ function EcoVote() {
       treesEquivalent: 120,
       beforeAfter: {
         before: '/images/forest_10089053.png',
-        after: '/images/community_16119903.png'
+        after: '/images/New Playground for School.png'
       },
       timeline: [
         { date: '2025-06-01', event: t('projectApproved'), votes: 1250 },
@@ -275,7 +298,7 @@ function EcoVote() {
         { date: '2025-07-01', event: t('constructionStarted') },
         { date: '2025-08-15', event: t('projectCompleted') }
       ],
-      gallery: ['/images/art-tiles.png', '/images/ECOBUSSTOP.png', '/images/meet-the-team_15916616.png', '/images/community_16119903.png'],
+      gallery: ['/images/New Playground for School.png', '/images/art-tiles.png', '/images/ECOBUSSTOP.png', '/images/meet-the-team_15916616.png'],
       satisfaction: 96,
       views: 15420,
       shares: 234
@@ -632,27 +655,35 @@ function EcoVote() {
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 sm:gap-4">
                           <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-3">
                             <div className="relative">
-                              <img 
-                                src={project.iconPath || project.image} 
-                                alt={project.title} 
-                                className="w-12 h-12 sm:w-16 sm:h-16 object-contain" 
-                                loading="lazy"
-                                onError={(e) => {
-                                  // Fallback to emoji if image fails to load
-                                  const target = e.target as HTMLImageElement;
-                                  if (project.image && project.image.length < 10) {
-                                    // It's an emoji, show it as text
-                                    target.style.display = 'none';
-                                    const parent = target.parentElement;
-                                    if (parent && !parent.querySelector('.emoji-fallback')) {
-                                      const emojiSpan = document.createElement('span');
-                                      emojiSpan.className = 'emoji-fallback text-2xl sm:text-3xl';
-                                      emojiSpan.textContent = project.image;
-                                      parent.appendChild(emojiSpan);
-                                    }
-                                  }
-                                }}
-                              />
+                              {project.id === '1' ? (
+                                // Direct PNG for playground project
+                                <img 
+                                  src="/images/New Playground for School.png" 
+                                  alt={project.title} 
+                                  className="w-12 h-12 sm:w-16 sm:h-16 object-contain flex-shrink-0" 
+                                  loading="lazy"
+                                />
+                              ) : project.iconPath && project.iconPath.startsWith('/images/') ? (
+                                <img 
+                                  src={project.iconPath} 
+                                  alt={project.title} 
+                                  className="w-12 h-12 sm:w-16 sm:h-16 object-contain flex-shrink-0" 
+                                  loading="lazy"
+                                />
+                              ) : project.image && project.image.length < 10 ? (
+                                // Show emoji as text if no iconPath and image is emoji
+                                <span className="text-2xl sm:text-3xl w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center flex-shrink-0">
+                                  {project.image}
+                                </span>
+                              ) : (
+                                // Fallback to image if it's a valid path
+                                <img 
+                                  src={project.image} 
+                                  alt={project.title} 
+                                  className="w-12 h-12 sm:w-16 sm:h-16 object-contain flex-shrink-0" 
+                                  loading="lazy"
+                                />
+                              )}
                               <div className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center font-bold">
                                 {index + 1}
                               </div>
@@ -749,7 +780,13 @@ function EcoVote() {
                             whileTap={{ scale: 0.98 }}
                             className="flex-1"
                           >
-                            <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 sm:py-3 shadow-lg hover:shadow-xl transition-all duration-300 text-sm">
+                            <Button 
+                              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 sm:py-3 shadow-lg hover:shadow-xl transition-all duration-300 text-sm"
+                              onClick={() => {
+                                setSelectedProject(project);
+                                toast.success(t('voteRecorded', { defaultValue: 'Your vote has been recorded!' }));
+                              }}
+                            >
                               <Vote className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                               {t('voteNow')}
                             </Button>
@@ -759,7 +796,14 @@ function EcoVote() {
                             whileTap={{ scale: 0.98 }}
                             className="flex-1"
                           >
-                            <Button variant="outline" className="w-full border-2 border-green-500 text-green-600 hover:bg-green-50 font-semibold py-2 sm:py-3 shadow-lg hover:shadow-xl transition-all duration-300 text-sm">
+                            <Button 
+                              variant="outline" 
+                              className="w-full border-2 border-green-500 text-green-600 hover:bg-green-50 font-semibold py-2 sm:py-3 shadow-lg hover:shadow-xl transition-all duration-300 text-sm"
+                              onClick={() => {
+                                setSelectedProjectForDonation(project);
+                                setDonationDialogOpen(true);
+                              }}
+                            >
                               <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                               {t('donate')}
                             </Button>
@@ -870,7 +914,13 @@ function EcoVote() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <Button className="bg-white text-blue-600 hover:bg-gray-100 font-bold text-sm sm:text-lg px-6 sm:px-8 py-3 sm:py-4 shadow-xl">
+                    <Button 
+                      className="bg-white text-blue-600 hover:bg-gray-100 font-bold text-sm sm:text-lg px-6 sm:px-8 py-3 sm:py-4 shadow-xl"
+                      onClick={() => {
+                        setActiveTab('active');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    >
                       <Vote className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                       {t('viewAllProjects')}
                     </Button>
@@ -880,6 +930,13 @@ function EcoVote() {
             </Card>
           </motion.div>
         </div>
+
+        {/* Donation Dialog */}
+        <DonationDialog
+          open={donationDialogOpen}
+          onOpenChange={setDonationDialogOpen}
+          projectTitle={selectedProjectForDonation ? getTranslatedTitle(selectedProjectForDonation) : ''}
+        />
       </div>
     </Layout>
   );

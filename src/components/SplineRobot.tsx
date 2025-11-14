@@ -234,7 +234,6 @@ export const SplineRobot: React.FC<SplineRobotProps> = ({ className, style }) =>
           title="Spline 3D Interactive Robot"
           loading="lazy"
           allow="autoplay; fullscreen; accelerometer; gyroscope"
-          allowFullScreen
           onLoad={handleIframeLoad}
           // Performance optimizations
           importance="low"
