@@ -41,8 +41,9 @@ export default function LanguageSwitcher() {
   };
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
+    <div className="relative z-50">
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={false}>
+        <DropdownMenuTrigger asChild>
         <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -123,15 +124,23 @@ export default function LanguageSwitcher() {
       </DropdownMenuTrigger>
       
       <DropdownMenuContent 
-        align="end" 
+        align="end"
+        side="bottom"
+        sideOffset={8}
+        alignOffset={0}
+        collisionPadding={24}
+        avoidCollisions={true}
         className={cn(
-          "min-w-[200px] p-2",
+          "w-[200px] p-2",
           "bg-white/98 backdrop-blur-xl",
           "border-2 border-gray-200/60",
           "shadow-2xl",
           "rounded-xl",
           "overflow-hidden"
         )}
+        style={{
+          maxWidth: 'min(200px, calc(100vw - 2rem))',
+        }}
       >
         <AnimatePresence>
           {languages.map((language, index) => {
@@ -244,6 +253,7 @@ export default function LanguageSwitcher() {
           })}
         </AnimatePresence>
       </DropdownMenuContent>
-    </DropdownMenu>
+      </DropdownMenu>
+    </div>
   );
 }
