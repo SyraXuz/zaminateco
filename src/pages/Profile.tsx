@@ -1217,9 +1217,9 @@ const Profile: React.FC = () => {
                       isMobile ? "mb-2" : "mb-3"
                     )}>
                       {/* Left: Level Text */}
-                      <div className="flex items-center">
+                      <div className="flex items-center h-full">
                         <p className={cn(
-                          "font-semibold text-white",
+                          "font-semibold text-white m-0 leading-none",
                           isMobile ? "text-xs" : "text-sm sm:text-base"
                         )}>
                           {t('levelFifteen')} {userProgress.level}
@@ -1238,7 +1238,7 @@ const Profile: React.FC = () => {
                             alt="Level" 
                             className={cn(
                               "object-contain drop-shadow-lg",
-                              isMobile ? "h-8 w-8" : "h-10 w-10 sm:h-12 sm:w-12"
+                              isMobile ? "h-12 w-12" : "h-16 w-16 sm:h-20 sm:w-20"
                             )}
                             loading="lazy"
                           />
@@ -1246,9 +1246,9 @@ const Profile: React.FC = () => {
                       </div>
                       
                       {/* Right: Points Badge */}
-                      <div className="flex items-center">
+                      <div className="flex items-center h-full">
                         <Badge className={cn(
-                          "bg-gradient-to-r from-white/20 to-white/10 text-white border-white/30 backdrop-blur-sm shadow-lg",
+                          "bg-gradient-to-r from-white/20 to-white/10 text-white border-white/30 backdrop-blur-sm shadow-lg flex items-center",
                           isMobile ? "text-[9px] px-1.5 py-0.5" : "text-xs sm:text-sm px-3 py-1.5"
                         )}>
                           <Sparkles className={cn(isMobile ? "h-2 w-2 mr-0.5" : "h-3 w-3 mr-1")} />
