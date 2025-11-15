@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { ShoppingBag, TrendingUp, Phone, Info } from 'lucide-react';
 import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -11,6 +11,10 @@ import { getIconForProductOrCategory } from '../lib/iconMatcher';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
+import CartSidebar from '../components/CartSidebar';
+import FloatingCartIcon from '../components/FloatingCartIcon';
+import AddToCartAnimation from '../components/AddToCartAnimation';
+import { useAddToCartAnimation } from '../hooks/useAddToCartAnimation';
 
 // Sample product data with translation keys
 // IMPORTANT: englishName is used for icon matching to ensure consistency across languages
@@ -176,6 +180,9 @@ export default function SocialMissionShop() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { addToCart, cartCount } = useCart();
+  const { animationState, triggerAnimation, completeAnimation } = useAddToCartAnimation();
+  // Track processing state to prevent double-adds (especially in React StrictMode)
+  const processingRef = useRef<Set<number>>(new Set());
   
   // Get product icons - use English names for consistency across languages
   const productsWithIcons = useMemo(() => {
@@ -281,71 +288,74 @@ export default function SocialMissionShop() {
               {productsWithIcons.map((product) => (
                 <Card key={product.id} className="eco-card-hover">
                   <CardContent className={cn(
-                    isMobile ? "p-2 space-y-1.5" : "p-3 sm:p-4 space-y-2 sm:space-y-3"
+                    "flex flex-col",
+                    isMobile ? "p-2" : "p-3 sm:p-4"
                   )}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className={cn(
-                          "flex items-center",
-                          isMobile ? "space-x-1.5 mb-1" : "space-x-2 mb-1 sm:mb-2"
-                        )}>
-                          <img 
-                            src={product.iconPath || product.image || product.emoji} 
-                            alt={product.productName} 
-                            className={cn(
-                              "object-contain flex-shrink-0",
-                              isMobile ? "w-10 h-10" : "w-12 h-12 sm:w-14 sm:h-14"
-                            )}
-                            style={{ 
-                              minWidth: isMobile ? '40px' : '48px', 
-                              minHeight: isMobile ? '40px' : '48px',
-                              maxWidth: 'none',
-                              maxHeight: 'none'
-                            }}
-                            loading="lazy"
-                            onError={(e) => {
-                              // Fallback to emoji if image fails to load
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const parent = target.parentElement;
-                              if (parent && !parent.querySelector('.emoji-fallback')) {
-                                const emojiSpan = document.createElement('span');
-                                emojiSpan.className = 'emoji-fallback text-xl';
-                                emojiSpan.textContent = product.emoji;
-                                parent.appendChild(emojiSpan);
-                              }
-                            }}
-                          />
-                          <div>
-                            <h4 className={cn(
-                              "font-medium",
-                              isMobile ? "text-[10px]" : "text-xs sm:text-sm"
-                            )}>
-                              {t(product.nameKey, { ns: 'shop' })}
-                            </h4>
-                            <Badge className={cn(isMobile ? "text-[9px] px-1 py-0" : "text-xs")}>
-                              {t(product.categoryKey, { ns: 'shop' })}
-                            </Badge>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className={cn(
+                            "flex items-center",
+                            isMobile ? "space-x-1.5 mb-1" : "space-x-2 mb-1 sm:mb-2"
+                          )}>
+                            <img 
+                              src={product.iconPath || product.image || product.emoji} 
+                              alt={product.productName} 
+                              className={cn(
+                                "object-contain flex-shrink-0",
+                                isMobile ? "w-10 h-10" : "w-12 h-12 sm:w-14 sm:h-14"
+                              )}
+                              style={{ 
+                                minWidth: isMobile ? '40px' : '48px', 
+                                minHeight: isMobile ? '40px' : '48px',
+                                maxWidth: 'none',
+                                maxHeight: 'none'
+                              }}
+                              loading="lazy"
+                              onError={(e) => {
+                                // Fallback to emoji if image fails to load
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent && !parent.querySelector('.emoji-fallback')) {
+                                  const emojiSpan = document.createElement('span');
+                                  emojiSpan.className = 'emoji-fallback text-xl';
+                                  emojiSpan.textContent = product.emoji;
+                                  parent.appendChild(emojiSpan);
+                                }
+                              }}
+                            />
+                            <div>
+                              <h4 className={cn(
+                                "font-medium",
+                                isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                              )}>
+                                {t(product.nameKey, { ns: 'shop' })}
+                              </h4>
+                              <Badge className={cn(isMobile ? "text-[9px] px-1 py-0" : "text-xs")}>
+                                {t(product.categoryKey, { ns: 'shop' })}
+                              </Badge>
+                            </div>
                           </div>
-                        </div>
-                        <p className={cn(
-                          "text-gray-600",
-                          isMobile ? "text-[10px] mb-1" : "text-xs mb-1 sm:mb-2"
-                        )}>
-                          {t(product.descriptionKey, { ns: 'shop' })}
-                        </p>
-                        {product.infoKey && (
                           <p className={cn(
-                            "text-blue-600",
+                            "text-gray-600",
                             isMobile ? "text-[10px] mb-1" : "text-xs mb-1 sm:mb-2"
                           )}>
-                            <Info className={cn("inline", isMobile ? "h-2 w-2 mr-0.5" : "h-2 w-2 sm:h-3 sm:w-3 mr-0.5 sm:mr-1")} />
-                            {t(product.infoKey, { ns: 'shop' })}
+                            {t(product.descriptionKey, { ns: 'shop' })}
                           </p>
-                        )}
+                          {product.infoKey && (
+                            <p className={cn(
+                              "text-blue-600",
+                              isMobile ? "text-[10px] mb-1" : "text-xs mb-1 sm:mb-2"
+                            )}>
+                              <Info className={cn("inline", isMobile ? "h-2 w-2 mr-0.5" : "h-2 w-2 sm:h-3 sm:w-3 mr-0.5 sm:mr-1")} />
+                              {t(product.infoKey, { ns: 'shop' })}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div className={cn(isMobile ? "space-y-1" : "space-y-1 sm:space-y-2")}>
+                    <div className={cn("mt-auto", isMobile ? "space-y-1" : "space-y-1 sm:space-y-2")}>
                       <div className="text-center">
                         {product.isCallForPrice ? (
                           <div className={cn(
@@ -377,15 +387,76 @@ export default function SocialMissionShop() {
                             : 'bg-green-600 hover:bg-green-700 text-primary-foreground'
                         )}
                         variant={product.isCallForPrice ? "outline" : "default"}
-                        onClick={() => {
+                        onClick={(e) => {
+                          // Prevent double-clicks and event bubbling
+                          e.preventDefault();
+                          e.stopPropagation();
+                          
+                          // Check if this product is already being processed (prevents React StrictMode double-calls)
+                          if (processingRef.current.has(product.id)) {
+                            return; // Already processing this product
+                          }
+                          
+                          // Prevent rapid multiple clicks (debounce protection)
+                          const button = e.currentTarget;
+                          const isProcessing = button.getAttribute('data-adding') === 'true';
+                          if (isProcessing) {
+                            return; // Already processing, ignore this click
+                          }
+                          
+                          // Mark product and button as processing
+                          processingRef.current.add(product.id);
+                          button.setAttribute('data-adding', 'true');
+                          button.style.pointerEvents = 'none'; // Disable further clicks
+                          
+                          // Re-enable after animation completes
+                          setTimeout(() => {
+                            processingRef.current.delete(product.id);
+                            button.removeAttribute('data-adding');
+                            button.style.pointerEvents = '';
+                          }, 1500);
+                          
                           if (product.isCallForPrice) {
                             // Open contact form or email
                             window.open(`mailto:sukhrobjonrikhsiboev@gmail.com?subject=${encodeURIComponent(t('buttons.contactUs', { ns: 'shop' }))} - ${product.productName}&body=${encodeURIComponent(t('inquiryAboutProduct', { defaultValue: 'I am interested in this product:', ns: 'shop' }))} ${product.productName}`, '_blank');
                             toast.info(t('openingEmail', { defaultValue: 'Opening email client...', ns: 'shop' }));
                           } else {
-                            // Add to cart using context
-                            addToCart(product);
-                            toast.success(t('addedToCart', { defaultValue: 'Added to cart!', ns: 'shop' }));
+                            // Trigger animation using the button element from the event
+                            const buttonElement = e.currentTarget;
+                            triggerAnimation(product.iconPath || product.image, buttonElement);
+                            // Add to cart using context with translation keys for language switching
+                            addToCart({
+                              id: product.id,
+                              productName: product.productName, // Current translated name
+                              price: product.price,
+                              image: product.iconPath || product.image,
+                              description: t(product.descriptionKey, { ns: 'shop' }), // Current translated description
+                              // Store translation keys for dynamic language updates
+                              nameKey: product.nameKey,
+                              descriptionKey: product.descriptionKey,
+                            });
+                            // Add bounce effect to floating cart icon after animation completes
+                            setTimeout(() => {
+                              // Target the FloatingCartIcon using multiple methods for reliability
+                              let floatingCartIcon = document.querySelector('[data-floating-cart-icon="true"]') as HTMLElement;
+                              
+                              if (!floatingCartIcon) {
+                                floatingCartIcon = document.querySelector('[aria-label="Open shopping cart"]') as HTMLElement;
+                              }
+                              
+                              if (floatingCartIcon) {
+                                // Reset animation
+                                floatingCartIcon.style.animation = 'none';
+                                // Force reflow
+                                void floatingCartIcon.offsetWidth;
+                                // Apply bounce animation
+                                floatingCartIcon.style.animation = 'cartBounce 0.6s ease-in-out';
+                                // Remove animation after it completes
+                                setTimeout(() => {
+                                  floatingCartIcon.style.animation = '';
+                                }, 600);
+                              }
+                            }, 1000); // Match animation duration (1.0s)
                           }
                         }}
                       >
@@ -568,6 +639,15 @@ export default function SocialMissionShop() {
           </Card>
         </div>
       </div>
+      <CartSidebar />
+      <FloatingCartIcon />
+      {animationState.isAnimating && animationState.productImage && animationState.startPosition && (
+        <AddToCartAnimation
+          productImage={animationState.productImage}
+          startPosition={animationState.startPosition}
+          onComplete={completeAnimation}
+        />
+      )}
     </Layout>
   );
 }

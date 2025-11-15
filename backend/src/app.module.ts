@@ -11,6 +11,12 @@ import { ShopModule } from './shop/shop.module';
 import { StoriesModule } from './stories/stories.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { UploadModule } from './upload/upload.module';
+import { WasteLogsModule } from './waste-logs/waste-logs.module';
+import { NewsModule } from './news/news.module';
+import { GeoModule } from './geo/geo.module';
+import { ModerationModule } from './moderation/moderation.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { LocalizationModule } from './localization/localization.module';
 
 @Module({
   imports: [
@@ -34,6 +40,12 @@ import { UploadModule } from './upload/upload.module';
     StoriesModule,
     LeaderboardModule,
     UploadModule,
+    WasteLogsModule,
+    NewsModule,
+    GeoModule,
+    ModerationModule,
+    NotificationsModule,
+    LocalizationModule,
   ],
 })
 export class AppModule {}

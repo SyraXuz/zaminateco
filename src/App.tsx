@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
 import ErrorBoundary from './components/ErrorBoundary';
+import RouterErrorBoundary from './components/RouterErrorBoundary';
+import ProtectedRoute from './components/ProtectedRoute';
 import { CartProvider } from './contexts/CartContext';
 import { Skeleton } from './components/ui/loading-skeleton';
 import './styles/enhanced-mobile.css';
@@ -48,22 +50,24 @@ const App = () => (
               v7_relativeSplatPath: true,
             }}
           >
-            <ScrollToTop />
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/vote" element={<EcoVote />} />
-                <Route path="/actions" element={<EcoActions />} />
-                <Route path="/shop" element={<SocialMissionShop />} />
-                <Route path="/stories" element={<EcoStories />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/partners" element={<Partners />} />
-                <Route path="/team" element={<Team />} />
-                <Route path="/contacts" element={<Contacts />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
+            <RouterErrorBoundary>
+              <ScrollToTop />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/vote" element={<EcoVote />} />
+                  <Route path="/actions" element={<EcoActions />} />
+                  <Route path="/shop" element={<SocialMissionShop />} />
+                  <Route path="/stories" element={<EcoStories />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/partners" element={<Partners />} />
+                  <Route path="/team" element={<Team />} />
+                  <Route path="/contacts" element={<Contacts />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </RouterErrorBoundary>
           </BrowserRouter>
         </CartProvider>
       </ErrorBoundary>

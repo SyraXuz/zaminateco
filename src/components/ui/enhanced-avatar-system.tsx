@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, Star, Trophy, Zap, CheckCircle, Unlock, Save, Palette, Sparkles, Filter } from 'lucide-react';
 import { Button } from './button';
@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { EnhancedAvatar } from './enhanced-avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PROFILE_BACKGROUNDS, ThemeBackground, loadUserProgress, saveUserProgress, UserProgress } from '@/lib/userProgress';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface EnhancedAvatarSystemProps {
   isOpen: boolean;
@@ -25,130 +26,156 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('avatars');
   const [selectedTaskId, setSelectedTaskId] = useState('');
+  const [selectedLockedTheme, setSelectedLockedTheme] = useState<string | null>(null);
   const [currentSelection, setCurrentSelection] = useState(selectedAvatar);
   const [selectedTheme, setSelectedTheme] = useState<string>('');
   const [themeCategory, setThemeCategory] = useState<string>('all');
   const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
   const isMobile = useIsMobile();
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const { t } = useTranslation();
 
-  // Track viewport size for responsive modal sizing - Deferred for performance
+  // Sync currentSelection with selectedAvatar prop changes when modal opens
   useEffect(() => {
-    if (!isOpen) return;
-    
-    const updateViewportSize = () => {
-      requestAnimationFrame(() => {
-        setViewportSize({
-          width: window.innerWidth || window.visualViewport?.width || 0,
-          height: window.innerHeight || window.visualViewport?.height || 0,
-        });
-      });
-    };
+    if (isOpen && selectedAvatar) {
+      setCurrentSelection(selectedAvatar);
+    }
+  }, [isOpen, selectedAvatar]);
 
-    // Initial update - deferred
-    const timeoutId = setTimeout(updateViewportSize, 0);
-    
-    // Use visual viewport API if available (better for mobile browsers)
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', updateViewportSize);
-      window.visualViewport.addEventListener('scroll', updateViewportSize);
+  // Track viewport size - Optimized with debouncing
+  useEffect(() => {
+    if (!isOpen) {
+      setViewportSize({ width: 0, height: 0 });
+      return;
     }
     
-    window.addEventListener('resize', updateViewportSize);
-    window.addEventListener('orientationchange', updateViewportSize);
-
+    // Set initial viewport size immediately
+    setViewportSize({
+      width: window.innerWidth || 0,
+      height: window.innerHeight || 0
+    });
+    
+    // Debounced resize handler to prevent excessive updates
+    let resizeTimeout: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        setViewportSize({
+          width: window.innerWidth || 0,
+          height: window.innerHeight || 0
+        });
+      }, 150);
+    };
+    
+    window.addEventListener('resize', handleResize);
     return () => {
-      clearTimeout(timeoutId);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', updateViewportSize);
-        window.visualViewport.removeEventListener('scroll', updateViewportSize);
-      }
-      window.removeEventListener('resize', updateViewportSize);
-      window.removeEventListener('orientationchange', updateViewportSize);
+      clearTimeout(resizeTimeout);
+      window.removeEventListener('resize', handleResize);
     };
   }, [isOpen]);
 
-  // Lock body scroll when modal is open (prevent background scrolling) - Optimized with RAF
+  // Lock body scroll when modal is open (prevent background scrolling) - Optimized
   useEffect(() => {
     if (isOpen) {
-      // Use requestAnimationFrame to prevent layout thrashing
-      const rafId = requestAnimationFrame(() => {
-        // Save current scroll position
-        const scrollY = window.scrollY;
-        // Lock body scroll
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${scrollY}px`;
-        document.body.style.width = '100%';
-        document.body.style.overflow = 'hidden';
-      });
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      const originalOverflow = document.body.style.overflow;
+      const originalPosition = document.body.style.position;
+      const originalTop = document.body.style.top;
+      const originalWidth = document.body.style.width;
+      
+      // Lock body scroll
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
       
       return () => {
-        cancelAnimationFrame(rafId);
-        // Restore scroll position when modal closes - also use RAF
-        const restoreRafId = requestAnimationFrame(() => {
-          const scrollY = parseInt(document.body.style.top || '0') * -1;
-          document.body.style.position = '';
-          document.body.style.top = '';
-          document.body.style.width = '';
-          document.body.style.overflow = '';
-          window.scrollTo(0, scrollY);
-        });
-        return () => cancelAnimationFrame(restoreRafId);
+        // Restore scroll position when modal closes
+        document.body.style.position = originalPosition;
+        document.body.style.top = originalTop;
+        document.body.style.width = originalWidth;
+        document.body.style.overflow = originalOverflow;
+        window.scrollTo(0, scrollY);
       };
     }
   }, [isOpen]);
 
-  // Load user progress and current theme - Deferred for performance
+  // Load user progress only when themes tab is active
   useEffect(() => {
-    if (isOpen && activeTab === 'themes') {
-      // Defer loading to next frame to prevent blocking
-      requestAnimationFrame(() => {
-        const progress = loadUserProgress();
-        setUserProgress(progress);
-        setSelectedTheme(progress.profileBackground || 'default');
-      });
+    if (isOpen && activeTab === 'themes' && !userProgress) {
+      const progress = loadUserProgress();
+      setUserProgress(progress);
+      setSelectedTheme(progress.profileBackground || 'default');
     }
-  }, [isOpen, activeTab]);
+  }, [isOpen, activeTab, userProgress]);
 
-  // Completely flat data - no nested objects
-  const avatarEmojis = ['👩‍🌾', '🌱', '🌿', '🌳', '♻️', '🌍', '💧', '☀️', '⚡', '🔥', '🌟', '🔮', '🦋'];
-  const avatarImages = ['/images/Eco Farmer.png', '/images/Green Sprout.png', '/images/Leaf Guardian.png', '/images/Tree Protector.png', '/images/Recycling Hero.png', '/images/Earth Guardian.png', '/images/Water Saver.png', '/images/Solar Champion.png', '/images/Energy Saver.png', '/images/Climate Warrior.png', '/images/Eco Star.png', '/images/Future Visionary.png', '/images/Nature Lover.png'];
-  const avatarNames = ['Eco Farmer', 'Green Sprout', 'Leaf Guardian', 'Tree Protector', 'Recycling Hero', 'Earth Guardian', 'Water Saver', 'Solar Champion', 'Energy Saver', 'Climate Warrior', 'Eco Star', 'Future Visionary', 'Nature Lover'];
-  const avatarDescs = ['Your sustainability journey begins', 'New growth, fresh starts', 'Protector of nature', 'Guardian of the forest', 'Master of waste transformation', 'Protector of our planet', 'Champion of water conservation', 'Advocate for renewable energy', 'Master of energy efficiency', 'Leader in climate action', 'Ultimate environmental champion', 'Pioneer of sustainability innovation', 'Guardian of biodiversity'];
-  const avatarRarities = ['common', 'common', 'common', 'rare', 'rare', 'rare', 'epic', 'epic', 'epic', 'epic', 'legendary', 'legendary', 'legendary'];
-  const avatarUnlocked = [true, true, true, true, true, true, true, true, false, false, false, false, false];
-  const avatarTasks = ['', '', '', '', '', '', '', '', 'energy_master', 'climate_action', 'eco_champion', 'innovation_leader', 'biodiversity_protector'];
+  // Memoize static data arrays to prevent recreation on every render
+  const avatarData = useMemo(() => ({
+    emojis: ['👩‍🌾', '🌱', '🌿', '🌳', '♻️', '🌍', '💧', '☀️', '⚡', '🔥', '🌟', '🔮', '🦋'],
+    images: ['/images/Eco Farmer.png', '/images/Green Sprout.png', '/images/Leaf Guardian.png', '/images/Tree Protector.png', '/images/Recycling Hero.png', '/images/Earth Guardian.png', '/images/Water Saver.png', '/images/Solar Champion.png', '/images/Energy Saver.png', '/images/Climate Warrior.png', '/images/Eco Star.png', '/images/Future Visionary.png', '/images/Nature Lover.png'],
+    nameKeys: ['avatarEcoFarmer', 'avatarGreenSprout', 'avatarLeafGuardian', 'avatarTreeProtector', 'avatarRecyclingHero', 'avatarEarthGuardian', 'avatarWaterSaver', 'avatarSolarChampion', 'avatarEnergySaver', 'avatarClimateWarrior', 'avatarEcoStar', 'avatarFutureVisionary', 'avatarNatureLover'],
+    descKeys: ['avatarDescEcoFarmer', 'avatarDescGreenSprout', 'avatarDescLeafGuardian', 'avatarDescTreeProtector', 'avatarDescRecyclingHero', 'avatarDescEarthGuardian', 'avatarDescWaterSaver', 'avatarDescSolarChampion', 'avatarDescEnergySaver', 'avatarDescClimateWarrior', 'avatarDescEcoStar', 'avatarDescFutureVisionary', 'avatarDescNatureLover'],
+    rarities: ['common', 'common', 'common', 'rare', 'rare', 'rare', 'epic', 'epic', 'epic', 'epic', 'legendary', 'legendary', 'legendary'],
+    unlocked: [true, true, true, true, true, true, true, true, false, false, false, false, false],
+    tasks: ['', '', '', '', '', '', '', '', 'energy_master', 'climate_action', 'eco_champion', 'innovation_leader', 'biodiversity_protector']
+  }), []);
 
-  const taskTitles = {
-    'energy_master': 'Energy Master Challenge',
-    'climate_action': 'Climate Action Hero',
-    'eco_champion': 'Ultimate Eco Champion',
-    'innovation_leader': 'Sustainability Innovation Leader',
-    'biodiversity_protector': 'Biodiversity Protection Champion'
+  const taskTitleKeys = {
+    'energy_master': 'taskEnergyMaster',
+    'climate_action': 'taskClimateAction',
+    'eco_champion': 'taskEcoChampion',
+    'innovation_leader': 'taskInnovationLeader',
+    'biodiversity_protector': 'taskBiodiversityProtector'
   };
 
-  const taskDescs = {
-    'energy_master': 'Become a master of energy efficiency and unlock the Energy Saver avatar!',
-    'climate_action': 'Lead the fight against climate change!',
-    'eco_champion': 'Prove yourself as the ultimate environmental champion!',
-    'innovation_leader': 'Pioneer new ways to protect our planet!',
-    'biodiversity_protector': 'Become a guardian of nature\'s diversity!'
+  const taskDescKeys = {
+    'energy_master': 'taskDescEnergyMaster',
+    'climate_action': 'taskDescClimateAction',
+    'eco_champion': 'taskDescEcoChampion',
+    'innovation_leader': 'taskDescInnovationLeader',
+    'biodiversity_protector': 'taskDescBiodiversityProtector'
   };
 
-  const taskRewards = {
-    'energy_master': 'Energy Saver Avatar + 500 EcoPoints',
-    'climate_action': 'Climate Warrior Avatar + 750 EcoPoints',
-    'eco_champion': 'Eco Star Avatar + 1000 EcoPoints + Special Badge',
-    'innovation_leader': 'Future Visionary Avatar + 1200 EcoPoints + Innovation Badge',
-    'biodiversity_protector': 'Nature Lover Avatar + 1500 EcoPoints + Conservation Badge'
+  const taskRewardKeys = {
+    'energy_master': 'taskRewardEnergyMaster',
+    'climate_action': 'taskRewardClimateAction',
+    'eco_champion': 'taskRewardEcoChampion',
+    'innovation_leader': 'taskRewardInnovationLeader',
+    'biodiversity_protector': 'taskRewardBiodiversityProtector'
   };
 
-  const taskReqs = {
-    'energy_master': ['Complete 5 energy-saving actions', 'Reduce household energy consumption by 20%', 'Share 3 energy-saving tips with friends', 'Participate in Earth Hour event'],
-    'climate_action': ['Complete 10 climate-friendly actions', 'Organize a community cleanup event', 'Plant 5 trees or support reforestation', 'Advocate for renewable energy in your area'],
-    'eco_champion': ['Complete all previous avatar challenges', 'Maintain a 30-day sustainability streak', 'Lead 3 community environmental initiatives', 'Achieve carbon-neutral lifestyle for 1 month'],
-    'innovation_leader': ['Develop or implement 3 innovative eco-solutions', 'Mentor 5 people in sustainable practices', 'Create educational content about sustainability', 'Collaborate with local environmental organizations'],
-    'biodiversity_protector': ['Support 5 different wildlife conservation projects', 'Create or maintain a pollinator garden', 'Document and report local biodiversity', 'Educate others about endangered species']
+  const taskReqKeys = {
+    'energy_master': [
+      'taskReqEnergyMaster1',
+      'taskReqEnergyMaster2',
+      'taskReqEnergyMaster3',
+      'taskReqEnergyMaster4'
+    ],
+    'climate_action': [
+      'taskReqClimateAction1',
+      'taskReqClimateAction2',
+      'taskReqClimateAction3',
+      'taskReqClimateAction4'
+    ],
+    'eco_champion': [
+      'taskReqEcoChampion1',
+      'taskReqEcoChampion2',
+      'taskReqEcoChampion3',
+      'taskReqEcoChampion4'
+    ],
+    'innovation_leader': [
+      'taskReqInnovationLeader1',
+      'taskReqInnovationLeader2',
+      'taskReqInnovationLeader3',
+      'taskReqInnovationLeader4'
+    ],
+    'biodiversity_protector': [
+      'taskReqBiodiversityProtector1',
+      'taskReqBiodiversityProtector2',
+      'taskReqBiodiversityProtector3',
+      'taskReqBiodiversityProtector4'
+    ]
   };
 
   const taskDiffs = {
@@ -160,16 +187,16 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
   };
 
   const handleAvatarClick = useCallback((index: number) => {
-    const emoji = avatarEmojis[index];
-    const unlocked = avatarUnlocked[index];
-    const task = avatarTasks[index];
+    const emoji = avatarData.emojis[index];
+    const unlocked = avatarData.unlocked[index];
+    const task = avatarData.tasks[index];
 
     if (unlocked) {
       setCurrentSelection(emoji);
     } else if (task) {
       setSelectedTaskId(task);
     }
-  }, []);
+  }, [avatarData]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent, index: number) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -203,24 +230,107 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
     setSelectedTaskId('');
   }, []);
 
+  const handleCloseLockedTheme = useCallback(() => {
+    setSelectedLockedTheme(null);
+  }, []);
+
+  // Simple helper functions - no memoization overhead
+  const getThemeName = (themeId: string): string => {
+    const themeNameKeys: Record<string, string> = {
+      'default': 'themeDefaultGradient',
+      'forest_gradient': 'themeForestHarmony',
+      'solar_energy': 'themeSolarPower',
+      'cosmic_nature': 'themeCosmicNature',
+      'biodiversity_garden': 'themeBiodiversityGarden',
+      'future_tech': 'themeFutureTechnology',
+      'iridescent_emerald': 'themeIridescentEmerald',
+      'aurora_borealis': 'themeAuroraBorealis',
+      'ocean_depths': 'themeOceanDepths',
+      'sunset_blaze': 'themeSunsetBlaze',
+      'neon_eco': 'themeNeonEco',
+      'pastel_dream': 'themePastelDream',
+      'prismatic_flow': 'themePrismaticFlow',
+      'moonlight_forest': 'themeMoonlightForest'
+    };
+    return t(themeNameKeys[themeId] || 'all');
+  };
+
+  const getThemeDescription = (themeId: string): string => {
+    const themeDescKeys: Record<string, string> = {
+      'default': 'themeDescDefaultGradient',
+      'forest_gradient': 'themeDescForestHarmony',
+      'solar_energy': 'themeDescSolarPower',
+      'cosmic_nature': 'themeDescCosmicNature',
+      'biodiversity_garden': 'themeDescBiodiversityGarden',
+      'future_tech': 'themeDescFutureTechnology',
+      'iridescent_emerald': 'themeDescIridescentEmerald',
+      'aurora_borealis': 'themeDescAuroraBorealis',
+      'ocean_depths': 'themeDescOceanDepths',
+      'sunset_blaze': 'themeDescSunsetBlaze',
+      'neon_eco': 'themeDescNeonEco',
+      'pastel_dream': 'themeDescPastelDream',
+      'prismatic_flow': 'themeDescPrismaticFlow',
+      'moonlight_forest': 'themeDescMoonlightForest'
+    };
+    return t(themeDescKeys[themeId] || '');
+  };
+
+  const getThemeUnlockRequirements = useCallback((themeId: string): string[] => {
+    // Define unlock requirements for each locked theme
+    const requirements: Record<string, string[]> = {
+      solar_energy: [
+        t('themeReqSolar1'),
+        t('themeReqSolar2'),
+        t('themeReqSolar3')
+      ],
+      cosmic_nature: [
+        t('themeReqCosmic1'),
+        t('themeReqCosmic2'),
+        t('themeReqCosmic3')
+      ],
+      biodiversity_garden: [
+        t('themeReqBiodiversity1'),
+        t('themeReqBiodiversity2'),
+        t('themeReqBiodiversity3')
+      ],
+      future_tech: [
+        t('themeReqFuture1'),
+        t('themeReqFuture2'),
+        t('themeReqFuture3')
+      ],
+      neon_eco: [
+        t('themeReqNeon1'),
+        t('themeReqNeon2'),
+        t('themeReqNeon3')
+      ],
+      prismatic_flow: [
+        t('themeReqPrismatic1'),
+        t('themeReqPrismatic2'),
+        t('themeReqPrismatic3')
+      ]
+    };
+    return requirements[themeId] || [t('themeReqDefault')];
+  }, [t]);
+
   if (!isOpen) return null;
 
-  const unlockedCount = avatarUnlocked.filter(Boolean).length;
+  // Calculate these only when modal is open
+  const unlockedCount = avatarData.unlocked.filter(Boolean).length;
   const selectedName = activeTab === 'themes' 
-    ? (selectedTheme ? (PROFILE_BACKGROUNDS[selectedTheme]?.name || 'None') : 'None')
-    : (currentSelection ? (avatarNames[avatarEmojis.indexOf(currentSelection)] || 'None') : 'None');
+    ? (selectedTheme ? getThemeName(selectedTheme) : t('all'))
+    : (currentSelection ? t(avatarData.nameKeys[avatarData.emojis.indexOf(currentSelection)] || 'all') : t('all'));
 
   return (
     <>
       <AnimatePresence>
-        <motion.div
+          <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
+          transition={{ duration: 0.2 }}
           className={cn(
             "fixed inset-0 bg-black/50 z-50 flex items-center",
-            isMobile ? "p-2 items-start justify-center pt-4" : "p-4 items-center justify-center"
+            isMobile ? "p-3 items-start justify-center pt-4" : "p-4 sm:p-6 items-center justify-center"
           )}
           style={{
             willChange: 'opacity',
@@ -232,62 +342,62 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
               paddingBottom: 'max(80px, env(safe-area-inset-bottom) + 60px)',
               paddingLeft: 'max(0.5rem, env(safe-area-inset-left))',
             } : {}),
-            touchAction: 'none',
+            // Allow touch events to pass through to children for scrolling
+            touchAction: 'pan-y pinch-zoom',
           }}
           onClick={onClose}
           onTouchStart={(e) => {
-            // Prevent background scroll on touch
+            // Only prevent default if clicking backdrop (not modal content)
             if (e.target === e.currentTarget) {
               e.preventDefault();
             }
           }}
         >
           <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className={cn(
               "bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col",
               isMobile 
-                ? "w-[calc(100vw-1rem)] mx-auto"
-                : "w-full max-w-sm sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl"
+                ? "w-[calc(100vw-1.5rem)] mx-auto"
+                : "w-full max-w-2xl sm:max-w-3xl lg:max-w-5xl xl:max-w-7xl"
             )}
             onClick={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchMove={(e) => e.stopPropagation()}
             style={{
               willChange: 'transform, opacity',
+              // Allow vertical scrolling within modal
               touchAction: 'pan-y',
               maxHeight: isMobile && viewportSize.height > 0
-                ? `${Math.min(viewportSize.height * 0.75, viewportSize.height - 100)}px`
+                ? `${Math.min(viewportSize.height * 0.92, viewportSize.height - 32)}px`
                 : isMobile
-                ? 'calc(75dvh - 2rem)'
-                : 'min(95vh, calc(100vh - 2rem))',
+                ? 'calc(92dvh - 0.5rem)'
+                : 'min(92vh, calc(100vh - 1.5rem))',
               height: isMobile && viewportSize.height > 0
-                ? `${Math.min(viewportSize.height * 0.75, viewportSize.height - 100)}px`
+                ? `${Math.min(viewportSize.height * 0.92, viewportSize.height - 32)}px`
                 : 'auto',
-              maxWidth: isMobile 
-                ? `${Math.min(viewportSize.width - 16, 420)}px`
+              maxWidth: isMobile && viewportSize.width > 0
+                ? `${Math.min(viewportSize.width - 24, 520)}px`
                 : undefined,
-              marginBottom: isMobile ? '80px' : undefined,
+              marginBottom: isMobile ? '16px' : undefined,
             }}
           >
             {/* Header - Ultra Compact on Mobile */}
             <div className={cn(
               "relative border-b border-gray-200 bg-gradient-to-r from-green-50 via-blue-50 to-purple-50 flex-shrink-0",
-              isMobile ? "p-1.5" : "p-4 sm:p-6"
+              isMobile ? "p-3" : "p-4 sm:p-5"
             )}>
               {/* Title and Close - Single Row */}
               <div className={cn(
                 "flex items-center justify-between",
-                isMobile ? "mb-1" : "mb-3"
+                isMobile ? "mb-2" : "mb-3"
               )}>
                   <h2 className={cn(
                   "font-bold text-gray-900 truncate flex-1 min-w-0",
                   isMobile ? "text-sm" : "text-xl sm:text-2xl"
                   )}>
-                  🎭 {isMobile ? "Avatars" : "Avatar & Achievement System"}
+                  🎭 {isMobile ? t('avatars') : t('avatarAchievementSystem')}
                   </h2>
                 <Button
                   variant="ghost"
@@ -305,16 +415,14 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
               {/* Tab Navigation - Ultra Compact */}
               <div 
                 className={cn(
-                  "flex space-x-0.5 bg-white/50 backdrop-blur-sm rounded-md overflow-x-auto",
-                  isMobile ? "p-0.5" : "p-1"
+                  "flex space-x-1 bg-white/50 backdrop-blur-sm rounded-md overflow-x-auto",
+                  isMobile ? "p-1" : "p-1.5"
                 )}
                 style={{
                   WebkitOverflowScrolling: 'touch',
                   overscrollBehavior: 'contain',
                   touchAction: 'pan-x',
                 }}
-                onTouchStart={(e) => e.stopPropagation()}
-                onTouchMove={(e) => e.stopPropagation()}
               >
                 <Button
                   variant={activeTab === 'avatars' ? 'default' : 'ghost'}
@@ -325,7 +433,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     isMobile ? "text-xs px-1.5 py-0.5 h-6" : "text-xs sm:text-sm px-2 sm:px-3"
                   )}
                 >
-                  <span>{isMobile ? "🎭" : "🎭 Avatars"}</span>
+                  <span>{isMobile ? "🎭" : `🎭 ${t('avatars')}`}</span>
                 </Button>
                 <Button
                   variant={activeTab === 'quests' ? 'default' : 'ghost'}
@@ -336,7 +444,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     isMobile ? "text-xs px-1.5 py-0.5 h-6" : "text-xs sm:text-sm px-2 sm:px-3"
                   )}
                 >
-                  <span>{isMobile ? "⚔️" : "⚔️ Quests"}</span>
+                  <span>{isMobile ? "⚔️" : `⚔️ ${t('quests')}`}</span>
                 </Button>
                 <Button
                   variant={activeTab === 'frames' ? 'default' : 'ghost'}
@@ -347,7 +455,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     isMobile ? "text-xs px-1.5 py-0.5 h-6" : "text-xs sm:text-sm px-2 sm:px-3"
                   )}
                 >
-                  <span>{isMobile ? "🖼️" : "🖼️ Frames"}</span>
+                  <span>{isMobile ? "🖼️" : `🖼️ ${t('frames')}`}</span>
                 </Button>
                 <Button
                   variant={activeTab === 'themes' ? 'default' : 'ghost'}
@@ -358,24 +466,24 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     isMobile ? "text-xs px-1.5 py-0.5 h-6" : "text-xs sm:text-sm px-2 sm:px-3"
                   )}
                 >
-                  <span>{isMobile ? "🎨" : "🎨 Themes"}</span>
+                  <span>{isMobile ? "🎨" : `🎨 ${t('themes')}`}</span>
                 </Button>
               </div>
             </div>
 
             {/* Desktop Selection Bar */}
             {!isMobile && (
-              <div className="border-b border-gray-200 bg-white px-4 py-2 flex items-center justify-between flex-shrink-0">
-                <div className="text-xs sm:text-sm text-gray-600">
-                  <span>Selected: <strong>{selectedName}</strong></span>
+              <div className="border-b border-gray-200 bg-white px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
+                <div className="text-sm text-gray-600">
+                  <span>{t('selected')}: <strong className="text-gray-900">{selectedName}</strong></span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2.5">
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={onClose}
                   >
-                    Cancel
+                    {t('cancel')}
                   </Button>
                   <Button 
                     size="sm"
@@ -383,7 +491,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     onClick={handleConfirm}
                     disabled={activeTab === 'themes' ? !selectedTheme : !currentSelection}
                   >
-                    Confirm Selection
+                    {t('confirmSelection')}
                   </Button>
                 </div>
               </div>
@@ -394,60 +502,50 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
               className={cn(
                 "overflow-y-auto flex-1",
               isMobile 
-                  ? "p-2" 
-                  : "p-3 sm:p-6"
+                  ? "p-3" 
+                  : "p-4 sm:p-5 lg:p-6"
               )}
               style={{
                 WebkitOverflowScrolling: 'touch',
                 overscrollBehavior: 'contain',
+                // Critical: Allow vertical panning for scrolling
                 touchAction: 'pan-y',
                 maxHeight: isMobile && viewportSize.height > 0
-                  ? `${Math.max(350, Math.min(viewportSize.height * 0.75 - 100, viewportSize.height - 200))}px`
+                  ? `${Math.max(380, Math.min(viewportSize.height * 0.92 - 140, viewportSize.height - 180))}px`
                   : isMobile
-                  ? 'calc(75dvh - 100px)'
-                  : 'calc(95vh - 200px)',
-                minHeight: isMobile ? '300px' : '400px',
+                  ? 'calc(92dvh - 140px)'
+                  : 'calc(92vh - 200px)',
+                minHeight: isMobile ? '320px' : '400px',
               }}
-              onTouchStart={(e) => {
-                // Allow scrolling within modal content
-                e.stopPropagation();
-              }}
-              onTouchMove={(e) => {
-                // Prevent scroll propagation to background
-                e.stopPropagation();
-              }}
-              onWheel={(e) => {
-                // Prevent wheel scroll from propagating to background
-                e.stopPropagation();
-              }}
+              // Remove touch handlers that block scrolling - let native scrolling work
             >
               {activeTab === 'avatars' && (
-                <div className="space-y-3" style={{ contain: 'layout style paint' }}>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-6 gap-2">
-                    <h3 className="text-sm sm:text-lg font-semibold">Avatar Collection</h3>
-                    <Badge variant="outline" className="text-xs self-start sm:self-auto">
-                      {unlockedCount}/{avatarEmojis.length} unlocked
+                <div className="space-y-4" style={{ contain: 'layout style paint' }}>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-5 gap-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">{t('avatarCollection')}</h3>
+                    <Badge variant="outline" className="text-xs sm:text-sm self-start sm:self-auto px-2.5 py-1">
+                      {unlockedCount}/{avatarData.emojis.length} {t('unlocked')}
                     </Badge>
                   </div>
 
-                  {/* Avatar Grid - Optimized Spacing - Larger Cards on Mobile */}
+                  {/* Avatar Grid - Optimized Spacing */}
                   <div 
                     className={cn(
                       "grid",
                     isMobile 
-                        ? "grid-cols-2 gap-3" 
-                        : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-6"
+                        ? "grid-cols-2 gap-2.5" 
+                        : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-5 lg:gap-6"
                     )}
                     style={{ 
                       contain: 'layout style paint',
                       contentVisibility: 'auto',
                     }}
                   >
-                    {avatarEmojis.map((emoji, index) => {
-                      const name = avatarNames[index];
-                      const description = avatarDescs[index];
-                      const rarity = avatarRarities[index];
-                      const unlocked = avatarUnlocked[index];
+                    {avatarData.emojis.map((emoji, index) => {
+                      const name = t(avatarData.nameKeys[index]);
+                      const description = t(avatarData.descKeys[index]);
+                      const rarity = avatarData.rarities[index];
+                      const unlocked = avatarData.unlocked[index];
                       const isSelected = currentSelection === emoji;
                       
                       let rarityIcon = null;
@@ -468,22 +566,22 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                       return (
                         <motion.div
                           key={`avatar-${index}`}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
                           transition={{ 
-                            delay: isMobile ? Math.min(index * 0.02, 0.2) : index * 0.05,
-                            duration: 0.3,
+                            // Reduced delay for faster initial render - batch animations
+                            delay: isMobile ? Math.min(index * 0.008, 0.08) : Math.min(index * 0.015, 0.12),
+                            duration: 0.2,
                             ease: "easeOut"
                           }}
                           className="relative"
-                          style={{ willChange: 'opacity, transform' }}
                         >
                           <div
                             className={cn(
                               'relative flex flex-col items-center rounded-xl transition-all duration-300 cursor-pointer border-2',
                               'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
                               'transform hover:scale-105 hover:shadow-lg active:scale-95',
-                              isMobile ? 'p-3 min-h-[160px]' : 'p-3 sm:p-4 min-h-[140px] sm:min-h-[160px]',
+                              isMobile ? 'p-2.5 min-h-[160px]' : 'p-3 sm:p-4 min-h-[170px] sm:min-h-[190px]',
                               unlocked 
                                 ? 'hover:bg-gray-50' 
                                 : 'opacity-90 hover:opacity-100 hover:bg-gradient-to-br hover:from-orange-50 hover:to-red-50 hover:border-orange-300 hover:shadow-orange-200/50',
@@ -524,27 +622,28 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                             <div className={cn("relative z-10", isMobile ? "mb-1" : "mb-2 sm:mb-3")}>
                               <EnhancedAvatar
                                 emoji={emoji}
-                                image={avatarImages[index]}
+                                image={avatarData.images[index]}
                                 size={isMobile ? "md" : "md"}
                                 glowColor={unlocked ? 'green' : 'yellow'}
                                 className={!unlocked ? 'grayscale brightness-75' : ''}
+                                noBackground={true}
                               />
                             </div>
 
                             {/* Avatar info */}
-                            <div className="text-center relative z-10 space-y-1 flex-1 flex flex-col justify-between">
-                              <div>
-                                <h4 className="text-xs font-semibold text-gray-900 line-clamp-1">
+                            <div className="text-center relative z-10 space-y-1.5 flex-1 flex flex-col justify-between w-full">
+                              <div className="w-full">
+                                <h4 className={cn("font-semibold text-gray-900 line-clamp-1", isMobile ? "text-xs" : "text-sm")}>
                                   {name}
                                 </h4>
                                 <Badge 
                                   variant="outline" 
-                                  className={cn('text-xs mb-1', rarityBadgeStyles)}
+                                  className={cn('text-xs mb-1.5 mt-1', rarityBadgeStyles)}
                                 >
-                                  {rarity}
+                                  {t(rarity)}
                                 </Badge>
                                 {!isMobile && (
-                                  <p className="text-xs text-gray-600 leading-tight px-1 line-clamp-2">
+                                  <p className="text-xs text-gray-600 leading-relaxed px-1 line-clamp-2 mt-1">
                                     {description}
                                   </p>
                                 )}
@@ -555,12 +654,12 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                                 {unlocked ? (
                                   <div className="flex items-center text-green-600 text-xs">
                                     <CheckCircle className="h-2 w-2 mr-1" />
-                                    <span className={isMobile ? "text-xs" : ""}>Available</span>
+                                    <span className={isMobile ? "text-xs" : ""}>{t('available')}</span>
                                   </div>
                                 ) : (
                                   <div className="flex items-center text-orange-600 text-xs">
                                     <Unlock className="h-2 w-2 mr-1" />
-                                    <span className={isMobile ? "text-xs" : ""}>Unlock</span>
+                                    <span className={isMobile ? "text-xs" : ""}>{t('unlock')}</span>
                                   </div>
                                 )}
                               </div>
@@ -577,7 +676,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
               {activeTab === 'quests' && (
                 <div className="text-center py-6 sm:py-12">
                   <p className="text-gray-500 text-sm sm:text-base">
-                    ⚔️ Quest system coming soon!
+                    ⚔️ {t('questSystemComingSoon')}
                   </p>
                 </div>
               )}
@@ -586,7 +685,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
               {activeTab === 'frames' && (
                 <div className="text-center py-6 sm:py-12">
                   <p className="text-gray-500 text-sm sm:text-base">
-                    🖼️ Avatar frames coming soon!
+                    🖼️ {t('avatarFramesComingSoon')}
                   </p>
                 </div>
               )}
@@ -595,41 +694,13 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
               {activeTab === 'themes' && (
                 <div className="space-y-4 sm:space-y-6">
                   {/* Header with Preview */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                    <div>
-                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
-                        🎨 Profile Themes
-                      </h3>
-                      <p className="text-xs sm:text-sm text-gray-600">
-                        Customize your profile badge background with iridescent gradients
-                      </p>
-                    </div>
-                    {selectedTheme && (
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {PROFILE_BACKGROUNDS[selectedTheme]?.name || 'Default'}
-                        </Badge>
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            if (userProgress && selectedTheme) {
-                              const updated = { ...userProgress, profileBackground: selectedTheme };
-                              saveUserProgress(updated);
-                              setUserProgress(updated);
-                              onThemeChange?.(selectedTheme);
-                              // Close modal after saving to show the change
-                              setTimeout(() => {
-                                onClose();
-                              }, 300);
-                            }
-                          }}
-                          className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
-                        >
-                          <Save className="h-3 w-3 mr-1" />
-                          Save
-                        </Button>
-                      </div>
-                    )}
+                  <div className="mb-4">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
+                      🎨 {t('profileThemes')}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-gray-600">
+                      {t('customizeProfileBadge')}
+                    </p>
                   </div>
 
                   {/* Category Filter */}
@@ -640,8 +711,6 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                       overscrollBehavior: 'contain',
                       touchAction: 'pan-x',
                     }}
-                    onTouchStart={(e) => e.stopPropagation()}
-                    onTouchMove={(e) => e.stopPropagation()}
                   >
                     <Filter className="h-4 w-4 text-gray-500 flex-shrink-0" />
                     <div className="flex gap-2">
@@ -653,7 +722,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                           onClick={() => setThemeCategory(cat)}
                           className="text-xs whitespace-nowrap"
                         >
-                          {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                          {cat === 'all' ? t('all') : t(`category${cat.charAt(0).toUpperCase() + cat.slice(1)}`)}
                         </Button>
                       ))}
                     </div>
@@ -667,7 +736,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                       className="mb-6"
                     >
                       <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                        <p className="text-xs font-semibold text-gray-700 mb-3">Live Preview</p>
+                        <p className="text-xs font-semibold text-gray-700 mb-3">{t('livePreview')}</p>
                         <div 
                           className="relative h-32 sm:h-40 rounded-lg overflow-hidden shadow-lg"
                           style={{
@@ -676,6 +745,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                           }}
                         >
                           {/* Iridescent animation overlay */}
+                          {/* Optimized: Only render animation if visible and reduce complexity */}
                           {PROFILE_BACKGROUNDS[selectedTheme]?.animation === 'shimmer' && (
                             <motion.div
                               animate={{
@@ -684,31 +754,35 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                               transition={{
                                 duration: 3,
                                 repeat: Infinity,
-                                ease: "linear"
+                                ease: "linear",
+                                // Reduce animation complexity for performance
+                                type: "tween"
                               }}
-                              className="absolute inset-0 opacity-30"
+                              className="absolute inset-0 opacity-20"
                               style={{
-                                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
-                                backgroundSize: '200% 100%'
+                                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
+                                backgroundSize: '200% 100%',
+                                willChange: 'background-position',
                               }}
                             />
                           )}
                           {PROFILE_BACKGROUNDS[selectedTheme]?.animation === 'aurora' && (
                             <motion.div
                               animate={{
-                                x: ['-100%', '100%'],
                                 rotate: [0, 360]
                               }}
                               transition={{
-                                duration: 8,
+                                duration: 12,
                                 repeat: Infinity,
-                                ease: "linear"
+                                ease: "linear",
+                                type: "tween"
                               }}
-                              className="absolute inset-0 opacity-20"
+                              className="absolute inset-0 opacity-15"
                               style={{
-                                background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, transparent 70%)',
-                                width: '200%',
-                                height: '200%'
+                                background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.3) 0%, transparent 70%)',
+                                width: '150%',
+                                height: '150%',
+                                willChange: 'transform',
                               }}
                             />
                           )}
@@ -718,32 +792,35 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                                 backgroundPosition: ['0% 0%', '100% 100%']
                               }}
                               transition={{
-                                duration: 5,
+                                duration: 6,
                                 repeat: Infinity,
-                                ease: "easeInOut",
-                                repeatType: "reverse"
+                                ease: "linear",
+                                repeatType: "reverse",
+                                type: "tween"
                               }}
-                              className="absolute inset-0 opacity-25"
+                              className="absolute inset-0 opacity-20"
                               style={{
-                                background: `linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%)`,
-                                backgroundSize: '200% 200%'
+                                background: `linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.2) 50%, transparent 70%)`,
+                                backgroundSize: '200% 200%',
+                                willChange: 'background-position',
                               }}
                             />
                           )}
                           {PROFILE_BACKGROUNDS[selectedTheme]?.animation === 'pulse' && (
                             <motion.div
                               animate={{
-                                scale: [1, 1.1, 1],
-                                opacity: [0.1, 0.3, 0.1]
+                                opacity: [0.1, 0.2, 0.1]
                               }}
                               transition={{
                                 duration: 4,
                                 repeat: Infinity,
-                                ease: "easeInOut"
+                                ease: "easeInOut",
+                                type: "tween"
                               }}
                               className="absolute inset-0"
                               style={{
-                                background: 'radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, transparent 70%)'
+                                background: 'radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 70%)',
+                                willChange: 'opacity',
                               }}
                             />
                           )}
@@ -753,9 +830,10 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                             <div className="text-center">
                               <EnhancedAvatar
                                 emoji={selectedAvatar || '👩‍🌾'}
-                                image={selectedAvatar ? avatarImages[avatarEmojis.indexOf(selectedAvatar)] : avatarImages[0]}
+                                image={selectedAvatar ? avatarData.images[avatarData.emojis.indexOf(selectedAvatar)] : avatarData.images[0]}
                                 size="lg"
                                 glowColor="green"
+                                noBackground={true}
                               />
                               <p className="text-white text-xs font-semibold mt-2 drop-shadow-lg">
                                 {userProgress?.name || 'Aziza Karimova'}
@@ -764,7 +842,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                           </div>
                         </div>
                         <p className="text-xs text-gray-600 mt-2 text-center">
-                          {PROFILE_BACKGROUNDS[selectedTheme]?.description}
+                          {getThemeDescription(selectedTheme)}
                         </p>
                       </div>
                     </motion.div>
@@ -773,7 +851,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                   {/* Theme Grid */}
                   <div className={cn(
                     "grid gap-3 sm:gap-4",
-                    isMobile ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+                    isMobile ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
                   )}>
                     {Object.entries(PROFILE_BACKGROUNDS)
                       .filter(([_, theme]) => themeCategory === 'all' || theme.category === themeCategory)
@@ -784,147 +862,287 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                         return (
                           <motion.div
                             key={themeId}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="relative group"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ 
+                              delay: isMobile ? Math.min(Object.keys(PROFILE_BACKGROUNDS).indexOf(themeId) * 0.008, 0.08) : Math.min(Object.keys(PROFILE_BACKGROUNDS).indexOf(themeId) * 0.015, 0.12),
+                              duration: 0.2,
+                              ease: "easeOut"
+                            }}
+                            className="relative"
                           >
                             <div
                               className={cn(
-                                "relative rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-300",
-                                isSelected 
-                                  ? "border-green-500 ring-2 ring-green-500 ring-offset-2 shadow-lg" 
-                                  : "border-gray-200 hover:border-gray-300",
-                                !isUnlocked && "opacity-60 grayscale"
+                                "relative flex flex-col rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-300",
+                                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                                "transform hover:scale-105 hover:shadow-lg active:scale-95",
+                                isUnlocked 
+                                  ? 'hover:bg-gray-50' 
+                                  : 'opacity-90 hover:opacity-100 hover:bg-gradient-to-br hover:from-orange-50 hover:to-red-50 hover:border-orange-300 hover:shadow-orange-200/50',
+                                isSelected && isUnlocked
+                                  ? 'bg-blue-50 ring-2 ring-blue-500 shadow-md' 
+                                  : '',
+                                !isUnlocked && "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300"
                               )}
                               onClick={() => {
                                 if (isUnlocked) {
                                   setSelectedTheme(themeId);
+                                } else {
+                                  setSelectedLockedTheme(themeId);
                                 }
                               }}
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`${getThemeName(themeId)} - ${isUnlocked ? 'Available' : 'Locked'} - ${getThemeDescription(themeId)}`}
                             >
+                              {/* Lock indicator - Top Left */}
+                              {!isUnlocked && (
+                                <div className="absolute -top-1 -left-1 z-20">
+                                  <motion.div
+                                    className={cn(
+                                      "flex items-center justify-center bg-gradient-to-br from-orange-400 to-red-500 rounded-full shadow-lg border-2 border-white",
+                                      isMobile ? "w-6 h-6" : "w-7 h-7 sm:w-8 sm:h-8"
+                                    )}
+                                    animate={{
+                                      scale: [1, 1.1, 1],
+                                      rotate: [0, -5, 5, 0]
+                                    }}
+                                    transition={{
+                                      duration: 2,
+                                      repeat: Infinity,
+                                      ease: "easeInOut"
+                                    }}
+                                  >
+                                    <Lock className={cn(
+                                      "text-white",
+                                      isMobile ? "h-3 w-3" : "h-3.5 w-3.5 sm:h-4 sm:w-4"
+                                    )} />
+                                  </motion.div>
+                                </div>
+                              )}
+
                               {/* Theme Preview */}
                               <div 
-                                className="h-24 sm:h-32 relative overflow-hidden"
+                                className={cn(
+                                  "relative overflow-hidden",
+                                  isMobile ? "h-24" : "h-28 sm:h-32"
+                                )}
                                 style={{
-                                  background: theme.gradient
+                                  background: theme.gradient,
+                                  filter: !isUnlocked ? 'grayscale(0.8) brightness(0.6)' : 'none'
                                 }}
                               >
-                                {/* Animation Overlays */}
-                                {theme.animation === 'shimmer' && (
+                                {/* Animation Overlays - Only show for unlocked themes */}
+                                {isUnlocked && theme.animation === 'shimmer' && (
                                   <motion.div
                                     animate={{
                                       x: ['-100%', '200%']
                                     }}
                                     transition={{
-                                      duration: 2,
+                                      duration: 3,
                                       repeat: Infinity,
-                                      ease: "linear"
-                                    }}
-                                    className="absolute inset-0 opacity-30"
-                                    style={{
-                                      background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
-                                      transform: 'skewX(-20deg)'
-                                    }}
-                                  />
-                                )}
-                                {theme.animation === 'aurora' && (
-                                  <motion.div
-                                    animate={{
-                                      rotate: [0, 360],
-                                      scale: [1, 1.2, 1]
-                                    }}
-                                    transition={{
-                                      duration: 6,
-                                      repeat: Infinity,
-                                      ease: "easeInOut"
+                                      ease: "linear",
+                                      type: "tween"
                                     }}
                                     className="absolute inset-0 opacity-20"
                                     style={{
-                                      background: 'radial-gradient(ellipse at 30% 50%, rgba(255,255,255,0.5) 0%, transparent 50%)'
+                                      background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                                      transform: 'skewX(-20deg)',
+                                      willChange: 'transform',
                                     }}
                                   />
                                 )}
-                                {theme.animation === 'flow' && (
+                                {isUnlocked && theme.animation === 'aurora' && (
+                                  <motion.div
+                                    animate={{
+                                      rotate: [0, 360]
+                                    }}
+                                    transition={{
+                                      duration: 10,
+                                      repeat: Infinity,
+                                      ease: "linear",
+                                      type: "tween"
+                                    }}
+                                    className="absolute inset-0 opacity-15"
+                                    style={{
+                                      background: 'radial-gradient(ellipse at 30% 50%, rgba(255,255,255,0.4) 0%, transparent 50%)',
+                                      willChange: 'transform',
+                                    }}
+                                  />
+                                )}
+                                {isUnlocked && theme.animation === 'flow' && (
                                   <motion.div
                                     animate={{
                                       backgroundPosition: ['0% 0%', '100% 100%']
                                     }}
                                     transition={{
-                                      duration: 4,
+                                      duration: 5,
                                       repeat: Infinity,
                                       ease: "linear",
-                                      repeatType: "reverse"
+                                      repeatType: "reverse",
+                                      type: "tween"
                                     }}
-                                    className="absolute inset-0 opacity-25"
+                                    className="absolute inset-0 opacity-20"
                                     style={{
-                                      background: `linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%)`,
-                                      backgroundSize: '200% 200%'
+                                      background: `linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%)`,
+                                      backgroundSize: '200% 200%',
+                                      willChange: 'background-position',
                                     }}
                                   />
                                 )}
-                                {theme.animation === 'pulse' && (
+                                {isUnlocked && theme.animation === 'pulse' && (
                                   <motion.div
                                     animate={{
-                                      scale: [1, 1.1, 1],
-                                      opacity: [0.1, 0.3, 0.1]
+                                      opacity: [0.1, 0.2, 0.1]
                                     }}
                                     transition={{
-                                      duration: 3,
+                                      duration: 4,
                                       repeat: Infinity,
-                                      ease: "easeInOut"
+                                      ease: "easeInOut",
+                                      type: "tween"
                                     }}
                                     className="absolute inset-0"
                                     style={{
-                                      background: 'radial-gradient(circle at center, rgba(255,255,255,0.3) 0%, transparent 70%)'
+                                      background: 'radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, transparent 70%)',
+                                      willChange: 'opacity',
                                     }}
                                   />
                                 )}
 
-                                {/* Lock Overlay */}
+                                {/* Lock Overlay - Darkened background for locked themes */}
                                 {!isUnlocked && (
-                                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
-                                    <Lock className="h-6 w-6 text-white" />
-                                  </div>
+                                  <motion.div
+                                    className="absolute inset-0 bg-gradient-to-br from-black/50 to-black/60 flex items-center justify-center z-10"
+                                    animate={{
+                                      opacity: [0.5, 0.6, 0.5]
+                                    }}
+                                    transition={{
+                                      duration: 2,
+                                      repeat: Infinity,
+                                      ease: "easeInOut"
+                                    }}
+                                  >
+                                    <motion.div
+                                      animate={{
+                                        scale: [1, 1.1, 1],
+                                        rotate: [0, -5, 5, 0]
+                                      }}
+                                      transition={{
+                                        duration: 2,
+                                        repeat: Infinity,
+                                        ease: "easeInOut"
+                                      }}
+                                    >
+                                      <Lock className={cn(
+                                        "text-white drop-shadow-lg",
+                                        isMobile ? "h-8 w-8" : "h-10 w-10 sm:h-12 sm:w-12"
+                                      )} />
+                                    </motion.div>
+                                  </motion.div>
                                 )}
 
-                                {/* Selected Indicator */}
+                                {/* Selected Indicator - Top Right */}
                                 {isSelected && isUnlocked && (
-                                  <div className="absolute top-2 right-2 z-10">
-                                    <div className="bg-green-500 rounded-full p-1">
-                                      <CheckCircle className="h-4 w-4 text-white" />
-                                    </div>
+                                  <div className="absolute top-2 right-2 z-20">
+                                    <motion.div
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      className="bg-green-500 rounded-full p-1.5 shadow-lg"
+                                    >
+                                      <CheckCircle className={cn(
+                                        "text-white",
+                                        isMobile ? "h-3 w-3" : "h-4 w-4"
+                                      )} />
+                                    </motion.div>
                                   </div>
                                 )}
 
-                                {/* Category Badge */}
-                                <div className="absolute bottom-2 left-2 z-10">
+                                {/* Category Badge - Bottom Left */}
+                                <div className="absolute bottom-2 left-2 z-20">
                                   <Badge 
                                     variant="outline" 
-                                    className="text-xs bg-white/80 backdrop-blur-sm border-white/50"
+                                    className={cn(
+                                      "text-xs backdrop-blur-sm",
+                                      isUnlocked 
+                                        ? "bg-white/80 border-white/50" 
+                                        : "bg-gray-800/80 border-gray-600/50 text-gray-200"
+                                    )}
                                   >
-                                    {theme.category}
+                                    {t(`category${theme.category.charAt(0).toUpperCase() + theme.category.slice(1)}`)}
                                   </Badge>
                                 </div>
                               </div>
 
                               {/* Theme Info */}
-                              <div className="p-3 bg-white">
-                                <h4 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-1">
-                                  {theme.name}
-                                </h4>
-                                <p className="text-xs text-gray-600 line-clamp-2">
-                                  {theme.description}
-                                </p>
-                                {theme.animation && theme.animation !== 'none' && (
-                                  <div className="mt-2 flex items-center gap-1">
-                                    <Sparkles className="h-3 w-3 text-purple-500" />
-                                    <span className="text-xs text-purple-600 capitalize">
-                                      {theme.animation}
-                                    </span>
-                                  </div>
-                                )}
+                              <div className={cn(
+                                "p-3 flex-1 flex flex-col justify-between",
+                                isUnlocked ? "bg-white" : "bg-gray-50"
+                              )}>
+                                <div className="w-full">
+                                  <h4 className={cn(
+                                    "font-semibold line-clamp-1 mb-1",
+                                    isMobile ? "text-xs" : "text-sm",
+                                    isUnlocked ? "text-gray-900" : "text-gray-600"
+                                  )}>
+                                    {getThemeName(themeId)}
+                                  </h4>
+                                  <p className={cn(
+                                    "line-clamp-2",
+                                    isMobile ? "text-[10px]" : "text-xs",
+                                    isUnlocked ? "text-gray-600" : "text-gray-500"
+                                  )}>
+                                    {getThemeDescription(themeId)}
+                                  </p>
+                                  {isUnlocked && theme.animation && theme.animation !== 'none' && (
+                                    <div className="mt-2 flex items-center gap-1">
+                                      <Sparkles className={cn(
+                                        "text-purple-500",
+                                        isMobile ? "h-2.5 w-2.5" : "h-3 w-3"
+                                      )} />
+                                      <span className={cn(
+                                        "text-purple-600 capitalize",
+                                        isMobile ? "text-[10px]" : "text-xs"
+                                      )}>
+                                        {theme.animation}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {!isUnlocked && (
+                                    <div className="mt-2 flex items-center gap-1">
+                                      <Sparkles className={cn(
+                                        "text-gray-400",
+                                        isMobile ? "h-2.5 w-2.5" : "h-3 w-3"
+                                      )} />
+                                      <span className={cn(
+                                        "text-gray-500 capitalize",
+                                        isMobile ? "text-[10px]" : "text-xs"
+                                      )}>
+                                        {theme.animation}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Status indicator */}
+                                <div className="flex items-center justify-center mt-2 pt-2 border-t border-gray-200">
+                                  {isUnlocked ? (
+                                    <div className="flex items-center text-green-600 text-xs">
+                                      <CheckCircle className={cn(
+                                        "mr-1",
+                                        isMobile ? "h-2 w-2" : "h-2.5 w-2.5"
+                                      )} />
+                                      <span className={isMobile ? "text-[10px]" : "text-xs"}>{t('available')}</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center text-orange-600 text-xs">
+                                      <Unlock className={cn(
+                                        "mr-1",
+                                        isMobile ? "h-2 w-2" : "h-2.5 w-2.5"
+                                      )} />
+                                      <span className={isMobile ? "text-[10px]" : "text-xs"}>{t('unlock')}</span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </motion.div>
@@ -945,14 +1163,14 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     onClick={onClose}
                     className="flex-1 h-10 text-sm font-medium border-2"
                   >
-                    Cancel
+                    {t('cancel')}
                   </Button>
                   <Button 
                     className="flex-1 h-10 text-sm font-semibold bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 shadow-lg"
                     onClick={handleConfirm}
                     disabled={activeTab === 'themes' ? !selectedTheme : !currentSelection}
                   >
-                    Confirm
+                    {t('confirm')}
                   </Button>
                 </div>
               </div>
@@ -963,7 +1181,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
 
       {/* Task Modal */}
       <AnimatePresence>
-        {selectedTaskId && taskTitles[selectedTaskId] && (
+        {selectedTaskId && taskTitleKeys[selectedTaskId] && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -971,11 +1189,12 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-3 sm:p-4"
             onClick={handleCloseTask}
             onTouchStart={(e) => {
+              // Only prevent if clicking backdrop directly
               if (e.target === e.currentTarget) {
                 e.preventDefault();
               }
             }}
-            style={{ touchAction: 'none' }}
+            style={{ touchAction: 'pan-y pinch-zoom' }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -988,9 +1207,8 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                   : "w-full max-w-sm sm:max-w-md"
               )}
               onClick={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              onTouchMove={(e) => e.stopPropagation()}
               style={{
+                // Critical: Allow vertical scrolling
                 touchAction: 'pan-y',
                 maxHeight: isMobile && viewportSize.height > 0
                   ? `${Math.min(viewportSize.height * 0.85, viewportSize.height - 32)}px`
@@ -1008,7 +1226,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
               <div className="p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900">
-                    {taskTitles[selectedTaskId]}
+                    {t(taskTitleKeys[selectedTaskId])}
                   </h3>
                   <Button
                     variant="ghost"
@@ -1024,7 +1242,7 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                   taskDiffs[selectedTaskId] === 'hard' ? 'bg-red-100 text-red-800 border-red-300' :
                   'bg-yellow-100 text-yellow-800 border-yellow-300'
                 )}>
-                  {taskDiffs[selectedTaskId].charAt(0).toUpperCase() + taskDiffs[selectedTaskId].slice(1)} Challenge
+                  {t(taskDiffs[selectedTaskId])} {t('challenge')}
                 </Badge>
               </div>
               
@@ -1041,30 +1259,28 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                     : 'calc(85vh - 180px)',
                   minHeight: isMobile ? '150px' : '200px',
                 }}
-                onTouchStart={(e) => e.stopPropagation()}
-                onTouchMove={(e) => e.stopPropagation()}
-                onWheel={(e) => e.stopPropagation()}
+                // Removed touch handlers that were blocking native scroll
               >
                 <p className="text-sm sm:text-base text-gray-600 mb-4 leading-relaxed">
-                  {taskDescs[selectedTaskId]}
+                  {t(taskDescKeys[selectedTaskId])}
                 </p>
                 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-900 mb-2">Requirements:</h4>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-2">{t('requirements')}:</h4>
                     <ul className="space-y-2">
-                      {taskReqs[selectedTaskId] && taskReqs[selectedTaskId].map((req, index) => (
+                      {taskReqKeys[selectedTaskId] && taskReqKeys[selectedTaskId].map((reqKey, index) => (
                         <li key={`req-${index}`} className="flex items-start text-sm text-gray-600">
                           <span className="inline-block w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 mr-2 flex-shrink-0" />
-                          {req}
+                          {t(reqKey)}
                         </li>
                       ))}
                     </ul>
                   </div>
                   
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <h4 className="text-sm font-semibold text-green-900 mb-1">Reward:</h4>
-                    <p className="text-sm text-green-700">{taskRewards[selectedTaskId]}</p>
+                    <h4 className="text-sm font-semibold text-green-900 mb-1">{t('reward')}:</h4>
+                    <p className="text-sm text-green-700">{t(taskRewardKeys[selectedTaskId])}</p>
                   </div>
                 </div>
               </div>
@@ -1081,14 +1297,14 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                       <Button
                         className="w-full h-10 text-sm font-semibold bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 active:scale-95 transition-all duration-200"
                       >
-                        Start Challenge
+                        {t('startChallenge')}
                       </Button>
                       <Button
                         variant="outline"
                         onClick={handleCloseTask}
                         className="w-full h-10 text-sm font-medium border-2 active:scale-95 transition-all duration-200"
                       >
-                        Close
+                        {t('close')}
                       </Button>
                     </>
                   ) : (
@@ -1098,16 +1314,230 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                         onClick={handleCloseTask}
                         className="flex-1 order-2 sm:order-1"
                       >
-                        Close
+                        {t('close')}
                       </Button>
                       <Button
                         className="flex-1 order-1 sm:order-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
                       >
-                        Start Challenge
+                        {t('startChallenge')}
                       </Button>
                     </>
                   )}
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Locked Theme Modal */}
+      <AnimatePresence>
+        {selectedLockedTheme && PROFILE_BACKGROUNDS[selectedLockedTheme] && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-3 sm:p-4"
+            onClick={handleCloseLockedTheme}
+            onTouchStart={(e) => {
+              if (e.target === e.currentTarget) {
+                e.preventDefault();
+              }
+            }}
+            style={{ touchAction: 'pan-y pinch-zoom' }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={cn(
+                "bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col",
+                isMobile 
+                  ? "w-[calc(100vw-1.5rem)] mx-auto"
+                  : "w-full max-w-sm sm:max-w-md"
+              )}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                touchAction: 'pan-y',
+                maxHeight: isMobile && viewportSize.height > 0
+                  ? `${Math.min(viewportSize.height * 0.85, viewportSize.height - 32)}px`
+                  : isMobile
+                  ? '85dvh'
+                  : 'min(85vh, calc(100vh - 2rem))',
+                maxWidth: isMobile && viewportSize.width > 0
+                  ? `${Math.min(viewportSize.width - 24, 400)}px`
+                  : undefined,
+              }}
+            >
+              {/* Header with Theme Preview */}
+              <div className="relative">
+                <div 
+                  className="h-32 sm:h-40 relative overflow-hidden"
+                  style={{
+                    background: PROFILE_BACKGROUNDS[selectedLockedTheme].gradient
+                  }}
+                >
+                  {/* Lock overlay - semi-transparent */}
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.1, 1],
+                        rotate: [0, -5, 5, 0]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <Lock className={cn(
+                        "text-white drop-shadow-lg",
+                        isMobile ? "h-12 w-12" : "h-16 w-16"
+                      )} />
+                    </motion.div>
+                  </div>
+                  
+                  {/* Theme animation overlays - show actual animations */}
+                  {PROFILE_BACKGROUNDS[selectedLockedTheme].animation === 'shimmer' && (
+                    <motion.div
+                      animate={{
+                        x: ['-100%', '200%']
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "linear",
+                        type: "tween"
+                      }}
+                      className="absolute inset-0 opacity-20"
+                      style={{
+                        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                        transform: 'skewX(-20deg)',
+                        willChange: 'transform',
+                      }}
+                    />
+                  )}
+                  {PROFILE_BACKGROUNDS[selectedLockedTheme].animation === 'aurora' && (
+                    <motion.div
+                      animate={{
+                        rotate: [0, 360]
+                      }}
+                      transition={{
+                        duration: 10,
+                        repeat: Infinity,
+                        ease: "linear",
+                        type: "tween"
+                      }}
+                      className="absolute inset-0 opacity-15"
+                      style={{
+                        background: 'radial-gradient(ellipse at 30% 50%, rgba(255,255,255,0.4) 0%, transparent 50%)',
+                        willChange: 'transform',
+                      }}
+                    />
+                  )}
+                  {PROFILE_BACKGROUNDS[selectedLockedTheme].animation === 'flow' && (
+                    <motion.div
+                      animate={{
+                        backgroundPosition: ['0% 0%', '100% 100%']
+                      }}
+                      transition={{
+                        duration: 5,
+                        repeat: Infinity,
+                        ease: "linear",
+                        repeatType: "reverse",
+                        type: "tween"
+                      }}
+                      className="absolute inset-0 opacity-20"
+                      style={{
+                        background: `linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%)`,
+                        backgroundSize: '200% 200%',
+                        willChange: 'background-position',
+                      }}
+                    />
+                  )}
+                  {PROFILE_BACKGROUNDS[selectedLockedTheme].animation === 'pulse' && (
+                    <motion.div
+                      animate={{
+                        opacity: [0.1, 0.2, 0.1]
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        type: "tween"
+                      }}
+                      className="absolute inset-0"
+                      style={{
+                        background: 'radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, transparent 70%)',
+                        willChange: 'opacity',
+                      }}
+                    />
+                  )}
+                </div>
+                <div className="absolute top-4 left-4 right-4 flex items-start justify-between z-10">
+                  <div className="flex-1">
+                    <h3 className="text-lg sm:text-xl font-bold text-white drop-shadow-lg mb-2">
+                      {getThemeName(selectedLockedTheme)}
+                    </h3>
+                    <Badge className="bg-orange-500 text-white border-orange-400 text-xs">
+                      {t('locked')}
+                    </Badge>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCloseLockedTheme}
+                    className="h-8 w-8 p-0 bg-white/20 hover:bg-white/30 text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div 
+                className="p-4 sm:p-6 overflow-y-auto flex-1"
+                style={{
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehavior: 'contain',
+                  touchAction: 'pan-y',
+                  maxHeight: isMobile && viewportSize.height > 0
+                    ? `${Math.max(150, Math.min(viewportSize.height * 0.85 - 200, viewportSize.height - 232))}px`
+                    : isMobile
+                    ? 'calc(85dvh - 200px)'
+                    : 'calc(85vh - 200px)',
+                  minHeight: isMobile ? '150px' : '200px',
+                }}
+              >
+                <p className="text-sm sm:text-base text-gray-600 mb-4 leading-relaxed">
+                  {getThemeDescription(selectedLockedTheme)}
+                </p>
+                
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2">{t('unlockRequirements')}:</h4>
+                  <ul className="space-y-2">
+                    {getThemeUnlockRequirements(selectedLockedTheme).map((req, index) => (
+                      <li key={`req-${index}`} className="flex items-start text-sm text-gray-600">
+                        <span className="inline-block w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 mr-2 flex-shrink-0" />
+                        <span>{req}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              
+              {/* Footer */}
+              <div className={cn(
+                "border-t border-gray-200 bg-gray-50",
+                isMobile ? "p-3" : "p-4 sm:p-6"
+              )}>
+                <Button 
+                  variant="outline"
+                  onClick={handleCloseLockedTheme}
+                  className="w-full h-10 text-sm font-medium border-2 active:scale-95 transition-all duration-200"
+                >
+                  {t('close')}
+                </Button>
               </div>
             </motion.div>
           </motion.div>

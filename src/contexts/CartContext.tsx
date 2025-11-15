@@ -1,18 +1,24 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { toast } from 'sonner';
 
 export interface CartItem {
   id: number;
-  name: string;
+  name: string; // Translated name (for backward compatibility)
   price: string;
   image: string;
   quantity: number;
+  description?: string; // Translated description (for backward compatibility)
+  // Translation keys for dynamic language switching
+  nameKey?: string;
+  descriptionKey?: string;
 }
 
 interface CartContextType {
   cart: CartItem[];
   cartCount: number;
-  addToCart: (product: { id: number; productName: string; price: string; image: string }) => void;
+  isCartOpen: boolean;
+  setIsCartOpen: (open: boolean) => void;
+  addToCart: (product: { id: number; productName: string; price: string; image: string; description?: string; nameKey?: string; descriptionKey?: string }) => void;
   removeFromCart: (productId: number) => void;
   updateQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
@@ -49,29 +55,49 @@ const saveCart = (cart: CartItem[]) => {
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>(loadCart);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  // Track processing state to prevent double-adds (especially in React StrictMode)
+  const processingRef = useRef<Set<number>>(new Set());
 
   // Calculate cart count
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   // Load cart on mount and listen for storage changes
   useEffect(() => {
+    let isUpdating = false;
+    
     const handleStorageChange = () => {
-      setCart(loadCart());
+      // Prevent infinite loops - only update if we're not currently updating
+      if (!isUpdating) {
+        isUpdating = true;
+        setCart(loadCart());
+        // Reset flag after a short delay
+        setTimeout(() => {
+          isUpdating = false;
+        }, 100);
+      }
     };
 
     // Listen for localStorage changes (from other tabs)
     window.addEventListener('storage', handleStorageChange);
-    // Listen for custom cart update events (from same tab)
-    window.addEventListener('cartUpdated', handleStorageChange);
+    // Listen for custom cart update events (from same tab) - but only for cross-tab sync
+    // We don't need to listen to our own cartUpdated events since we're already updating state
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('cartUpdated', handleStorageChange);
     };
   }, []);
 
   // Add item to cart
-  const addToCart = (product: { id: number; productName: string; price: string; image: string }) => {
+  const addToCart = (product: { id: number; productName: string; price: string; image: string; description?: string; nameKey?: string; descriptionKey?: string }) => {
+    // Prevent double-adds: check if this product is already being processed
+    if (processingRef.current.has(product.id)) {
+      return; // Already processing this product, ignore duplicate call
+    }
+    
+    // Mark product as processing
+    processingRef.current.add(product.id);
+    
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
       
@@ -87,15 +113,26 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           ...prevCart,
           {
             id: product.id,
-            name: product.productName,
+            name: product.productName, // Keep for backward compatibility
             price: product.price,
             image: product.image,
             quantity: 1,
+            description: product.description, // Keep for backward compatibility
+            // Store translation keys for dynamic language switching
+            nameKey: product.nameKey,
+            descriptionKey: product.descriptionKey,
           },
         ];
       }
       
       saveCart(newCart);
+      
+      // Remove from processing set after a short delay
+      setTimeout(() => {
+        processingRef.current.delete(product.id);
+      }, 500);
+      
+      // Don't auto-open cart - let user decide when to view it
       return newCart;
     });
   };
@@ -145,6 +182,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const value: CartContextType = {
     cart,
     cartCount,
+    isCartOpen,
+    setIsCartOpen,
     addToCart,
     removeFromCart,
     updateQuantity,

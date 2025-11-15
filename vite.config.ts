@@ -20,20 +20,47 @@ export default defineConfig(({ mode }) => ({
     host: '0.0.0.0', // Allow access from network (mobile devices)
     port: 5173,
     strictPort: false,
+    // Prevent server from shutting down on errors
+    watch: {
+      // Use polling on Windows for better stability
+      usePolling: process.platform === 'win32',
+      interval: 1000, // Polling interval in ms (only used when usePolling is true)
+      // Ignore more patterns to reduce file watching overhead
+      ignored: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/dist/**',
+        '**/build/**',
+        '**/.mgx/**',
+        '**/.vite/**',
+        '**/coverage/**',
+        '**/.next/**',
+        '**/.nuxt/**',
+        '**/.cache/**',
+        '**/public/images/**', // Ignore image files to reduce watch overhead
+        '**/*.log',
+        '**/.DS_Store',
+        '**/Thumbs.db',
+        '**/desktop.ini',
+      ],
+      // Follow symlinks (can cause issues, so disable if not needed)
+      followSymlinks: false,
+    },
     // Optimize server performance
     hmr: {
       overlay: false, // Disable error overlay for faster HMR
       clientPort: 5173, // Explicit port for HMR
-    },
-    // Optimize file watching
-    watch: {
-      usePolling: false, // Use native file system events (faster)
-      ignored: ['**/node_modules/**', '**/.git/**', '**/dist/**'],
+      // Add protocol for better HMR stability
+      protocol: 'ws',
     },
     // Reduce latency
     fs: {
       strict: false, // Allow serving files outside root for faster dev
+      // Allow serving files from workspace root
+      allow: ['..'],
     },
+    // Prevent crashes on unhandled errors
+    middlewareMode: false,
   },
   // Optimize build performance
   build: {

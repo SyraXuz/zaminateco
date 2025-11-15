@@ -11,6 +11,7 @@ interface EnhancedAvatarProps {
   showCrown?: boolean;
   className?: string;
   profileFrame?: string; // Add profile frame support
+  noBackground?: boolean; // Remove circular background
 }
 
 const sizeClasses = {
@@ -48,7 +49,8 @@ export const EnhancedAvatar: React.FC<EnhancedAvatarProps> = ({
   glowColor = 'none',
   showCrown = false,
   className,
-  profileFrame = 'default'
+  profileFrame = 'default',
+  noBackground = false
 }) => {
   const frameGradient = frameGradients[profileFrame as keyof typeof frameGradients] || frameGradients.default;
   
@@ -77,9 +79,11 @@ export const EnhancedAvatar: React.FC<EnhancedAvatarProps> = ({
       {/* Avatar Container */}
       <motion.div
         className={cn(
-          'relative flex items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-white shadow-lg transition-all duration-300',
+          'relative flex items-center justify-center transition-all duration-300',
+          !noBackground && 'rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-white shadow-lg',
+          noBackground && 'rounded-none bg-transparent border-0 shadow-none',
           sizeClasses[size],
-          glowColor !== 'none' && `shadow-lg ${glowColors[glowColor]}`,
+          glowColor !== 'none' && !noBackground && `shadow-lg ${glowColors[glowColor]}`,
           className
         )}
         whileHover={{ 
@@ -113,9 +117,9 @@ export const EnhancedAvatar: React.FC<EnhancedAvatarProps> = ({
         
         {/* Avatar Image or Emoji */}
         {image ? (
-          <img src={image} alt="" className="relative z-10 w-full h-full object-contain rounded-full" loading="lazy" />
+          <img src={image} alt="User avatar" className={cn("relative z-10 w-full h-full object-contain", !noBackground && "rounded-full")} loading="lazy" />
         ) : emoji ? (
-        <span className="relative z-10 select-none">{emoji}</span>
+        <span className="relative z-10 select-none text-2xl sm:text-3xl">{emoji}</span>
         ) : null}
         
         {/* Crown for special users */}

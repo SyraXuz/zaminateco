@@ -224,7 +224,7 @@ export default function EcoStories() {
                   <div className="flex items-start space-x-2 sm:space-x-3">
                     <img 
                       src={story.iconPath || story.image || story.emoji} 
-                      alt="" 
+                      alt={story.title || 'Story image'} 
                       className="w-8 h-8 sm:w-10 sm:h-10 object-contain" 
                       loading="lazy"
                       onError={(e) => {

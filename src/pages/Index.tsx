@@ -1,4 +1,4 @@
-import { Bell, Leaf, Award, Users, ArrowRight, Settings, Coins, Star, Trophy, Crown, MapPin, School, Eye, EyeOff, ExternalLink, UserCheck, Phone, Mail } from 'lucide-react';
+import { Bell, Leaf, Award, Users, ArrowRight, Settings, Coins, Star, Trophy, Crown, MapPin, School, Eye, EyeOff, ExternalLink, UserCheck, Phone, Mail, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
@@ -16,13 +16,26 @@ import { getNewsItems } from '@/lib/newsData';
 import { USER_DATA, calculateLevel, calculateLevelProgress } from '@/lib/userData';
 import { UzbekPattern } from '@/components/EcoIcons';
 import { useTranslation } from 'react-i18next';
-import { loadUserProgress, PROFILE_BACKGROUNDS, UserProgress } from '@/lib/userProgress';
+import { loadUserProgress, PROFILE_BACKGROUNDS, UserProgress, calculateLevelProgress as calcLevelProgress } from '@/lib/userProgress';
 import { getAvatarImage } from '@/lib/avatarImages';
 import { EnhancedAvatar } from '@/components/ui/enhanced-avatar';
 import { useEffect, useMemo, lazy, Suspense } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SplineRobot } from '@/components/SplineRobot';
+import { cn } from '@/lib/utils';
 import '../styles/mobile-responsive.css';
+
+// Progress animation variants
+const progressVariants = {
+  initial: { width: 0 },
+  animate: (progress: number) => ({
+    width: `${progress}%`,
+    transition: {
+      duration: 1.5,
+      ease: "easeOut"
+    }
+  })
+};
 
 export default function Index() {
   const { t } = useTranslation();
@@ -70,7 +83,7 @@ export default function Index() {
       : 'linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #2563eb 100%)';
     
     const level = calculateLevel(ecoPoints);
-    const { progress, pointsToNext } = calculateLevelProgress(ecoPoints);
+    const { progress, pointsToNext } = calcLevelProgress(ecoPoints, level);
     
     return {
       ecoCoins,
@@ -509,6 +522,7 @@ export default function Index() {
                       glowColor="green"
                       showCrown={true}
                       profileFrame={userProgress?.profileFrame}
+                      noBackground={true}
                     />
                   </div>
                   <div className="flex-1">
@@ -595,45 +609,260 @@ export default function Index() {
                 </motion.div>
               </div>
 
-              {/* Level Progress - Mobile Optimized */}
-              <motion.div 
-                className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-3 sm:p-4 text-white level-card-mobile"
-                whileHover={{ scale: 1.01 }}
-              >
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <div className="flex items-center">
-                    <motion.div 
-                      className="bg-white/20 rounded-full p-1 sm:p-2 mr-2 sm:mr-3"
-                      whileHover={{ rotate: 360 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <Trophy className="h-3 w-3 sm:h-5 sm:w-5" />
-                    </motion.div>
-                    <div>
-                      <p className="text-xs sm:text-sm opacity-90 level-title-mobile">{t('levelFifteen')} {currentLevel}</p>
-                      <p className="font-semibold text-xs sm:text-base level-name-mobile">{t('sustainabilityExpert')}</p>
+              {/* Level Progress - Connected to Profile Page */}
+              <Link to="/profile" className="block">
+                <motion.div 
+                  className={cn(
+                    "bg-white/10 backdrop-blur-md rounded-xl text-white border border-white/20 shadow-lg cursor-pointer",
+                    isMobile ? "p-3" : "p-4"
+                  )}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className={cn(
+                    "flex flex-col sm:flex-row sm:items-center sm:justify-between",
+                    isMobile ? "mb-3" : "mb-4"
+                  )}>
+                    <div className={cn("flex items-center", isMobile ? "mb-2" : "mb-3 sm:mb-0")}>
+                      <motion.div 
+                        className={cn("flex items-center justify-center", isMobile ? "mr-2" : "mr-3")}
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.6 }}
+                      >
+                        <Trophy className={cn(
+                          "text-yellow-300",
+                          isMobile ? "h-5 w-5" : "h-6 w-6"
+                        )} />
+                      </motion.div>
+                      <div className="min-w-0 flex-1">
+                        <p className={cn(
+                          "opacity-90 font-medium",
+                          isMobile ? "text-xs" : "text-sm"
+                        )}>
+                          {t('levelFifteen')} {currentLevel}
+                        </p>
+                        <p className={cn(
+                          "font-bold bg-gradient-to-r from-white to-yellow-200 bg-clip-text text-transparent",
+                          isMobile ? "text-sm" : "text-base"
+                        )}>
+                          {t('sustainabilityExpert')}
+                        </p>
+                      </div>
                     </div>
+                    <Badge className={cn(
+                      "bg-gradient-to-r from-white/20 to-white/10 text-white border-white/30 backdrop-blur-sm shadow-lg",
+                      isMobile ? "text-[10px] px-2 py-1" : "text-xs px-3 py-1.5"
+                    )}>
+                      <Sparkles className={cn(isMobile ? "h-2 w-2 mr-0.5" : "h-3 w-3 mr-1")} />
+                      {displayEcoPoints.toLocaleString()} {t('pts', { ns: 'profile' })}
+                    </Badge>
                   </div>
-                  <Badge className="bg-white/20 text-white border-white/30 text-xs level-badge-mobile">
-                    {displayEcoPoints.toLocaleString()} pts
-                  </Badge>
-                </div>
-                <div className="space-y-1 sm:space-y-2">
-                  <div className="flex justify-between text-xs sm:text-sm opacity-90">
-                    <span>Progress to Level {currentLevel + 1}</span>
-                    <span>{Math.round(levelProgress)}%</span>
+                  
+                  <div className={cn(isMobile ? "space-y-2" : "space-y-3")}>
+                    <div className={cn(
+                      "flex justify-between opacity-90 font-medium",
+                      isMobile ? "text-[10px]" : "text-xs"
+                    )}>
+                      <span className="truncate mr-1">Progress to Level {currentLevel + 1}</span>
+                      <span className="flex-shrink-0">{Math.round(levelProgress)}%</span>
+                    </div>
+                    
+                    {/* Elegant Liquid Wave Progress Bar - Same as Profile Page */}
+                    <div className="relative">
+                      {/* Glassmorphism Track Background */}
+                      <div className={cn(
+                        "relative rounded-full overflow-hidden",
+                        "bg-white/5 backdrop-blur-sm border border-white/10",
+                        isMobile ? "h-3" : "h-4"
+                      )}
+                      style={{
+                        boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.1), 0 1px 3px rgba(0,0,0,0.1)',
+                      }}
+                      >
+                        {/* Progress Fill with Liquid Wave Effect */}
+                        <motion.div
+                          className="relative h-full rounded-full overflow-hidden"
+                          variants={progressVariants}
+                          initial="initial"
+                          animate="animate"
+                          custom={levelProgress}
+                          style={{
+                            background: `linear-gradient(90deg, 
+                              #facc15 0%,
+                              #fb923c ${levelProgress * 0.5}%,
+                              #f87171 ${levelProgress}%
+                            )`,
+                            filter: `drop-shadow(0 0 ${2 + (levelProgress / 100) * 4}px rgba(251, 146, 60, 0.6))`,
+                          }}
+                        >
+                          {/* Animated Liquid Wave Layer 1 */}
+                          <motion.div
+                            className="absolute inset-0"
+                            style={{
+                              background: `linear-gradient(90deg, 
+                                transparent 0%,
+                                rgba(255, 255, 255, 0.3) 30%,
+                                rgba(255, 255, 255, 0.5) 50%,
+                                rgba(255, 255, 255, 0.3) 70%,
+                                transparent 100%
+                              )`,
+                              clipPath: `polygon(0% 0%, ${levelProgress}% 0%, ${levelProgress}% 100%, 0% 100%)`,
+                            }}
+                            animate={{
+                              x: ['-100%', '100%'],
+                            }}
+                            transition={{
+                              duration: 3,
+                              repeat: Infinity,
+                              ease: "linear",
+                              repeatDelay: 0
+                            }}
+                          />
+                          
+                          {/* Animated Liquid Wave Layer 2 - slower */}
+                          <motion.div
+                            className="absolute inset-0"
+                            style={{
+                              background: `linear-gradient(90deg, 
+                                transparent 0%,
+                                rgba(255, 255, 255, 0.2) 40%,
+                                rgba(255, 255, 255, 0.4) 60%,
+                                rgba(255, 255, 255, 0.2) 80%,
+                                transparent 100%
+                              )`,
+                              clipPath: `polygon(0% 0%, ${levelProgress}% 0%, ${levelProgress}% 100%, 0% 100%)`,
+                            }}
+                            animate={{
+                              x: ['-100%', '100%'],
+                            }}
+                            transition={{
+                              duration: 4,
+                              repeat: Infinity,
+                              ease: "linear",
+                              repeatDelay: 0.5
+                            }}
+                          />
+                          
+                          {/* Shimmer Effect at Progress Edge */}
+                          <motion.div
+                            className="absolute top-0 bottom-0 right-0"
+                            style={{
+                              width: '20px',
+                              background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent)',
+                              filter: 'blur(4px)',
+                              left: `${levelProgress}%`,
+                              transform: 'translateX(-50%)',
+                            }}
+                            animate={{
+                              opacity: [0.3, 0.8, 0.3],
+                              scaleX: [0.8, 1.2, 0.8],
+                            }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                          />
+                        </motion.div>
+                      </div>
+                      
+                      {/* Floating Progress Indicator */}
+                      <motion.div
+                        className="absolute top-1/2 -translate-y-1/2"
+                        style={{ 
+                          left: `${levelProgress}%`,
+                          transform: 'translate(-50%, -50%)',
+                        }}
+                        initial={{ left: 0 }}
+                        animate={{ 
+                          left: `${levelProgress}%`,
+                        }}
+                        transition={{ 
+                          left: { duration: 1.5, ease: "easeOut" },
+                        }}
+                      >
+                        {/* Outer Glow Halo */}
+                        <motion.div
+                          className="absolute inset-0 rounded-full"
+                          style={{
+                            width: isMobile ? '14px' : '18px',
+                            height: isMobile ? '14px' : '18px',
+                            background: 'radial-gradient(circle, rgba(250, 204, 21, 0.4), transparent 70%)',
+                            transform: 'translate(-50%, -50%)',
+                          }}
+                          animate={{
+                            scale: [1, 1.4, 1],
+                            opacity: [0.5, 0.8, 0.5],
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        />
+                        
+                        {/* Main Indicator */}
+                        <motion.div
+                          className="absolute inset-0 rounded-full"
+                          style={{
+                            width: isMobile ? '10px' : '12px',
+                            height: isMobile ? '10px' : '12px',
+                            background: 'radial-gradient(circle, #facc15, #fb923c)',
+                            transform: 'translate(-50%, -50%)',
+                            boxShadow: `
+                              0 0 ${4 + (levelProgress / 100) * 6}px rgba(250, 204, 21, 0.8),
+                              0 0 ${2 + (levelProgress / 100) * 4}px rgba(251, 146, 60, 0.6),
+                              inset 0 1px 2px rgba(255, 255, 255, 0.4)
+                            `,
+                            border: '1.5px solid rgba(255, 255, 255, 0.5)',
+                          }}
+                          animate={{
+                            y: [0, -2, 0],
+                            scale: [1, 1.1, 1],
+                          }}
+                          transition={{
+                            duration: 2.5,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        />
+                        
+                        {/* Inner Highlight */}
+                        <motion.div
+                          className="absolute inset-0 rounded-full"
+                          style={{
+                            width: isMobile ? '4px' : '5px',
+                            height: isMobile ? '4px' : '5px',
+                            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.9), transparent)',
+                            transform: 'translate(-50%, -50%)',
+                            top: '30%',
+                          }}
+                          animate={{
+                            opacity: [0.6, 1, 0.6],
+                          }}
+                          transition={{
+                            duration: 1.5,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        />
+                      </motion.div>
+                    </div>
+                    
+                    <motion.p 
+                      className={cn(
+                        "opacity-80 font-medium",
+                        isMobile ? "text-[10px]" : "text-xs"
+                      )}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1 }}
+                    >
+                      <span className="text-yellow-200">{pointsToNext}</span> points to next level
+                    </motion.p>
                   </div>
-                  <div className="relative w-full overflow-hidden rounded-full h-1.5 sm:h-2 bg-white/20">
-                    <motion.div
-                      className="h-full bg-white rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${levelProgress}%` }}
-                      transition={{ duration: 1.5, delay: 0.8 }}
-                    />
-                  </div>
-                  <p className="text-xs opacity-75">{pointsToNext} points to next level</p>
-                </div>
-              </motion.div>
+                </motion.div>
+              </Link>
             </div>
           </motion.section>
 

@@ -563,6 +563,7 @@ export const AvatarSelector: React.FC<AvatarSelectorProps> = ({
                         size="lg"
                         glowColor={avatar.glowColor}
                         className={!avatar.unlocked ? "grayscale" : ""}
+                        noBackground={true}
                       />
                     </motion.div>
 
@@ -681,6 +682,7 @@ export const AvatarSelector: React.FC<AvatarSelectorProps> = ({
                         size="md"
                         glowColor={showTaskModal.glowColor}
                         className="grayscale"
+                        noBackground={true}
                       />
                       <div>
                         <h4 className="font-semibold">{showTaskModal.name}</h4>

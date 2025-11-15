@@ -3,7 +3,6 @@ import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 
 interface Props {
   children: ReactNode;
@@ -75,8 +74,13 @@ interface ErrorFallbackProps {
   onReset: () => void;
 }
 
+// Simple error fallback (used outside BrowserRouter)
 const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, onReset }) => {
   const { t } = useTranslation('common');
+
+  const handleGoHome = () => {
+    window.location.href = '/';
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-red-50 to-orange-50">
@@ -115,15 +119,14 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, onReset }) => {
               <RefreshCw className="h-4 w-4 mr-2" />
               {t('tryAgain', { defaultValue: 'Try Again' })}
             </Button>
-            <Link to="/" className="flex-1">
-              <Button
-                variant="outline"
-                className="w-full"
-              >
-                <Home className="h-4 w-4 mr-2" />
-                {t('goHome', { defaultValue: 'Go Home' })}
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              className="w-full flex-1"
+              onClick={handleGoHome}
+            >
+              <Home className="h-4 w-4 mr-2" />
+              {t('goHome', { defaultValue: 'Go Home' })}
+            </Button>
           </div>
         </CardContent>
       </Card>

@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { GeoService } from '../geo/geo.service';
 
 @Injectable()
 export class LocationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private geoService: GeoService,
+  ) {}
 
   async findAll(filters?: { type?: string; eventType?: string; district?: string }) {
     return this.prisma.actionLocation.findMany({
@@ -32,18 +36,23 @@ export class LocationsService {
   }
 
   async findByCoordinates(lat: number, lng: number, radius: number = 5) {
-    // Simple radius search (for production, use PostGIS for accurate distance)
+    // Use GeoService for accurate distance calculation
+    const nearestPoints = await this.geoService.findNearestCollectionPoints(
+      lat,
+      lng,
+      radius,
+      50,
+    );
+
+    // Get full location details
+    const locationIds = nearestPoints.map((p) => p.id);
     return this.prisma.actionLocation.findMany({
       where: {
+        id: { in: locationIds },
         isActive: true,
-        latitude: {
-          gte: lat - radius / 111, // Approximate km to degrees
-          lte: lat + radius / 111,
-        },
-        longitude: {
-          gte: lng - radius / 111,
-          lte: lng + radius / 111,
-        },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
   }
