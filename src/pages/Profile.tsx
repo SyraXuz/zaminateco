@@ -13,8 +13,6 @@ import {
   Crown,
   MapPin,
   School,
-  Eye,
-  EyeOff,
   Gift,
   ShoppingBag,
   TrendingUp,
@@ -180,7 +178,6 @@ const Profile: React.FC = () => {
   // Load user progress from localStorage or use default
   const [userProgress, setUserProgress] = useState<UserProgress>(() => loadUserProgress());
   const [activeTab, setActiveTab] = useState('wallet');
-  const [coinsVisible, setCoinsVisible] = useState(true);
   const [levelExpanded, setLevelExpanded] = useState(false);
   const [isAvatarSelectorOpen, setIsAvatarSelectorOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -862,9 +859,32 @@ const Profile: React.FC = () => {
                   <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-black/10" />
                 </div>
                 
-                <CardContent className={cn("relative z-10", isMobile ? "p-3" : "p-4 sm:p-6 lg:p-8")}>
-                  <div className={cn("flex flex-col sm:flex-row sm:items-start sm:justify-between", isMobile ? "mb-3" : "mb-4 sm:mb-6")}>
-                    <div className={cn("flex items-center mb-4 sm:mb-0", isMobile ? "space-x-2" : "space-x-3 sm:space-x-4")}>
+                <CardContent className={cn("relative z-10", isMobile ? "p-2" : "p-4 sm:p-6 lg:p-8")}>
+                  {/* Settings Button - Absolute positioned in top right corner */}
+                  <motion.div
+                    className={cn(
+                      "absolute top-0 right-0 z-20",
+                      isMobile ? "top-2 right-2" : "top-4 right-4 sm:top-6 sm:right-6"
+                    )}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className={cn(
+                        "text-white hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-300",
+                        isMobile ? "h-7 w-7 p-0 min-h-[28px] min-w-[28px]" : "h-8 w-8"
+                      )}
+                      onClick={() => setIsSettingsOpen(true)}
+                      style={{ touchAction: 'manipulation' }}
+                    >
+                      <Settings className={cn(isMobile ? "h-3.5 w-3.5" : "h-4 w-4")} />
+                    </Button>
+                  </motion.div>
+
+                  <div className={cn("flex flex-col sm:flex-row sm:items-start sm:justify-between", isMobile ? "mb-2" : "mb-4 sm:mb-6")}>
+                    <div className={cn("flex items-center sm:mb-0", isMobile ? "space-x-2 mb-1.5" : "space-x-3 sm:space-x-4 mb-4")}>
                       <div className="relative group">
                         <div 
                           className="relative z-10 cursor-pointer"
@@ -889,7 +909,7 @@ const Profile: React.FC = () => {
                           <EnhancedAvatar
                             emoji={userProgress.activeAvatar}
                             image={getAvatarImage(userProgress.activeAvatar)}
-                            size="xl"
+                            size={isMobile ? "xl" : "2xl"}
                             glowColor="green"
                             showCrown={true}
                             profileFrame={userProgress.profileFrame}
@@ -928,14 +948,14 @@ const Profile: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <h2 className={cn(
                           "font-bold bg-gradient-to-r from-white to-yellow-200 bg-clip-text text-transparent",
-                          isMobile ? "text-base" : "text-lg sm:text-xl lg:text-2xl"
+                          isMobile ? "text-sm leading-tight" : "text-lg sm:text-xl lg:text-2xl"
                         )}>
                           {userProgress.name}
                         </h2>
-                        <div className="flex items-center space-x-1 mt-1">
+                        <div className="flex items-center space-x-1 mt-0.5">
                           <p className={cn(
                             "text-white/90 font-medium",
-                            isMobile ? "text-xs" : "text-sm sm:text-base"
+                            isMobile ? "text-[10px]" : "text-sm sm:text-base"
                           )}>
                             {t('climateHero')}
                           </p>
@@ -943,13 +963,13 @@ const Profile: React.FC = () => {
                             animate={{ rotate: [0, 10, -10, 0] }}
                             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                           >
-                            <Flame className={cn("text-orange-300", isMobile ? "h-3 w-3" : "h-4 w-4")} />
+                            <Flame className={cn("text-orange-300", isMobile ? "h-2.5 w-2.5" : "h-4 w-4")} />
                           </motion.div>
                         </div>
                         
                         <div className={cn(
-                          "flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-white/80 space-y-1 sm:space-y-0",
-                          isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                          "flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-white/80 sm:space-y-0",
+                          isMobile ? "mt-0.5 space-y-0 text-[9px]" : "mt-2 space-y-1 text-xs sm:text-sm"
                         )}>
                           <div className="flex items-center space-x-1">
                             <MapPin className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />
@@ -962,300 +982,222 @@ const Profile: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className={cn(
-                  "text-white hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-300",
-                  isMobile ? "h-8 w-8 p-0 min-h-[32px] min-w-[32px]" : ""
-                )}
-                onClick={() => setIsSettingsOpen(true)}
-                style={{ touchAction: 'manipulation' }}
-              >
-                <Settings className={cn(isMobile ? "h-3.5 w-3.5" : "h-4 w-4")} />
-              </Button>
-                    </motion.div>
                   </div>
 
                   {/* Enhanced Stats Grid */}
                   <div className={cn(
-                    "grid gap-2 mb-3 sm:mb-4 sm:mb-6",
-                    isMobile ? "grid-cols-2 gap-2" : "grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+                    "grid sm:mb-4 sm:mb-6",
+                    isMobile ? "grid-cols-2 gap-1.5 mb-2" : "grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-3"
                   )}>
-                    {/* EcoCoins Card - Enhanced */}
+                    {/* EcoCoins Card - Golden Theme */}
                     <motion.div 
                       className={cn(
-                        "bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-md rounded-xl border border-white/20 shadow-lg",
+                        "relative overflow-hidden rounded-xl border shadow-lg backdrop-blur-md",
+                        "bg-gradient-to-br from-yellow-500/30 via-yellow-400/25 to-amber-500/20",
+                        "border-yellow-400/50",
                         isMobile ? "p-2" : "p-3 sm:p-4"
                       )}
-                      whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                      whileHover={isMobile ? {} : { scale: 1.03, y: -2 }}
+                      transition={{ type: "spring", stiffness: 300 }}
                     >
-                      <div className={cn("flex items-center justify-between", isMobile ? "mb-1.5" : "mb-2")}>
-                        <div className={cn("flex items-center", isMobile ? "space-x-1.5" : "space-x-2")}>
-                          <div className={cn(
-                            "flex items-center justify-center relative",
-                            isMobile ? "h-5 w-5" : "h-6 w-6 sm:h-8 sm:w-8"
-                          )}>
-                            <img 
-                              src="/images/eco coins.png" 
-                              alt="Eco Coins" 
-                              className={cn(
-                                "object-contain w-full h-full",
-                                "[mix-blend-mode:multiply]"
-                              )}
-                              style={{ 
-                                filter: 'contrast(1.2) brightness(1.1)',
-                                WebkitFilter: 'contrast(1.2) brightness(1.1)'
-                              }}
-                              loading="lazy"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <span className={cn(
-                              "font-semibold block truncate",
-                              isMobile ? "text-[10px]" : "text-xs sm:text-sm"
-                            )}>
-                              {t('ecoCoins')}
-                            </span>
-                            <div className={cn(
-                              "flex items-center text-white/70",
-                              isMobile ? "space-x-0.5 text-[9px]" : "space-x-1 text-xs"
-                            )}>
-                              <Sparkles className={cn(isMobile ? "h-1.5 w-1.5" : "h-2 w-2")} />
-                              <span className={cn(isMobile ? "text-[9px]" : "text-xs")}>{t('active')}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <motion.div
-                          whileHover={isMobile ? {} : { scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                      {/* Decorative glow effect */}
+                      <div className="absolute top-0 right-0 w-20 h-20 bg-yellow-400/20 rounded-full blur-2xl -mr-10 -mt-10" />
+                      
+                      <div className="relative z-10">
+                        {/* Icon - Large and Prominent */}
+                        <div className={cn("flex items-center justify-center mb-2", isMobile ? "mb-1.5" : "")}>
+                          <img 
+                            src="/images/eco coins.png" 
+                            alt="Eco Coins" 
                             className={cn(
-                              "text-white/80 hover:bg-white/20 rounded-full transition-all duration-300 p-0",
-                              isMobile ? "h-5 w-5" : "h-6 w-6"
+                              "object-contain drop-shadow-lg",
+                              isMobile ? "h-8 w-8" : "h-10 w-10 sm:h-12 sm:w-12"
                             )}
-                            onClick={() => setCoinsVisible(!coinsVisible)}
-                            style={{ touchAction: 'manipulation' }}
-                          >
-                            {coinsVisible ? <Eye className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} /> : <EyeOff className={cn(isMobile ? "h-2.5 w-2.5" : "h-3 w-3")} />}
-                          </Button>
-                        </motion.div>
+                            style={{ 
+                              filter: 'brightness(1.2) drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                            }}
+                            loading="lazy"
+                          />
+                        </div>
+                        
+                        {/* Label */}
+                        <div className={cn("text-center mb-1", isMobile ? "mb-0.5" : "")}>
+                          <span className={cn(
+                            "font-semibold text-white/95 drop-shadow-sm",
+                            isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                          )}>
+                            {t('ecoCoins')}
+                          </span>
+                        </div>
+                        
+                        {/* Value - Bold and Prominent */}
+                        <div className={cn(
+                          "text-center font-bold",
+                          "bg-gradient-to-r from-yellow-200 via-yellow-300 to-amber-300 bg-clip-text text-transparent",
+                          "drop-shadow-lg",
+                          isMobile ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
+                        )}>
+                          {userProgress.ecoCoins}
+                        </div>
                       </div>
-                      <AnimatePresence mode="wait" initial={false}>
-                        <motion.div 
-                          key={coinsVisible ? 'visible' : 'hidden'}
-                          initial={{ opacity: 0, y: -4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 4 }}
-                          transition={{ 
-                            duration: 0.15,
-                            type: "tween",
-                            ease: "easeOut"
-                          }}
-                          style={{ willChange: 'transform, opacity' }}
-                          className={cn(
-                            "font-bold bg-gradient-to-r from-yellow-200 to-yellow-400 bg-clip-text text-transparent",
-                            isMobile ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
-                          )}
-                        >
-                          {coinsVisible ? userProgress.ecoCoins : '***'}
-                        </motion.div>
-                      </AnimatePresence>
-                      <motion.div 
-                        className={cn(
-                          "bg-white/20 rounded-full overflow-hidden",
-                          isMobile ? "mt-0.5 h-0.5" : "mt-1 h-1"
-                        )}
-                        initial={{ width: 0 }}
-                        animate={{ width: "100%" }}
-                        transition={{ duration: 1, delay: 0.5 }}
-                      >
-                        <motion.div 
-                          className="h-full bg-gradient-to-r from-yellow-400 to-orange-400"
-                          initial={{ width: 0 }}
-                          animate={{ width: "75%" }}
-                          transition={{ duration: 1.5, delay: 0.8 }}
-                        />
-                      </motion.div>
                     </motion.div>
 
-                    {/* EcoPoints Card */}
+                    {/* EcoPoints Card - Blue/Cyan Theme */}
                     <motion.div 
                       className={cn(
-                        "bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-md rounded-xl border border-white/20 shadow-lg",
+                        "relative overflow-hidden rounded-xl border shadow-lg backdrop-blur-md",
+                        "bg-gradient-to-br from-blue-500/30 via-cyan-400/25 to-blue-600/20",
+                        "border-blue-400/50",
                         isMobile ? "p-2" : "p-3 sm:p-4"
                       )}
-                      whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}
+                      whileHover={isMobile ? {} : { scale: 1.03, y: -2 }}
+                      transition={{ type: "spring", stiffness: 300 }}
                     >
-                      <div className={cn("flex items-center", isMobile ? "space-x-1.5 mb-1.5" : "space-x-2 mb-2")}>
-                        <div className={cn(
-                          "flex items-center justify-center relative",
-                          isMobile ? "h-5 w-5" : "h-6 w-6 sm:h-8 sm:w-8"
-                        )}>
+                      {/* Decorative glow effect */}
+                      <div className="absolute top-0 right-0 w-20 h-20 bg-cyan-400/20 rounded-full blur-2xl -mr-10 -mt-10" />
+                      
+                      <div className="relative z-10">
+                        {/* Icon - Large and Prominent */}
+                        <div className={cn("flex items-center justify-center mb-2", isMobile ? "mb-1.5" : "")}>
                           <img 
                             src="/images/eco-points.png" 
                             alt="Eco Points" 
                             className={cn(
-                              "object-contain w-full h-full",
-                              "[mix-blend-mode:multiply]"
+                              "object-contain drop-shadow-lg",
+                              isMobile ? "h-8 w-8" : "h-10 w-10 sm:h-12 sm:w-12"
                             )}
                             style={{ 
-                              filter: 'contrast(1.2) brightness(1.1)',
-                              WebkitFilter: 'contrast(1.2) brightness(1.1)'
+                              filter: 'brightness(1.2) drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
                             }}
                             loading="lazy"
                           />
                         </div>
-                        <div className="min-w-0 flex-1">
+                        
+                        {/* Label */}
+                        <div className={cn("text-center mb-1", isMobile ? "mb-0.5" : "")}>
                           <span className={cn(
-                            "font-semibold block truncate",
+                            "font-semibold text-white/95 drop-shadow-sm",
                             isMobile ? "text-[10px]" : "text-xs sm:text-sm"
                           )}>
                             {t('ecoPoints')}
                           </span>
-                          <div className={cn(
-                            "flex items-center text-white/70",
-                            isMobile ? "space-x-0.5 text-[9px]" : "space-x-1 text-xs"
-                          )}>
-                            <TrendingUp className={cn(isMobile ? "h-1.5 w-1.5" : "h-2 w-2")} />
-                            <span className={cn(isMobile ? "text-[9px]" : "text-xs")}>{t('growing', { ns: 'profile' })}</span>
-                          </div>
                         </div>
-                      </div>
-                      <div className={cn(
-                        "font-bold bg-gradient-to-r from-blue-200 to-cyan-300 bg-clip-text text-transparent",
-                        isMobile ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
-                      )}>
-                        {userProgress.ecoPoints.toLocaleString()}
-                      </div>
-                      <div className={cn(
-                        "bg-white/20 rounded-full overflow-hidden",
-                        isMobile ? "mt-0.5 h-0.5" : "mt-1 h-1"
-                      )}>
-                        <div className="h-full bg-gradient-to-r from-blue-400 to-cyan-400 w-full" />
+                        
+                        {/* Value - Bold and Prominent */}
+                        <div className={cn(
+                          "text-center font-bold",
+                          "bg-gradient-to-r from-blue-200 via-cyan-300 to-blue-400 bg-clip-text text-transparent",
+                          "drop-shadow-lg",
+                          isMobile ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
+                        )}>
+                          {userProgress.ecoPoints.toLocaleString()}
+                        </div>
                       </div>
                     </motion.div>
 
-                    {/* Waste Collected Card */}
+                    {/* Waste Collected Card - Green/Emerald Theme */}
                     <motion.div
                       className={cn(
-                        "bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-md rounded-xl border border-white/20 shadow-lg",
-                        isMobile ? "p-2 col-span-1" : "p-3 sm:p-4 col-span-2 lg:col-span-1"
+                        "relative overflow-hidden rounded-xl border shadow-lg backdrop-blur-md col-span-1",
+                        "bg-gradient-to-br from-green-500/30 via-emerald-400/25 to-green-600/20",
+                        "border-green-400/50",
+                        isMobile ? "p-2" : "p-3 sm:p-4"
                       )}
-                      whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}
+                      whileHover={isMobile ? {} : { scale: 1.03, y: -2 }}
+                      transition={{ type: "spring", stiffness: 300 }}
                     >
-                      <div className={cn("flex items-center", isMobile ? "space-x-1.5 mb-1.5" : "space-x-2 mb-2")}>
-                        <div className={cn(
-                          "flex items-center justify-center relative",
-                          isMobile ? "h-5 w-5" : "h-6 w-6 sm:h-8 sm:w-8"
-                        )}>
+                      {/* Decorative glow effect */}
+                      <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-400/20 rounded-full blur-2xl -mr-10 -mt-10" />
+                      
+                      <div className="relative z-10">
+                        {/* Icon - Large and Prominent */}
+                        <div className={cn("flex items-center justify-center mb-2", isMobile ? "mb-1.5" : "")}>
                           <img 
                             src="/images/Waste Collected.png" 
                             alt="Waste Collected" 
                             className={cn(
-                              "object-contain w-full h-full",
-                              "[mix-blend-mode:multiply]"
+                              "object-contain drop-shadow-lg",
+                              isMobile ? "h-8 w-8" : "h-10 w-10 sm:h-12 sm:w-12"
                             )}
                             style={{ 
-                              filter: 'contrast(1.2) brightness(1.1)',
-                              WebkitFilter: 'contrast(1.2) brightness(1.1)'
+                              filter: 'brightness(1.2) drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
                             }}
                             loading="lazy"
                           />
                         </div>
-                        <div className="min-w-0 flex-1">
+                        
+                        {/* Label */}
+                        <div className={cn("text-center mb-1", isMobile ? "mb-0.5" : "")}>
                           <span className={cn(
-                            "font-semibold block truncate",
+                            "font-semibold text-white/95 drop-shadow-sm",
                             isMobile ? "text-[10px]" : "text-xs sm:text-sm"
                           )}>
                             {t('wasteCollected')}
                           </span>
-                          <div className={cn(
-                            "flex items-center text-white/70",
-                            isMobile ? "space-x-0.5 text-[9px]" : "space-x-1 text-xs"
-                          )}>
-                            <Leaf className={cn(isMobile ? "h-1.5 w-1.5" : "h-2 w-2")} />
-                            <span className={cn(isMobile ? "text-[9px]" : "text-xs")}>{t('impact', { ns: 'profile' })}</span>
-                          </div>
                         </div>
-                      </div>
-                      <div className={cn(
-                        "font-bold bg-gradient-to-r from-green-200 to-emerald-300 bg-clip-text text-transparent",
-                        isMobile ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
-                      )}>
-                        {wasteFormatted.value}{wasteFormatted.unit}
-                      </div>
-                      <div className={cn(
-                        "bg-white/20 rounded-full overflow-hidden",
-                        isMobile ? "mt-0.5 h-0.5" : "mt-1 h-1"
-                      )}>
-                        <div className="h-full bg-gradient-to-r from-green-400 to-emerald-400 w-5/6" />
+                        
+                        {/* Value - Bold and Prominent */}
+                        <div className={cn(
+                          "text-center font-bold",
+                          "bg-gradient-to-r from-green-200 via-emerald-300 to-green-400 bg-clip-text text-transparent",
+                          "drop-shadow-lg",
+                          isMobile ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
+                        )}>
+                          {wasteFormatted.value}{wasteFormatted.unit}
+                        </div>
                       </div>
                     </motion.div>
 
-                    {/* Badges Card */}
+                    {/* Badges Card - Purple/Pink Theme */}
                     <motion.div
                       className={cn(
-                        "bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-md rounded-xl border border-white/20 shadow-lg",
-                        isMobile ? "p-2 col-span-1" : "p-3 sm:p-4 lg:col-span-1"
+                        "relative overflow-hidden rounded-xl border shadow-lg backdrop-blur-md col-span-1",
+                        "bg-gradient-to-br from-purple-500/30 via-pink-400/25 to-purple-600/20",
+                        "border-purple-400/50",
+                        isMobile ? "p-2" : "p-3 sm:p-4"
                       )}
-                      whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}
+                      whileHover={isMobile ? {} : { scale: 1.03, y: -2 }}
+                      transition={{ type: "spring", stiffness: 300 }}
                     >
-                      <div className={cn("flex items-center", isMobile ? "space-x-1.5 mb-1.5" : "space-x-2 mb-2")}>
-                        <div className={cn(
-                          "flex items-center justify-center relative",
-                          isMobile ? "h-5 w-5" : "h-6 w-6 sm:h-8 sm:w-8"
-                        )}>
+                      {/* Decorative glow effect */}
+                      <div className="absolute top-0 right-0 w-20 h-20 bg-pink-400/20 rounded-full blur-2xl -mr-10 -mt-10" />
+                      
+                      <div className="relative z-10">
+                        {/* Icon - Large and Prominent */}
+                        <div className={cn("flex items-center justify-center mb-2", isMobile ? "mb-1.5" : "")}>
                           <img 
                             src="/images/badges.png" 
                             alt="Badges" 
                             className={cn(
-                              "object-contain w-full h-full",
-                              "[mix-blend-mode:multiply]"
+                              "object-contain drop-shadow-lg",
+                              isMobile ? "h-8 w-8" : "h-10 w-10 sm:h-12 sm:w-12"
                             )}
                             style={{ 
-                              filter: 'contrast(1.2) brightness(1.1)',
-                              WebkitFilter: 'contrast(1.2) brightness(1.1)'
+                              filter: 'brightness(1.2) drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
                             }}
                             loading="lazy"
                           />
                         </div>
-                        <div className="min-w-0 flex-1">
+                        
+                        {/* Label */}
+                        <div className={cn("text-center mb-1", isMobile ? "mb-0.5" : "")}>
                           <span className={cn(
-                            "font-semibold block truncate",
+                            "font-semibold text-white/95 drop-shadow-sm",
                             isMobile ? "text-[10px]" : "text-xs sm:text-sm"
                           )}>
                             {t('badges')}
                           </span>
-                          <div className={cn(
-                            "flex items-center text-white/70",
-                            isMobile ? "space-x-0.5 text-[9px]" : "space-x-1 text-xs"
-                          )}>
-                            <Award className={cn(isMobile ? "h-1.5 w-1.5" : "h-2 w-2")} />
-                            <span className={cn(isMobile ? "text-[9px]" : "text-xs")}>{t('earned', { ns: 'profile' })}</span>
-                          </div>
                         </div>
-                      </div>
-                      <div className={cn(
-                        "font-bold bg-gradient-to-r from-purple-200 to-pink-300 bg-clip-text text-transparent",
-                        isMobile ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
-                      )}>
-                        {userProgress.badgesEarned}
-                      </div>
-                      <div className={cn(
-                        "bg-white/20 rounded-full overflow-hidden",
-                        isMobile ? "mt-0.5 h-0.5" : "mt-1 h-1"
-                      )}>
-                        <div className="h-full bg-gradient-to-r from-purple-400 to-pink-400 w-3/5" />
+                        
+                        {/* Value - Bold and Prominent */}
+                        <div className={cn(
+                          "text-center font-bold",
+                          "bg-gradient-to-r from-purple-200 via-pink-300 to-purple-400 bg-clip-text text-transparent",
+                          "drop-shadow-lg",
+                          isMobile ? "text-base" : "text-xl sm:text-2xl lg:text-3xl"
+                        )}>
+                          {userProgress.badgesEarned}
+                        </div>
                       </div>
                     </motion.div>
                   </div>
@@ -1264,18 +1206,30 @@ const Profile: React.FC = () => {
                   <motion.div 
                     className={cn(
                       "bg-white/10 backdrop-blur-md rounded-xl text-white border border-white/20 shadow-lg",
-                      isMobile ? "p-3" : "p-4 sm:p-6"
+                      isMobile ? "p-2" : "p-4 sm:p-6"
                     )}
                     whileHover={isMobile ? {} : { scale: 1.01 }}
                     layout
                   >
+                    {/* Header Row - Level, Icon, and Points Badge - Aligned Horizontally */}
                     <div className={cn(
-                      "flex flex-col sm:flex-row sm:items-center sm:justify-between",
-                      isMobile ? "mb-3" : "mb-4"
+                      "flex items-center justify-between",
+                      isMobile ? "mb-2" : "mb-3"
                     )}>
-                      <div className={cn("flex items-center", isMobile ? "mb-2" : "mb-3 sm:mb-0")}>
+                      {/* Left: Level Text */}
+                      <div className="flex items-center">
+                        <p className={cn(
+                          "font-semibold text-white",
+                          isMobile ? "text-xs" : "text-sm sm:text-base"
+                        )}>
+                          {t('levelFifteen')} {userProgress.level}
+                        </p>
+                      </div>
+                      
+                      {/* Center: Level Icon */}
+                      <div className="flex items-center justify-center flex-1">
                         <motion.div 
-                          className={cn("flex items-center justify-center", isMobile ? "mr-2" : "mr-3")}
+                          className="flex items-center justify-center"
                           whileHover={isMobile ? {} : { rotate: 360 }}
                           transition={{ duration: 0.6 }}
                         >
@@ -1283,60 +1237,73 @@ const Profile: React.FC = () => {
                             src="/images/level.png" 
                             alt="Level" 
                             className={cn(
-                              "object-contain",
-                              isMobile ? "h-6 w-6" : "h-8 w-8 sm:h-10 sm:w-10"
+                              "object-contain drop-shadow-lg",
+                              isMobile ? "h-8 w-8" : "h-10 w-10 sm:h-12 sm:w-12"
                             )}
                             loading="lazy"
                           />
                         </motion.div>
-                        <div className="min-w-0 flex-1">
-                          <p className={cn(
-                            "opacity-90 font-medium",
-                            isMobile ? "text-xs" : "text-sm sm:text-base"
-                          )}>
-                            {t('levelFifteen')} {userProgress.level}
-                          </p>
-                          <p className={cn(
-                            "font-bold bg-gradient-to-r from-white to-yellow-200 bg-clip-text text-transparent",
-                            isMobile ? "text-sm" : "text-base sm:text-lg"
-                          )}>
-                            {t('sustainabilityExpert')}
-                          </p>
-                        </div>
                       </div>
-                      <div className={cn("flex items-center", isMobile ? "space-x-1.5" : "space-x-2")}>
+                      
+                      {/* Right: Points Badge */}
+                      <div className="flex items-center">
                         <Badge className={cn(
                           "bg-gradient-to-r from-white/20 to-white/10 text-white border-white/30 backdrop-blur-sm shadow-lg",
-                          isMobile ? "text-[10px] px-2 py-1" : "text-sm px-4 py-2"
+                          isMobile ? "text-[9px] px-1.5 py-0.5" : "text-xs sm:text-sm px-3 py-1.5"
                         )}>
                           <Sparkles className={cn(isMobile ? "h-2 w-2 mr-0.5" : "h-3 w-3 mr-1")} />
                           {userProgress.ecoPoints.toLocaleString()} {t('pts', { ns: 'profile' })}
                         </Badge>
-                        <motion.button
-                          onClick={() => setLevelExpanded(!levelExpanded)}
-                          className={cn(
-                            "rounded-full hover:bg-white/20 transition-colors touch-feedback btn-touch",
-                            isMobile ? "p-1.5 min-h-[32px] min-w-[32px]" : "p-2"
-                          )}
-                          whileHover={isMobile ? {} : { scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          style={{ willChange: 'transform', touchAction: 'manipulation' }}
-                        >
-                          {levelExpanded ? <ChevronUp className={cn(isMobile ? "h-3 w-3" : "h-4 w-4")} /> : <ChevronDown className={cn(isMobile ? "h-3 w-3" : "h-4 w-4")} />}
-                        </motion.button>
                       </div>
                     </div>
+
+                    {/* Title Row - Sustainability Expert and Chevron - Aligned Horizontally */}
+                    <div className={cn(
+                      "flex items-center justify-between",
+                      isMobile ? "mb-3" : "mb-4"
+                    )}>
+                      <p className={cn(
+                        "font-bold bg-gradient-to-r from-white to-yellow-200 bg-clip-text text-transparent",
+                        isMobile ? "text-sm" : "text-base sm:text-lg"
+                      )}>
+                        {t('sustainabilityExpert')}
+                      </p>
+                      <motion.button
+                        onClick={() => setLevelExpanded(!levelExpanded)}
+                        className={cn(
+                          "rounded-full hover:bg-white/20 transition-colors touch-feedback btn-touch flex-shrink-0",
+                          isMobile ? "p-1 min-h-[24px] min-w-[24px]" : "p-1.5 min-h-[28px] min-w-[28px]"
+                        )}
+                        whileHover={isMobile ? {} : { scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        style={{ willChange: 'transform', touchAction: 'manipulation' }}
+                      >
+                        {levelExpanded ? <ChevronUp className={cn(isMobile ? "h-3.5 w-3.5" : "h-4 w-4")} /> : <ChevronDown className={cn(isMobile ? "h-3.5 w-3.5" : "h-4 w-4")} />}
+                      </motion.button>
+                    </div>
                     
+                    {/* Progress Section - Well Structured */}
                     <motion.div 
                       className={cn(isMobile ? "space-y-2" : "space-y-3")}
                       layout
                     >
+                      {/* Progress Label and Percentage - Aligned Horizontally */}
                       <div className={cn(
-                        "flex justify-between opacity-90 font-medium",
-                        isMobile ? "text-[10px]" : "text-sm"
+                        "flex items-center justify-between",
+                        isMobile ? "mb-1.5" : "mb-2"
                       )}>
-                        <span className="truncate mr-1">{t('progressToLevel')} {userProgress.level + 1}</span>
-                        <span className="flex-shrink-0">{Math.round(levelProgress)}%</span>
+                        <span className={cn(
+                          "font-medium text-white/90",
+                          isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                        )}>
+                          {t('progressToLevel')} {userProgress.level + 1}
+                        </span>
+                        <span className={cn(
+                          "font-semibold text-white flex-shrink-0",
+                          isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                        )}>
+                          {Math.round(levelProgress)}%
+                        </span>
                       </div>
                       
                       {/* Elegant Liquid Wave Progress Bar */}
@@ -1345,7 +1312,7 @@ const Profile: React.FC = () => {
                         <div className={cn(
                           "relative rounded-full overflow-hidden",
                           "bg-white/5 backdrop-blur-sm border border-white/10",
-                          isMobile ? "h-3" : "h-4"
+                          isMobile ? "h-2.5" : "h-4"
                         )}
                         style={{
                           boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.1), 0 1px 3px rgba(0,0,0,0.1)',
@@ -1521,16 +1488,17 @@ const Profile: React.FC = () => {
                         </motion.div>
                       </div>
                       
+                      {/* Points to Next Level - Aligned Left */}
                       <motion.p 
                         className={cn(
-                          "opacity-80 font-medium",
-                          isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                          "opacity-90 text-white/90 font-medium",
+                          isMobile ? "text-[9px] leading-tight mt-1.5" : "text-xs sm:text-sm mt-2"
                         )}
                         initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        animate={{ opacity: 0.9 }}
                         transition={{ delay: 1 }}
                       >
-                        <span className="text-yellow-200">{pointsToNext}</span> {t('pointsToNextLevel')}
+                        <span className="text-yellow-200 font-semibold">{pointsToNext}</span> {t('pointsToNextLevel')}
                       </motion.p>
 
                       {/* Improved Level Benefits with Better Text Readability */}
@@ -1605,131 +1573,6 @@ const Profile: React.FC = () => {
                   </motion.div>
                 </CardContent>
               </Card>
-            </motion.div>
-
-            {/* Stats Cards */}
-            <motion.div variants={itemVariants}>
-              <div className={cn(
-                "grid gap-2",
-                isMobile ? "grid-cols-3 gap-2" : "grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"
-              )}>
-                <motion.div whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}>
-                  <Card className={cn(
-                    "bg-gradient-to-br from-green-50 to-green-100 border-green-200 text-green-600 transition-all duration-300",
-                    isMobile ? "" : "hover:shadow-lg"
-                  )}>
-                    <CardContent className={cn("text-center", isMobile ? "p-2" : "p-3 sm:p-4")}>
-                      <div className={cn("flex items-center justify-center", isMobile ? "mb-1" : "mb-2")}>
-                        <div className={cn(
-                          "flex items-center justify-center relative",
-                          isMobile ? "h-5 w-5" : "h-7 w-7 sm:h-8 sm:w-8"
-                        )}>
-                          <img 
-                            src="/images/Waste Collected.png" 
-                            alt="Waste Collected" 
-                            className={cn(
-                              "object-contain w-full h-full",
-                              "[mix-blend-mode:multiply]"
-                            )}
-                            style={{ 
-                              filter: 'contrast(1.2) brightness(1.1)',
-                              WebkitFilter: 'contrast(1.2) brightness(1.1)'
-                            }}
-                            loading="lazy"
-                          />
-                        </div>
-                        <span className={cn(
-                          "font-bold ml-1",
-                          isMobile ? "text-sm" : "text-lg sm:text-xl md:text-2xl"
-                        )}>
-                          {wasteFormatted.value}{wasteFormatted.unit}
-                        </span>
-                      </div>
-                      <p className={cn(
-                        "font-medium",
-                        isMobile ? "text-[9px]" : "text-xs sm:text-sm"
-                      )}>
-                        {t('myWasteCollected')}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-                
-                <motion.div whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}>
-                  <Card className={cn(
-                    "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 text-blue-600 transition-all duration-300",
-                    isMobile ? "" : "hover:shadow-lg"
-                  )}>
-                    <CardContent className={cn("text-center", isMobile ? "p-2" : "p-3 sm:p-4")}>
-                      <div className={cn("flex items-center justify-center", isMobile ? "mb-1" : "mb-2")}>
-                        <div className={cn(
-                          "flex items-center justify-center relative",
-                          isMobile ? "h-5 w-5" : "h-7 w-7 sm:h-8 sm:w-8"
-                        )}>
-                          <img 
-                            src="/images/badges.png" 
-                            alt="Badges" 
-                            className={cn(
-                              "object-contain w-full h-full",
-                              "[mix-blend-mode:multiply]"
-                            )}
-                            style={{ 
-                              filter: 'contrast(1.2) brightness(1.1)',
-                              WebkitFilter: 'contrast(1.2) brightness(1.1)'
-                            }}
-                            loading="lazy"
-                          />
-                        </div>
-                        <span className={cn(
-                          "font-bold ml-1",
-                          isMobile ? "text-sm" : "text-lg sm:text-xl md:text-2xl"
-                        )}>
-                          {userProgress.badgesEarned}
-                        </span>
-                      </div>
-                      <p className={cn(
-                        "font-medium",
-                        isMobile ? "text-[9px]" : "text-xs sm:text-sm"
-                      )}>
-                        {t('badgesEarned')}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-                
-                <motion.div whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}>
-                  <Card className={cn(
-                    "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 text-purple-600 transition-all duration-300",
-                    isMobile ? "" : "hover:shadow-lg"
-                  )}>
-                    <CardContent className={cn("text-center", isMobile ? "p-2" : "p-3 sm:p-4")}>
-                      <div className={cn("flex items-center justify-center", isMobile ? "mb-1" : "mb-2")}>
-                        <img 
-                          src="/images/level.png" 
-                          alt="Level" 
-                          className={cn(
-                            "object-contain",
-                            isMobile ? "h-5 w-5" : "h-7 w-7 sm:h-8 sm:w-8"
-                          )}
-                          loading="lazy"
-                        />
-                        <span className={cn(
-                          "font-bold ml-1",
-                          isMobile ? "text-sm" : "text-lg sm:text-xl md:text-2xl"
-                        )}>
-                          {userProgress.level}
-                        </span>
-                      </div>
-                      <p className={cn(
-                        "font-medium",
-                        isMobile ? "text-[9px]" : "text-xs sm:text-sm"
-                      )}>
-                        {t('currentLevel')}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </div>
             </motion.div>
 
             {/* Tabs */}

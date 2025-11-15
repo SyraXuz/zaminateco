@@ -1,4 +1,4 @@
-import { Bell, Leaf, Award, Users, ArrowRight, Settings, Coins, Star, Trophy, Crown, MapPin, School, Eye, EyeOff, ExternalLink, UserCheck, Phone, Mail, Sparkles } from 'lucide-react';
+import { Bell, Leaf, Award, Users, ArrowRight, Settings, Coins, Star, Trophy, Crown, MapPin, School, ExternalLink, UserCheck, Phone, Mail, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
@@ -39,7 +39,6 @@ const progressVariants = {
 
 export default function Index() {
   const { t } = useTranslation();
-  const [coinsVisible, setCoinsVisible] = useState(true);
   const [userProgress, setUserProgress] = useState<UserProgress>(() => loadUserProgress());
   const isMobile = useIsMobile();
 
@@ -118,9 +117,6 @@ export default function Index() {
     }
   };
 
-  const toggleCoinsVisibility = () => {
-    setCoinsVisible(!coinsVisible);
-  };
 
   return (
     <Layout title={t('home')}>
@@ -518,7 +514,7 @@ export default function Index() {
                     <EnhancedAvatar
                       emoji={displayAvatar}
                       image={getAvatarImage(displayAvatar)}
-                      size={isMobile ? "sm" : "md"}
+                      size={isMobile ? "xl" : "2xl"}
                       glowColor="green"
                       showCrown={true}
                       profileFrame={userProgress?.profileFrame}
@@ -545,67 +541,90 @@ export default function Index() {
                 </Button>
               </div>
 
-              {/* Coins and Points - Mobile Optimized */}
-              <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-3 sm:mb-4 gap-mobile">
+              {/* Coins and Points - Icon-Focused Creative Design */}
+              <div className={cn("grid grid-cols-2", isMobile ? "gap-1.5 mb-2" : "gap-2 sm:gap-4 mb-3 sm:mb-4")}>
+                {/* Eco Coins Card - Golden Theme */}
                 <motion.div 
-                  className="bg-white/10 backdrop-blur-sm rounded-lg p-2 sm:p-3 stats-card-mobile"
-                  whileHover={{ scale: 1.02 }}
+                  className={cn(
+                    "relative overflow-hidden rounded-xl border shadow-lg backdrop-blur-md",
+                    "bg-gradient-to-br from-yellow-500/30 via-yellow-400/25 to-amber-500/20",
+                    "border-yellow-400/50",
+                    isMobile ? "p-2" : "p-3 sm:p-4"
+                  )}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center space-x-1 sm:space-x-2">
-                      <motion.div
-                        animate={{ rotate: [0, 360] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                      >
-                        <Coins className="h-3 w-3 sm:h-5 sm:w-5 text-yellow-300 icon-sm-mobile" />
-                      </motion.div>
-                      <span className="text-xs sm:text-sm font-medium stats-label-mobile">{t('ecoCoinsLabel')}</span>
+                  {/* Decorative glow effect */}
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-yellow-400/20 rounded-full blur-2xl -mr-10 -mt-10" />
+                  
+                  <div className="relative z-10">
+                    {/* Icon - Large and Prominent */}
+                    <div className={cn("flex items-center justify-center mb-2", isMobile ? "mb-1.5" : "")}>
+                      <Coins className={cn("text-yellow-200 drop-shadow-lg", isMobile ? "h-8 w-8" : "h-10 w-10 sm:h-12 sm:w-12")} />
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-white/80 hover:bg-white/20 h-4 w-4 sm:h-6 sm:w-6 p-0"
-                      onClick={toggleCoinsVisibility}
-                      aria-label={coinsVisible ? 'Hide eco coins' : 'Show eco coins'}
-                    >
-                      {coinsVisible ? (
-                        <Eye className="h-2 w-2 sm:h-3 sm:w-3" />
-                      ) : (
-                        <EyeOff className="h-2 w-2 sm:h-3 sm:w-3" />
-                      )}
-                    </Button>
+                    
+                    {/* Label */}
+                    <div className={cn("text-center mb-1", isMobile ? "mb-0.5" : "")}>
+                      <span className={cn(
+                        "font-semibold text-white/95 drop-shadow-sm",
+                        isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                      )}>
+                        {t('ecoCoinsLabel')}
+                      </span>
+                    </div>
+                    
+                    {/* Value - Bold and Prominent */}
+                    <div className={cn(
+                      "text-center font-bold",
+                      "bg-gradient-to-r from-yellow-200 via-yellow-300 to-amber-300 bg-clip-text text-transparent",
+                      "drop-shadow-lg",
+                      isMobile ? "text-base" : "text-xl sm:text-2xl"
+                    )}>
+                      {displayEcoCoins}
+                    </div>
                   </div>
-                  <motion.div 
-                    className="text-lg sm:text-2xl font-bold stats-value-mobile"
-                    initial={{ scale: 1.2 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                  >
-                    {coinsVisible ? displayEcoCoins : '***'}
-                  </motion.div>
                 </motion.div>
 
+                {/* Eco Points Card - Blue/Cyan Theme */}
                 <motion.div 
-                  className="bg-white/10 backdrop-blur-sm rounded-lg p-2 sm:p-3 stats-card-mobile"
-                  whileHover={{ scale: 1.02 }}
+                  className={cn(
+                    "relative overflow-hidden rounded-xl border shadow-lg backdrop-blur-md",
+                    "bg-gradient-to-br from-blue-500/30 via-cyan-400/25 to-blue-600/20",
+                    "border-blue-400/50",
+                    isMobile ? "p-2" : "p-3 sm:p-4"
+                  )}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <div className="flex items-center space-x-1 sm:space-x-2 mb-1">
-                    <motion.div
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      <Star className="h-3 w-3 sm:h-5 sm:w-5 text-yellow-300 icon-sm-mobile" />
-                    </motion.div>
-                    <span className="text-xs sm:text-sm font-medium stats-label-mobile">{t('ecoPointsLabel')}</span>
+                  {/* Decorative glow effect */}
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-cyan-400/20 rounded-full blur-2xl -mr-10 -mt-10" />
+                  
+                  <div className="relative z-10">
+                    {/* Icon - Large and Prominent */}
+                    <div className={cn("flex items-center justify-center mb-2", isMobile ? "mb-1.5" : "")}>
+                      <Star className={cn("text-blue-200 drop-shadow-lg fill-blue-200", isMobile ? "h-8 w-8" : "h-10 w-10 sm:h-12 sm:w-12")} />
+                    </div>
+                    
+                    {/* Label */}
+                    <div className={cn("text-center mb-1", isMobile ? "mb-0.5" : "")}>
+                      <span className={cn(
+                        "font-semibold text-white/95 drop-shadow-sm",
+                        isMobile ? "text-[10px]" : "text-xs sm:text-sm"
+                      )}>
+                        {t('ecoPointsLabel')}
+                      </span>
+                    </div>
+                    
+                    {/* Value - Bold and Prominent */}
+                    <div className={cn(
+                      "text-center font-bold",
+                      "bg-gradient-to-r from-blue-200 via-cyan-300 to-blue-400 bg-clip-text text-transparent",
+                      "drop-shadow-lg",
+                      isMobile ? "text-base" : "text-xl sm:text-2xl"
+                    )}>
+                      {displayEcoPoints.toLocaleString()}
+                    </div>
                   </div>
-                  <motion.div 
-                    className="text-lg sm:text-2xl font-bold stats-value-mobile"
-                    initial={{ scale: 1.2 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                  >
-                    {displayEcoPoints.toLocaleString()}
-                  </motion.div>
                 </motion.div>
               </div>
 
@@ -614,18 +633,18 @@ export default function Index() {
                 <motion.div 
                   className={cn(
                     "bg-white/10 backdrop-blur-md rounded-xl text-white border border-white/20 shadow-lg cursor-pointer",
-                    isMobile ? "p-3" : "p-4"
+                    isMobile ? "p-2" : "p-4"
                   )}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <div className={cn(
                     "flex flex-col sm:flex-row sm:items-center sm:justify-between",
-                    isMobile ? "mb-3" : "mb-4"
+                    isMobile ? "mb-1.5" : "mb-4"
                   )}>
-                    <div className={cn("flex items-center", isMobile ? "mb-2" : "mb-3 sm:mb-0")}>
+                    <div className={cn("flex items-center flex-1", isMobile ? "mb-1.5" : "mb-3 sm:mb-0")}>
                       <motion.div 
-                        className={cn("flex items-center justify-center", isMobile ? "mr-2" : "mr-3")}
+                        className={cn("flex items-center justify-center", isMobile ? "mr-1.5" : "mr-3")}
                         whileHover={{ rotate: 360 }}
                         transition={{ duration: 0.6 }}
                       >
@@ -635,33 +654,35 @@ export default function Index() {
                         )} />
                       </motion.div>
                       <div className="min-w-0 flex-1">
-                        <p className={cn(
-                          "opacity-90 font-medium",
-                          isMobile ? "text-xs" : "text-sm"
-                        )}>
-                          {t('levelFifteen')} {currentLevel}
-                        </p>
+                        <div className={cn("flex items-center justify-between", isMobile ? "mb-0.5" : "mb-1")}>
+                          <p className={cn(
+                            "opacity-90 font-medium",
+                            isMobile ? "text-[10px] leading-tight" : "text-sm"
+                          )}>
+                            {t('levelFifteen')} {currentLevel}
+                          </p>
+                          <Badge className={cn(
+                            "bg-gradient-to-r from-white/20 to-white/10 text-white border-white/30 backdrop-blur-sm shadow-lg",
+                            isMobile ? "text-[9px] px-1.5 py-0.5" : "text-xs px-3 py-1.5"
+                          )}>
+                            <Sparkles className={cn(isMobile ? "h-2 w-2 mr-0.5" : "h-3 w-3 mr-1")} />
+                            {displayEcoPoints.toLocaleString()} {t('pts', { ns: 'profile' })}
+                          </Badge>
+                        </div>
                         <p className={cn(
                           "font-bold bg-gradient-to-r from-white to-yellow-200 bg-clip-text text-transparent",
-                          isMobile ? "text-sm" : "text-base"
+                          isMobile ? "text-xs leading-tight" : "text-base"
                         )}>
                           {t('sustainabilityExpert')}
                         </p>
                       </div>
                     </div>
-                    <Badge className={cn(
-                      "bg-gradient-to-r from-white/20 to-white/10 text-white border-white/30 backdrop-blur-sm shadow-lg",
-                      isMobile ? "text-[10px] px-2 py-1" : "text-xs px-3 py-1.5"
-                    )}>
-                      <Sparkles className={cn(isMobile ? "h-2 w-2 mr-0.5" : "h-3 w-3 mr-1")} />
-                      {displayEcoPoints.toLocaleString()} {t('pts', { ns: 'profile' })}
-                    </Badge>
                   </div>
                   
-                  <div className={cn(isMobile ? "space-y-2" : "space-y-3")}>
+                  <div className={cn(isMobile ? "space-y-1" : "space-y-3")}>
                     <div className={cn(
                       "flex justify-between opacity-90 font-medium",
-                      isMobile ? "text-[10px]" : "text-xs"
+                      isMobile ? "text-[9px] leading-tight" : "text-xs"
                     )}>
                       <span className="truncate mr-1">Progress to Level {currentLevel + 1}</span>
                       <span className="flex-shrink-0">{Math.round(levelProgress)}%</span>
@@ -673,7 +694,7 @@ export default function Index() {
                       <div className={cn(
                         "relative rounded-full overflow-hidden",
                         "bg-white/5 backdrop-blur-sm border border-white/10",
-                        isMobile ? "h-3" : "h-4"
+                        isMobile ? "h-2.5" : "h-4"
                       )}
                       style={{
                         boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.1), 0 1px 3px rgba(0,0,0,0.1)',
@@ -852,7 +873,7 @@ export default function Index() {
                     <motion.p 
                       className={cn(
                         "opacity-80 font-medium",
-                        isMobile ? "text-[10px]" : "text-xs"
+                        isMobile ? "text-[9px] leading-tight mt-0.5" : "text-xs mt-1"
                       )}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
