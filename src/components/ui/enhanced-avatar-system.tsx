@@ -430,10 +430,10 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                   onClick={() => setActiveTab('avatars')}
                   className={cn(
                     "whitespace-nowrap flex-shrink-0",
-                    isMobile ? "text-xs px-1.5 py-0.5 h-6" : "text-xs sm:text-sm px-2 sm:px-3"
+                    isMobile ? "text-xs px-2 py-1 h-8" : "text-xs sm:text-sm px-2 sm:px-3"
                   )}
                 >
-                  <span>{isMobile ? "🎭" : `🎭 ${t('avatars')}`}</span>
+                  <span>🎭 {t('avatars')}</span>
                 </Button>
                 <Button
                   variant={activeTab === 'quests' ? 'default' : 'ghost'}
@@ -441,10 +441,10 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                   onClick={() => setActiveTab('quests')}
                   className={cn(
                     "whitespace-nowrap flex-shrink-0",
-                    isMobile ? "text-xs px-1.5 py-0.5 h-6" : "text-xs sm:text-sm px-2 sm:px-3"
+                    isMobile ? "text-xs px-2 py-1 h-8" : "text-xs sm:text-sm px-2 sm:px-3"
                   )}
                 >
-                  <span>{isMobile ? "⚔️" : `⚔️ ${t('quests')}`}</span>
+                  <span>⚔️ {t('quests')}</span>
                 </Button>
                 <Button
                   variant={activeTab === 'frames' ? 'default' : 'ghost'}
@@ -452,10 +452,10 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                   onClick={() => setActiveTab('frames')}
                   className={cn(
                     "whitespace-nowrap flex-shrink-0",
-                    isMobile ? "text-xs px-1.5 py-0.5 h-6" : "text-xs sm:text-sm px-2 sm:px-3"
+                    isMobile ? "text-xs px-2 py-1 h-8" : "text-xs sm:text-sm px-2 sm:px-3"
                   )}
                 >
-                  <span>{isMobile ? "🖼️" : `🖼️ ${t('frames')}`}</span>
+                  <span>🖼️ {t('frames')}</span>
                 </Button>
                 <Button
                   variant={activeTab === 'themes' ? 'default' : 'ghost'}
@@ -463,10 +463,10 @@ export const EnhancedAvatarSystem: React.FC<EnhancedAvatarSystemProps> = ({
                   onClick={() => setActiveTab('themes')}
                   className={cn(
                     "whitespace-nowrap flex-shrink-0",
-                    isMobile ? "text-xs px-1.5 py-0.5 h-6" : "text-xs sm:text-sm px-2 sm:px-3"
+                    isMobile ? "text-xs px-2 py-1 h-8" : "text-xs sm:text-sm px-2 sm:px-3"
                   )}
                 >
-                  <span>{isMobile ? "🎨" : `🎨 ${t('themes')}`}</span>
+                  <span>🎨 {t('themes')}</span>
                 </Button>
               </div>
             </div>
