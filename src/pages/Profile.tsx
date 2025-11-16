@@ -1628,21 +1628,18 @@ const Profile: React.FC = () => {
                   </TabsTrigger>
                 </TabsList>
 
-                <AnimatePresence mode="wait" initial={false}>
-                  {activeTab === 'wallet' && (
-                    <TabsContent key="wallet" value="wallet" className="space-y-4 sm:space-y-6">
-                      <motion.div
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ 
-                          duration: 0.15,
-                          type: "tween",
-                          ease: "easeOut"
-                        }}
-                        style={{ willChange: 'transform, opacity' }}
-                        className="space-y-4 sm:space-y-6"
-                      >
+                <TabsContent value="wallet" className="space-y-4 sm:space-y-6">
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ 
+                      duration: 0.15,
+                      type: "tween",
+                      ease: "easeOut"
+                    }}
+                    style={{ willChange: 'transform, opacity' }}
+                    className="space-y-4 sm:space-y-6"
+                  >
                       {/* Rewards Store */}
                       <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                         <CardHeader className="pb-3">
@@ -1735,18 +1732,15 @@ const Profile: React.FC = () => {
                           </div>
                         </CardContent>
                       </Card>
-                      </motion.div>
-                    </TabsContent>
-                  )}
+                  </motion.div>
+                </TabsContent>
 
-                  {activeTab === 'offers' && (
-                    <TabsContent key="offers" value="offers" className="mt-4 sm:mt-6">
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3 }}
-                      >
+                <TabsContent value="offers" className="mt-4 sm:mt-6">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
                       <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                         <CardHeader className="pb-3">
                           <CardTitle className="flex items-center justify-between text-base sm:text-lg">
@@ -1773,18 +1767,15 @@ const Profile: React.FC = () => {
                           </div>
                         </CardContent>
                       </Card>
-                      </motion.div>
-                    </TabsContent>
-                  )}
+                  </motion.div>
+                </TabsContent>
 
-                  {activeTab === 'badges' && (
-                    <TabsContent key="badges" value="badges" className="mt-4 sm:mt-6">
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3 }}
-                      >
+                <TabsContent value="badges" className="mt-4 sm:mt-6">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
                       <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                         <CardHeader className="pb-3">
                           <CardTitle className="flex items-center text-base sm:text-lg">
@@ -1800,24 +1791,21 @@ const Profile: React.FC = () => {
                           </div>
                         </CardContent>
                       </Card>
-                      </motion.div>
-                    </TabsContent>
-                  )}
+                  </motion.div>
+                </TabsContent>
 
-                  {activeTab === 'analytics' && (
-                    <TabsContent key="analytics" value="analytics" className="mt-4 sm:mt-6">
-                      <motion.div
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ 
-                          duration: 0.15,
-                          type: "tween",
-                          ease: "easeOut"
-                        }}
-                        style={{ willChange: 'transform, opacity' }}
-                        className="space-y-4 sm:space-y-6"
-                      >
+                <TabsContent value="analytics" className="mt-4 sm:mt-6">
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ 
+                      duration: 0.15,
+                      type: "tween",
+                      ease: "easeOut"
+                    }}
+                    style={{ willChange: 'transform, opacity' }}
+                    className="space-y-4 sm:space-y-6"
+                  >
                       {/* Analytics Overview */}
                       <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                         <CardHeader className="pb-3">
@@ -2148,10 +2136,8 @@ const Profile: React.FC = () => {
                           </div>
                         </CardContent>
                       </Card>
-                      </motion.div>
-                    </TabsContent>
-                  )}
-                </AnimatePresence>
+                  </motion.div>
+                </TabsContent>
               </Tabs>
             </motion.div>
           </motion.div>
