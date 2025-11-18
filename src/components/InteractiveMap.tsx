@@ -906,7 +906,7 @@ export default function InteractiveMap({
 
   // Collection point marker component
   const CollectionPointMarker: React.FC<{ point: MapPoint }> = ({ point }) => {
-    const markerRef = useRef<LeafletMarker | null>(null);
+    const markerRef = useRef<React.ComponentRef<typeof Marker> | null>(null);
     const icon = createCollectionPointIcon(
       point.type as 'plastic' | 'tires' | 'mixed',
       point.name,
@@ -957,7 +957,7 @@ export default function InteractiveMap({
 
   // Action location marker component
   const ActionLocationMarker: React.FC<{ point: MapPoint }> = ({ point }) => {
-    const markerRef = useRef<LeafletMarker | null>(null);
+    const markerRef = useRef<React.ComponentRef<typeof Marker> | null>(null);
     const icon = createActionLocationIcon(
       point.type as 'cleanup' | 'education' | 'recycling' | 'awareness',
       point.name,

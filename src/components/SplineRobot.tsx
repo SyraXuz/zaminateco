@@ -422,7 +422,18 @@ export const SplineRobot: React.FC<SplineRobotProps> = ({ className, style }) =>
 };
 
 // Polyfill for requestIdleCallback
-// Polyfill for requestIdleCallback
+// Type definitions for requestIdleCallback
+interface IdleDeadline {
+  didTimeout: boolean;
+  timeRemaining(): number;
+}
+
+type IdleRequestCallback = (deadline: IdleDeadline) => void;
+
+interface IdleRequestOptions {
+  timeout?: number;
+}
+
 declare global {
   interface Window {
     requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;

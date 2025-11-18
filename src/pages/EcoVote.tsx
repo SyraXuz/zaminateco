@@ -162,8 +162,8 @@ const pulseVariants = {
 function EcoVote() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('active');
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [isPlaying, setIsPlaying] = useState({});
+  const [selectedProject, setSelectedProject] = useState<VotingProject | null>(null);
+  const [isPlaying, setIsPlaying] = useState<Record<string, boolean>>({});
   const [donationDialogOpen, setDonationDialogOpen] = useState(false);
   const [selectedProjectForDonation, setSelectedProjectForDonation] = useState<VotingProject | null>(null);
   const [projects, setProjects] = useState<VotingProject[]>(votingProjects);
@@ -846,21 +846,24 @@ function EcoVote() {
                                   const status = activeTab === 'active' ? 'ACTIVE' : 'COMPLETED';
                                   const updatedProjects = await apiClient.getProjects(status, 'votes');
                                   if (updatedProjects && Array.isArray(updatedProjects) && updatedProjects.length > 0) {
-                                    const transformedProjects: VotingProject[] = updatedProjects.map((p: BackendProject) => ({
-                                      id: p.id || '',
-                                      title: p.title || '',
-                                      description: p.description || '',
-                                      image: p.imageUrl || '🏫',
-                                      location: p.district || p.location || '',
-                                      category: p.category || 'general',
-                                      status: p.status?.toLowerCase() || 'active',
-                                      currentVotes: p.voteCount || 0,
-                                      totalVotes: p.targetVotes || 1000,
-                                      deadline: p.endDate ? new Date(p.endDate) : new Date(),
-                                      requiredMaterials: p.materialsRequiredKg || 0,
-                                      donationTarget: p.budgetRequired || 0,
-                                      donationRaised: p.fundsRaised || 0,
-                                    }));
+                                    const transformedProjects: VotingProject[] = updatedProjects.map((p: Record<string, unknown>) => {
+                                      const backendProject = p as unknown as BackendProject;
+                                      return {
+                                      id: backendProject.id || '',
+                                      title: backendProject.title || '',
+                                      description: backendProject.description || '',
+                                      image: backendProject.imageUrl || '🏫',
+                                      location: backendProject.district || backendProject.location || '',
+                                      category: backendProject.category || 'general',
+                                      status: backendProject.status?.toLowerCase() || 'active',
+                                      currentVotes: backendProject.voteCount || 0,
+                                      totalVotes: backendProject.targetVotes || 1000,
+                                      deadline: backendProject.endDate ? new Date(backendProject.endDate) : new Date(),
+                                      requiredMaterials: backendProject.materialsRequiredKg || 0,
+                                      donationTarget: backendProject.budgetRequired || 0,
+                                      donationRaised: backendProject.fundsRaised || 0,
+                                      };
+                                    });
                                     setProjects(transformedProjects);
                                   }
                                 } catch (error: unknown) {

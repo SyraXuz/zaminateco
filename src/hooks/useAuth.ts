@@ -36,8 +36,10 @@ export function useAuth() {
 
       try {
         const userData = await apiClient.getCurrentUser();
-        setUser(userData);
-        setIsAuthenticated(true);
+        if (userData) {
+          setUser(userData as User);
+          setIsAuthenticated(true);
+        }
       } catch (error) {
         // If API call fails (backend not available), clear tokens
         console.warn('Auth check failed (backend may not be available):', error);
@@ -58,10 +60,10 @@ export function useAuth() {
   const login = async (credentials: { email?: string; phone?: string; password?: string; otp?: string }) => {
     try {
       const response = await apiClient.login(credentials);
-      if (response.data?.user) {
-        setUser(response.data.user);
+      if (response.user) {
+        setUser(response.user as User);
         setIsAuthenticated(true);
-        return { success: true, requiresOtp: response.data.requiresOtp };
+        return { success: true, requiresOtp: response.requiresOtp };
       }
       return { success: false, requiresOtp: response.requiresOtp };
     } catch (error: unknown) {
@@ -79,10 +81,10 @@ export function useAuth() {
   }) => {
     try {
       const response = await apiClient.register(data);
-      if (response.data?.user) {
-        setUser(response.data.user);
+      if (response.user) {
+        setUser(response.user as User);
         setIsAuthenticated(true);
-        return { success: true, requiresOtp: response.data.requiresOtp };
+        return { success: true, requiresOtp: response.requiresOtp };
       }
       return { success: false, requiresOtp: response.requiresOtp };
     } catch (error: unknown) {

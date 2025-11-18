@@ -11,7 +11,12 @@ interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
+  requiresOtp?: boolean;
 }
+
+// Type aliases for API responses
+type ApiData = Record<string, unknown>;
+type ApiDataArray = Record<string, unknown>[];
 
 class ApiClient {
   private baseURL: string;
@@ -147,15 +152,15 @@ class ApiClient {
     school?: string;
     mahalla?: string;
   }) {
-    const response = await this.request<ApiResponse<unknown>>('/auth/register', {
+    const response = await this.request<ApiData & { accessToken?: string; refreshToken?: string; user?: ApiData; requiresOtp?: boolean }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     });
 
-    if (response.data?.accessToken) {
-      this.setToken(response.data.accessToken);
-      if (response.data.refreshToken && typeof window !== 'undefined') {
-        localStorage.setItem('refreshToken', response.data.refreshToken);
+    if (response.accessToken) {
+      this.setToken(response.accessToken);
+      if (response.refreshToken && typeof window !== 'undefined') {
+        localStorage.setItem('refreshToken', response.refreshToken);
       }
     }
 
@@ -163,15 +168,15 @@ class ApiClient {
   }
 
   async login(data: { email?: string; phone?: string; password?: string; otp?: string }) {
-    const response = await this.request<ApiResponse<unknown>>('/auth/login', {
+    const response = await this.request<ApiData & { accessToken?: string; refreshToken?: string; user?: ApiData; requiresOtp?: boolean }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     });
 
-    if (response.data?.accessToken) {
-      this.setToken(response.data.accessToken);
-      if (response.data.refreshToken && typeof window !== 'undefined') {
-        localStorage.setItem('refreshToken', response.data.refreshToken);
+    if (response.accessToken) {
+      this.setToken(response.accessToken);
+      if (response.refreshToken && typeof window !== 'undefined') {
+        localStorage.setItem('refreshToken', response.refreshToken);
       }
     }
 
@@ -179,15 +184,15 @@ class ApiClient {
   }
 
   async verifyOtp(phone: string, otp: string) {
-    const response = await this.request<ApiResponse<unknown>>('/auth/verify-otp', {
+    const response = await this.request<ApiData & { accessToken?: string; refreshToken?: string; user?: ApiData }>('/auth/verify-otp', {
       method: 'POST',
       body: JSON.stringify({ phone, otp }),
     });
 
-    if (response.data?.accessToken) {
-      this.setToken(response.data.accessToken);
-      if (response.data.refreshToken && typeof window !== 'undefined') {
-        localStorage.setItem('refreshToken', response.data.refreshToken);
+    if (response.accessToken) {
+      this.setToken(response.accessToken);
+      if (response.refreshToken && typeof window !== 'undefined') {
+        localStorage.setItem('refreshToken', response.refreshToken);
       }
     }
 
@@ -195,7 +200,7 @@ class ApiClient {
   }
 
   async getCurrentUser() {
-    return this.request<unknown>('/auth/me');
+    return this.request<ApiData>('/auth/me');
   }
 
   logout() {
@@ -208,25 +213,25 @@ class ApiClient {
     if (status) query.append('status', status);
     if (sortBy) query.append('sortBy', sortBy);
     const queryString = query.toString();
-    return this.request<unknown[]>(`/projects${queryString ? `?${queryString}` : ''}`);
+    return this.request<ApiDataArray>(`/projects${queryString ? `?${queryString}` : ''}`);
   }
 
   async getProject(id: string) {
-    return this.request<unknown>(`/projects/${id}`);
+    return this.request<ApiData>(`/projects/${id}`);
   }
 
   async getProjectResults(id: string) {
-    return this.request<unknown>(`/projects/${id}/results`);
+    return this.request<ApiData>(`/projects/${id}/results`);
   }
 
   async voteForProject(projectId: string) {
-    return this.request<unknown>(`/projects/${projectId}/vote`, {
+    return this.request<ApiData>(`/projects/${projectId}/vote`, {
       method: 'POST',
     });
   }
 
   async donateToProject(projectId: string, amount: number, currency: string, paymentProvider?: string) {
-    return this.request<unknown>(`/projects/${projectId}/donate`, {
+    return this.request<ApiData>(`/projects/${projectId}/donate`, {
       method: 'POST',
       body: JSON.stringify({ amount, currency, paymentProvider }),
     });
@@ -234,44 +239,44 @@ class ApiClient {
 
   // Users
   async getUserProfile() {
-    return this.request<unknown>('/users/me');
+    return this.request<ApiData>('/users/me');
   }
 
-  async updateUserProfile(data: unknown) {
-    return this.request<unknown>('/users/me', {
+  async updateUserProfile(data: Record<string, unknown>) {
+    return this.request<ApiData>('/users/me', {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
   async getUserStats(userId: string) {
-    return this.request<unknown>(`/users/${userId}/stats`);
+    return this.request<ApiData>(`/users/${userId}/stats`);
   }
 
   // Events
   async getEvents(status?: string) {
     const query = status ? `?status=${status}` : '';
-    return this.request<unknown[]>(`/events${query}`);
+    return this.request<ApiDataArray>(`/events${query}`);
   }
 
   async getEvent(id: string) {
-    return this.request<unknown>(`/events/${id}`);
+    return this.request<ApiData>(`/events/${id}`);
   }
 
   async joinEvent(eventId: string) {
-    return this.request<unknown>(`/events/${eventId}/join`, {
+    return this.request<ApiData>(`/events/${eventId}/join`, {
       method: 'POST',
     });
   }
 
   // Locations
   async getLocations(filters?: { type?: string; eventType?: string; district?: string }) {
-    const query = new URLSearchParams(filters as unknown as Record<string, string>).toString();
-    return this.request<unknown[]>(`/locations${query ? `?${query}` : ''}`);
+    const query = new URLSearchParams(filters as Record<string, string>).toString();
+    return this.request<ApiDataArray>(`/locations${query ? `?${query}` : ''}`);
   }
 
   async getLocation(id: string) {
-    return this.request<unknown>(`/locations/${id}`);
+    return this.request<ApiData>(`/locations/${id}`);
   }
 
   async getNearbyLocations(lat: number, lng: number, radius?: number) {
@@ -280,33 +285,33 @@ class ApiClient {
       lng: lng.toString(),
       ...(radius && { radius: radius.toString() }),
     }).toString();
-    return this.request<unknown[]>(`/locations/nearby?${query}`);
+    return this.request<ApiDataArray>(`/locations/nearby?${query}`);
   }
 
   // Collections
   async getCollectionPoints(filters?: { materialType?: string; district?: string; status?: string; limit?: number }) {
-    const query = new URLSearchParams(filters as unknown as Record<string, string>).toString();
-    return this.request<unknown[]>(`/collection-points${query ? `?${query}` : ''}`);
+    const query = new URLSearchParams(filters as Record<string, string>).toString();
+    return this.request<ApiDataArray>(`/collection-points${query ? `?${query}` : ''}`);
   }
 
   async getCollectionPoint(id: string) {
-    return this.request<unknown>(`/collection-points/${id}`);
+    return this.request<ApiData>(`/collection-points/${id}`);
   }
 
   async createCollection(data: { collectionPointId: string; materialType: string; weightKg: number; photoUrl?: string }) {
-    return this.request<unknown>('/collections', {
+    return this.request<ApiData>('/collections', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async getUserCollections(userId: string) {
-    return this.request<unknown[]>(`/collections/user/${userId}`);
+    return this.request<ApiDataArray>(`/collections/user/${userId}`);
   }
 
   // Waste Logs
   async createWasteLog(data: { weightKg: number; category: string; location?: string; photoURL?: string; date?: string }) {
-    return this.request<unknown>('/waste-logs', {
+    return this.request<ApiData>('/waste-logs', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -320,20 +325,20 @@ class ApiClient {
     if (filters?.offset) query.append('offset', filters.offset.toString());
     const queryString = query.toString();
     const endpoint = userId ? `/waste-logs/user/${userId}` : '/waste-logs/me';
-    return this.request<unknown[]>(`${endpoint}${queryString ? `?${queryString}` : ''}`);
+    return this.request<ApiDataArray>(`${endpoint}${queryString ? `?${queryString}` : ''}`);
   }
 
   async getWasteLogStats(userId?: string) {
     const query = userId ? `?userId=${userId}` : '';
-    return this.request<unknown>(`/waste-logs/stats${query}`);
+    return this.request<ApiData>(`/waste-logs/stats${query}`);
   }
 
   async getWasteLog(id: string) {
-    return this.request<unknown>(`/waste-logs/${id}`);
+    return this.request<ApiData>(`/waste-logs/${id}`);
   }
 
   async deleteWasteLog(id: string) {
-    return this.request<unknown>(`/waste-logs/${id}`, {
+    return this.request<ApiData>(`/waste-logs/${id}`, {
       method: 'DELETE',
     });
   }
@@ -345,32 +350,32 @@ class ApiClient {
     if (filters?.offset) query.append('offset', filters.offset.toString());
     if (filters?.search) query.append('search', filters.search);
     const queryString = query.toString();
-    return this.request<unknown[]>(`/news${queryString ? `?${queryString}` : ''}`);
+    return this.request<ApiDataArray>(`/news${queryString ? `?${queryString}` : ''}`);
   }
 
   async getNewsArticle(slug: string) {
-    return this.request<unknown>(`/news/${slug}`);
+    return this.request<ApiData>(`/news/${slug}`);
   }
 
   // Shop
   async getProducts(category?: string) {
     const query = category ? `?category=${category}` : '';
-    return this.request<unknown[]>(`/shop/products${query}`);
+    return this.request<ApiDataArray>(`/shop/products${query}`);
   }
 
   async getProduct(id: string) {
-    return this.request<unknown>(`/shop/products/${id}`);
+    return this.request<ApiData>(`/shop/products/${id}`);
   }
 
-  async createOrder(data: { items: Array<{ productId: string; quantity: number }>; shippingAddress: unknown }) {
-    return this.request<unknown>('/orders', {
+  async createOrder(data: { items: Array<{ productId: string; quantity: number }>; shippingAddress: Record<string, unknown> }) {
+    return this.request<ApiData>('/orders', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async getOrder(id: string) {
-    return this.request<unknown>(`/orders/${id}`);
+    return this.request<ApiData>(`/orders/${id}`);
   }
 
   // Stories
@@ -381,22 +386,22 @@ class ApiClient {
     if (language) query.append('language', language);
     if (search) query.append('search', search);
     const queryString = query.toString();
-    return this.request<unknown[]>(`/posts${queryString ? `?${queryString}` : ''}`);
+    return this.request<ApiDataArray>(`/posts${queryString ? `?${queryString}` : ''}`);
   }
 
   async getStory(slug: string) {
-    return this.request<unknown>(`/posts/${slug}`);
+    return this.request<ApiData>(`/posts/${slug}`);
   }
 
   async reactToPost(postId: string, reactionType: string) {
-    return this.request<unknown>(`/posts/${postId}/reactions`, {
+    return this.request<ApiData>(`/posts/${postId}/reactions`, {
       method: 'POST',
       body: JSON.stringify({ reactionType }),
     });
   }
 
   async commentOnPost(postId: string, content: string) {
-    return this.request<unknown>(`/posts/${postId}/comments`, {
+    return this.request<ApiData>(`/posts/${postId}/comments`, {
       method: 'POST',
       body: JSON.stringify({ content }),
     });
@@ -408,25 +413,25 @@ class ApiClient {
       ...(period && { period }),
       ...(limit && { limit: limit.toString() }),
     }).toString();
-    return this.request<unknown[]>(`/leaderboard${query ? `?${query}` : ''}`);
+    return this.request<ApiDataArray>(`/leaderboard${query ? `?${query}` : ''}`);
   }
 
   // Achievements
   async getAchievements() {
-    return this.request<unknown[]>('/achievements');
+    return this.request<ApiDataArray>('/achievements');
   }
 
   async getUserAchievements(userId: string) {
-    return this.request<unknown[]>(`/users/${userId}/achievements`);
+    return this.request<ApiDataArray>(`/users/${userId}/achievements`);
   }
 
   // Rewards
   async getRewards() {
-    return this.request<unknown[]>('/rewards');
+    return this.request<ApiDataArray>('/rewards');
   }
 
   async redeemReward(rewardId: string) {
-    return this.request<unknown>(`/rewards/${rewardId}/redeem`, {
+    return this.request<ApiData>(`/rewards/${rewardId}/redeem`, {
       method: 'POST',
     });
   }
@@ -437,11 +442,11 @@ class ApiClient {
       ...(page && { page: page.toString() }),
       ...(limit && { limit: limit.toString() }),
     }).toString();
-    return this.request<unknown[]>(`/notifications${query ? `?${query}` : ''}`);
+    return this.request<ApiDataArray>(`/notifications${query ? `?${query}` : ''}`);
   }
 
   async markNotificationsRead(notificationIds?: string[]) {
-    return this.request<unknown>('/notifications/mark-read', {
+    return this.request<ApiData>('/notifications/mark-read', {
       method: 'POST',
       body: JSON.stringify({ notificationIds }),
     });
@@ -449,12 +454,12 @@ class ApiClient {
 
   // Impact Stats
   async getImpactStats() {
-    return this.request<unknown>('/impact/stats');
+    return this.request<ApiData>('/impact/stats');
   }
 
   // Search
   async search(query: string) {
-    return this.request<unknown>(`/search?q=${encodeURIComponent(query)}`);
+    return this.request<ApiData>(`/search?q=${encodeURIComponent(query)}`);
   }
 
   // Upload
