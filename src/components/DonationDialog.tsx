@@ -44,7 +44,7 @@ const DonationDialog: React.FC<DonationDialogProps> = ({
 
   // Donation links
   const DONATION_LINKS = {
-    uzs: 'https://tirikchilik.uz/cryix',
+    uzs: 'https://tirikchilik.uz/zaminateco',
     usd: 'https://dalink.to/zaminat_eco'
   };
 
