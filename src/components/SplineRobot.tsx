@@ -422,8 +422,16 @@ export const SplineRobot: React.FC<SplineRobotProps> = ({ className, style }) =>
 };
 
 // Polyfill for requestIdleCallback
+// Polyfill for requestIdleCallback
+declare global {
+  interface Window {
+    requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+    cancelIdleCallback?: (handle?: number) => void;
+  }
+}
+
 if (typeof window !== 'undefined' && !window.requestIdleCallback) {
-  (window as any).requestIdleCallback = (callback: IdleRequestCallback, options?: IdleRequestOptions) => {
+  window.requestIdleCallback = (callback: IdleRequestCallback, options?: IdleRequestOptions) => {
     const timeout = options?.timeout || 0;
     const start = Date.now();
     return window.setTimeout(() => {
@@ -434,8 +442,8 @@ if (typeof window !== 'undefined' && !window.requestIdleCallback) {
     }, 1);
   };
 
-  (window as any).cancelIdleCallback = (id: number) => {
-    clearTimeout(id);
+  window.cancelIdleCallback = (id?: number) => {
+    if (typeof id === 'number') clearTimeout(id);
   };
 }
 

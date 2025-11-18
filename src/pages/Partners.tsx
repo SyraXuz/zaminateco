@@ -11,8 +11,23 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import '../styles/mobile-responsive.css';
 
+type Partner = {
+  id: number;
+  name: string;
+  category: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  color: string;
+  bgColor?: string;
+  borderColor?: string;
+  discount: string | number;
+  coinsRequired: number;
+  description: string;
+  details?: string;
+  featured?: boolean;
+};
+
 // Partner Card Component
-const PartnerCard = ({ partner, isMobile }: { partner: any; isMobile: boolean }) => {
+const PartnerCard = ({ partner, isMobile }: { partner: Partner; isMobile: boolean }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useTranslation();
   const IconComponent = partner.icon;

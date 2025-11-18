@@ -86,6 +86,24 @@ interface VotingProject {
   donationRaised?: number;
 }
 
+// Backend project shape (partial) - used when mapping backend responses
+interface BackendProject {
+  id?: string;
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  district?: string;
+  location?: string;
+  category?: string;
+  status?: string;
+  voteCount?: number;
+  targetVotes?: number;
+  endDate?: string;
+  materialsRequiredKg?: number;
+  budgetRequired?: number;
+  fundsRaised?: number;
+}
+
 // Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -161,10 +179,10 @@ function EcoVote() {
         
         if (backendProjects && Array.isArray(backendProjects) && backendProjects.length > 0) {
           // Transform backend data to match frontend format
-          const transformedProjects: VotingProject[] = backendProjects.map((p: any) => ({
-            id: p.id,
-            title: p.title,
-            description: p.description,
+          const transformedProjects: VotingProject[] = backendProjects.map((p: BackendProject) => ({
+            id: p.id || '',
+            title: p.title || '',
+            description: p.description || '',
             image: p.imageUrl || '🏫',
             location: p.district || p.location || '',
             category: p.category || 'general',
@@ -828,10 +846,10 @@ function EcoVote() {
                                   const status = activeTab === 'active' ? 'ACTIVE' : 'COMPLETED';
                                   const updatedProjects = await apiClient.getProjects(status, 'votes');
                                   if (updatedProjects && Array.isArray(updatedProjects) && updatedProjects.length > 0) {
-                                    const transformedProjects: VotingProject[] = updatedProjects.map((p: any) => ({
-                                      id: p.id,
-                                      title: p.title,
-                                      description: p.description,
+                                    const transformedProjects: VotingProject[] = updatedProjects.map((p: BackendProject) => ({
+                                      id: p.id || '',
+                                      title: p.title || '',
+                                      description: p.description || '',
                                       image: p.imageUrl || '🏫',
                                       location: p.district || p.location || '',
                                       category: p.category || 'general',
@@ -845,8 +863,9 @@ function EcoVote() {
                                     }));
                                     setProjects(transformedProjects);
                                   }
-                                } catch (error: any) {
-                                  toast.error(error.message || t('voteError') || 'Failed to submit vote');
+                                } catch (error: unknown) {
+                                  const message = error instanceof Error ? error.message : String(error);
+                                  toast.error(message || t('voteError') || 'Failed to submit vote');
                                 }
                               }}
                             >

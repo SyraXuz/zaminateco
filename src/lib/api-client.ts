@@ -91,9 +91,10 @@ class ApiClient {
       }
 
       return response.json();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Only log non-network errors
-      if (error.message && !error.message.includes('Failed to fetch')) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes('Failed to fetch')) {
         console.error('API Request failed:', error);
       }
       throw error;
@@ -146,7 +147,7 @@ class ApiClient {
     school?: string;
     mahalla?: string;
   }) {
-    const response = await this.request<ApiResponse<any>>('/auth/register', {
+    const response = await this.request<ApiResponse<unknown>>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -162,7 +163,7 @@ class ApiClient {
   }
 
   async login(data: { email?: string; phone?: string; password?: string; otp?: string }) {
-    const response = await this.request<ApiResponse<any>>('/auth/login', {
+    const response = await this.request<ApiResponse<unknown>>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -178,7 +179,7 @@ class ApiClient {
   }
 
   async verifyOtp(phone: string, otp: string) {
-    const response = await this.request<ApiResponse<any>>('/auth/verify-otp', {
+    const response = await this.request<ApiResponse<unknown>>('/auth/verify-otp', {
       method: 'POST',
       body: JSON.stringify({ phone, otp }),
     });
@@ -194,7 +195,7 @@ class ApiClient {
   }
 
   async getCurrentUser() {
-    return this.request<any>('/auth/me');
+    return this.request<unknown>('/auth/me');
   }
 
   logout() {
@@ -207,25 +208,25 @@ class ApiClient {
     if (status) query.append('status', status);
     if (sortBy) query.append('sortBy', sortBy);
     const queryString = query.toString();
-    return this.request<any[]>(`/projects${queryString ? `?${queryString}` : ''}`);
+    return this.request<unknown[]>(`/projects${queryString ? `?${queryString}` : ''}`);
   }
 
   async getProject(id: string) {
-    return this.request<any>(`/projects/${id}`);
+    return this.request<unknown>(`/projects/${id}`);
   }
 
   async getProjectResults(id: string) {
-    return this.request<any>(`/projects/${id}/results`);
+    return this.request<unknown>(`/projects/${id}/results`);
   }
 
   async voteForProject(projectId: string) {
-    return this.request<any>(`/projects/${projectId}/vote`, {
+    return this.request<unknown>(`/projects/${projectId}/vote`, {
       method: 'POST',
     });
   }
 
   async donateToProject(projectId: string, amount: number, currency: string, paymentProvider?: string) {
-    return this.request<any>(`/projects/${projectId}/donate`, {
+    return this.request<unknown>(`/projects/${projectId}/donate`, {
       method: 'POST',
       body: JSON.stringify({ amount, currency, paymentProvider }),
     });
@@ -233,44 +234,44 @@ class ApiClient {
 
   // Users
   async getUserProfile() {
-    return this.request<any>('/users/me');
+    return this.request<unknown>('/users/me');
   }
 
-  async updateUserProfile(data: any) {
-    return this.request<any>('/users/me', {
+  async updateUserProfile(data: unknown) {
+    return this.request<unknown>('/users/me', {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
   async getUserStats(userId: string) {
-    return this.request<any>(`/users/${userId}/stats`);
+    return this.request<unknown>(`/users/${userId}/stats`);
   }
 
   // Events
   async getEvents(status?: string) {
     const query = status ? `?status=${status}` : '';
-    return this.request<any[]>(`/events${query}`);
+    return this.request<unknown[]>(`/events${query}`);
   }
 
   async getEvent(id: string) {
-    return this.request<any>(`/events/${id}`);
+    return this.request<unknown>(`/events/${id}`);
   }
 
   async joinEvent(eventId: string) {
-    return this.request<any>(`/events/${eventId}/join`, {
+    return this.request<unknown>(`/events/${eventId}/join`, {
       method: 'POST',
     });
   }
 
   // Locations
   async getLocations(filters?: { type?: string; eventType?: string; district?: string }) {
-    const query = new URLSearchParams(filters as any).toString();
-    return this.request<any[]>(`/locations${query ? `?${query}` : ''}`);
+    const query = new URLSearchParams(filters as unknown as Record<string, string>).toString();
+    return this.request<unknown[]>(`/locations${query ? `?${query}` : ''}`);
   }
 
   async getLocation(id: string) {
-    return this.request<any>(`/locations/${id}`);
+    return this.request<unknown>(`/locations/${id}`);
   }
 
   async getNearbyLocations(lat: number, lng: number, radius?: number) {
@@ -279,33 +280,33 @@ class ApiClient {
       lng: lng.toString(),
       ...(radius && { radius: radius.toString() }),
     }).toString();
-    return this.request<any[]>(`/locations/nearby?${query}`);
+    return this.request<unknown[]>(`/locations/nearby?${query}`);
   }
 
   // Collections
   async getCollectionPoints(filters?: { materialType?: string; district?: string; status?: string; limit?: number }) {
-    const query = new URLSearchParams(filters as any).toString();
-    return this.request<any[]>(`/collection-points${query ? `?${query}` : ''}`);
+    const query = new URLSearchParams(filters as unknown as Record<string, string>).toString();
+    return this.request<unknown[]>(`/collection-points${query ? `?${query}` : ''}`);
   }
 
   async getCollectionPoint(id: string) {
-    return this.request<any>(`/collection-points/${id}`);
+    return this.request<unknown>(`/collection-points/${id}`);
   }
 
   async createCollection(data: { collectionPointId: string; materialType: string; weightKg: number; photoUrl?: string }) {
-    return this.request<any>('/collections', {
+    return this.request<unknown>('/collections', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async getUserCollections(userId: string) {
-    return this.request<any[]>(`/collections/user/${userId}`);
+    return this.request<unknown[]>(`/collections/user/${userId}`);
   }
 
   // Waste Logs
   async createWasteLog(data: { weightKg: number; category: string; location?: string; photoURL?: string; date?: string }) {
-    return this.request<any>('/waste-logs', {
+    return this.request<unknown>('/waste-logs', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -319,20 +320,20 @@ class ApiClient {
     if (filters?.offset) query.append('offset', filters.offset.toString());
     const queryString = query.toString();
     const endpoint = userId ? `/waste-logs/user/${userId}` : '/waste-logs/me';
-    return this.request<any[]>(`${endpoint}${queryString ? `?${queryString}` : ''}`);
+    return this.request<unknown[]>(`${endpoint}${queryString ? `?${queryString}` : ''}`);
   }
 
   async getWasteLogStats(userId?: string) {
     const query = userId ? `?userId=${userId}` : '';
-    return this.request<any>(`/waste-logs/stats${query}`);
+    return this.request<unknown>(`/waste-logs/stats${query}`);
   }
 
   async getWasteLog(id: string) {
-    return this.request<any>(`/waste-logs/${id}`);
+    return this.request<unknown>(`/waste-logs/${id}`);
   }
 
   async deleteWasteLog(id: string) {
-    return this.request<any>(`/waste-logs/${id}`, {
+    return this.request<unknown>(`/waste-logs/${id}`, {
       method: 'DELETE',
     });
   }
@@ -344,32 +345,32 @@ class ApiClient {
     if (filters?.offset) query.append('offset', filters.offset.toString());
     if (filters?.search) query.append('search', filters.search);
     const queryString = query.toString();
-    return this.request<any[]>(`/news${queryString ? `?${queryString}` : ''}`);
+    return this.request<unknown[]>(`/news${queryString ? `?${queryString}` : ''}`);
   }
 
   async getNewsArticle(slug: string) {
-    return this.request<any>(`/news/${slug}`);
+    return this.request<unknown>(`/news/${slug}`);
   }
 
   // Shop
   async getProducts(category?: string) {
     const query = category ? `?category=${category}` : '';
-    return this.request<any[]>(`/shop/products${query}`);
+    return this.request<unknown[]>(`/shop/products${query}`);
   }
 
   async getProduct(id: string) {
-    return this.request<any>(`/shop/products/${id}`);
+    return this.request<unknown>(`/shop/products/${id}`);
   }
 
-  async createOrder(data: { items: Array<{ productId: string; quantity: number }>; shippingAddress: any }) {
-    return this.request<any>('/orders', {
+  async createOrder(data: { items: Array<{ productId: string; quantity: number }>; shippingAddress: unknown }) {
+    return this.request<unknown>('/orders', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async getOrder(id: string) {
-    return this.request<any>(`/orders/${id}`);
+    return this.request<unknown>(`/orders/${id}`);
   }
 
   // Stories
@@ -380,22 +381,22 @@ class ApiClient {
     if (language) query.append('language', language);
     if (search) query.append('search', search);
     const queryString = query.toString();
-    return this.request<any[]>(`/posts${queryString ? `?${queryString}` : ''}`);
+    return this.request<unknown[]>(`/posts${queryString ? `?${queryString}` : ''}`);
   }
 
   async getStory(slug: string) {
-    return this.request<any>(`/posts/${slug}`);
+    return this.request<unknown>(`/posts/${slug}`);
   }
 
   async reactToPost(postId: string, reactionType: string) {
-    return this.request<any>(`/posts/${postId}/reactions`, {
+    return this.request<unknown>(`/posts/${postId}/reactions`, {
       method: 'POST',
       body: JSON.stringify({ reactionType }),
     });
   }
 
   async commentOnPost(postId: string, content: string) {
-    return this.request<any>(`/posts/${postId}/comments`, {
+    return this.request<unknown>(`/posts/${postId}/comments`, {
       method: 'POST',
       body: JSON.stringify({ content }),
     });
@@ -407,25 +408,25 @@ class ApiClient {
       ...(period && { period }),
       ...(limit && { limit: limit.toString() }),
     }).toString();
-    return this.request<any[]>(`/leaderboard${query ? `?${query}` : ''}`);
+    return this.request<unknown[]>(`/leaderboard${query ? `?${query}` : ''}`);
   }
 
   // Achievements
   async getAchievements() {
-    return this.request<any[]>('/achievements');
+    return this.request<unknown[]>('/achievements');
   }
 
   async getUserAchievements(userId: string) {
-    return this.request<any[]>(`/users/${userId}/achievements`);
+    return this.request<unknown[]>(`/users/${userId}/achievements`);
   }
 
   // Rewards
   async getRewards() {
-    return this.request<any[]>('/rewards');
+    return this.request<unknown[]>('/rewards');
   }
 
   async redeemReward(rewardId: string) {
-    return this.request<any>(`/rewards/${rewardId}/redeem`, {
+    return this.request<unknown>(`/rewards/${rewardId}/redeem`, {
       method: 'POST',
     });
   }
@@ -436,11 +437,11 @@ class ApiClient {
       ...(page && { page: page.toString() }),
       ...(limit && { limit: limit.toString() }),
     }).toString();
-    return this.request<any[]>(`/notifications${query ? `?${query}` : ''}`);
+    return this.request<unknown[]>(`/notifications${query ? `?${query}` : ''}`);
   }
 
   async markNotificationsRead(notificationIds?: string[]) {
-    return this.request<any>('/notifications/mark-read', {
+    return this.request<unknown>('/notifications/mark-read', {
       method: 'POST',
       body: JSON.stringify({ notificationIds }),
     });
@@ -448,12 +449,12 @@ class ApiClient {
 
   // Impact Stats
   async getImpactStats() {
-    return this.request<any>('/impact/stats');
+    return this.request<unknown>('/impact/stats');
   }
 
   // Search
   async search(query: string) {
-    return this.request<any>(`/search?q=${encodeURIComponent(query)}`);
+    return this.request<unknown>(`/search?q=${encodeURIComponent(query)}`);
   }
 
   // Upload

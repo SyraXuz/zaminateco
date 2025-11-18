@@ -182,8 +182,17 @@ const KeyFeaturesSection = () => {
   const { t } = useTranslation(['actions', 'translation']);
   const isMobile = useIsMobile();
   
+  type Feature = {
+    image: string;
+    title: string;
+    englishTitle?: string;
+    description: string;
+    color: string;
+    iconPath?: string;
+  };
+
   const features = useMemo(() => {
-    const baseFeatures = [
+    const baseFeatures: Feature[] = [
     {
         image: '/images/community_16119903.png',
       title: t('communityImpact', { ns: 'actions' }),
@@ -218,18 +227,18 @@ const KeyFeaturesSection = () => {
     }
   ];
     
-    return baseFeatures.map(feature => {
-      let iconPath = (feature as any).iconPath;
-      
+    return baseFeatures.map((feature: Feature) => {
+      let iconPath = feature.iconPath;
+
       if (!iconPath || !iconPath.startsWith('/images/')) {
-        const englishTitle = (feature as any).englishTitle || feature.title;
+        const englishTitle = feature.englishTitle || feature.title;
         iconPath = getIconForProductOrCategory(englishTitle, feature.image);
       }
-      
+
       return {
         ...feature,
         iconPath: iconPath && iconPath.startsWith('/images/') ? iconPath : feature.image
-      };
+      } as Feature;
     });
   }, [t]);
 

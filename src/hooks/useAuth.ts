@@ -64,8 +64,9 @@ export function useAuth() {
         return { success: true, requiresOtp: response.data.requiresOtp };
       }
       return { success: false, requiresOtp: response.requiresOtp };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { success: false, error: message };
     }
   };
 
@@ -84,8 +85,9 @@ export function useAuth() {
         return { success: true, requiresOtp: response.data.requiresOtp };
       }
       return { success: false, requiresOtp: response.requiresOtp };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { success: false, error: message };
     }
   };
 

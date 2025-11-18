@@ -18,7 +18,21 @@ import { useAddToCartAnimation } from '../hooks/useAddToCartAnimation';
 
 // Sample product data with translation keys
 // IMPORTANT: englishName is used for icon matching to ensure consistency across languages
-const productData = [
+type ProductItem = {
+  id: number;
+  emoji?: string;
+  image?: string;
+  nameKey: string;
+  englishName?: string;
+  descriptionKey?: string;
+  infoKey?: string;
+  categoryKey?: string;
+  price?: string;
+  pricingKey?: string;
+  isCallForPrice?: boolean;
+};
+
+const productData: ProductItem[] = [
   {
     id: 1,
     emoji: '🏗️',
@@ -140,7 +154,16 @@ const productData = [
 // - Infrastructure.png
 // - playground.png
 // IMPORTANT: englishName and iconImage are used for consistent icons across languages
-const categoryData = [
+type CategoryItem = {
+  emoji?: string;
+  image?: string;
+  iconImage?: string;
+  nameKey: string;
+  englishName?: string;
+  descriptionKey?: string;
+};
+
+const categoryData: CategoryItem[] = [
   {
     emoji: '🏗️',
     image: '/images/art-tiles.png',
@@ -191,7 +214,7 @@ export default function SocialMissionShop() {
       const categoryName = t(product.categoryKey, { ns: 'shop' });
       
       // Use original English name for icon matching (language-independent)
-      const englishName = (product as any).englishName || productName;
+      const englishName = product.englishName || productName;
       const iconPath = getIconForProductOrCategory(englishName, product.image);
       
       return {
@@ -212,7 +235,7 @@ export default function SocialMissionShop() {
       let iconPath = category.iconImage;
       
       if (!iconPath || !iconPath.startsWith('/images/')) {
-        const englishName = (category as any).englishName || categoryName;
+        const englishName = category.englishName || categoryName;
         iconPath = getIconForProductOrCategory(englishName, category.iconImage || category.image);
       }
       
